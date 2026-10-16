@@ -1,0 +1,453 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@500;600;700&family=Unbounded:wght@600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* =========================================================================
+     Theme 1: Aurora (Default: Obsidian Base + Electric Violet + Acid Lime)
+     ========================================================================= */
+  :root,
+  [data-vibe="aurora"],
+  .theme-aurora {
+    --theme-name: 'aurora';
+    --background: 240 29% 5%;          /* #0A0A12 */
+    --foreground: 225 33% 96%;
+    --card: 240 27% 9%;                /* #11111E */
+    --card-foreground: 220 20% 95%;
+    --popover: 240 27% 10%;            /* #131322 */
+    --popover-foreground: 220 20% 95%;
+    --primary: 77 100% 62%;            /* #C6FF3D Acid Lime */
+    --primary-foreground: 240 29% 5%;
+    --secondary: 252 100% 68%;         /* #7C5CFF Electric Violet */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 20% 15%;
+    --muted-foreground: 240 12% 65%;
+    --accent: 77 100% 62%;
+    --accent-foreground: 240 29% 5%;
+    --destructive: 345 100% 62%;       /* #FF3D6E */
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 70% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 23 100% 62%;            /* #FF8A3D */
+    --warning-foreground: 0 0% 100%;
+    --border: 240 20% 22%;             /* #2A2A3E */
+    --input: 240 20% 22%;
+    --ring: 77 100% 62%;
+    --radius: 18px;
+    --sidebar: 240 29% 6%;
+    --sidebar-foreground: 220 15% 80%;
+    --sidebar-muted: 220 15% 50%;
+    --sidebar-border: 240 20% 18%;
+
+    /* Typography & Spacing Scales */
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+
+    --transition-fast: 150ms ease;
+    --transition-normal: 200ms ease;
+    --transition-slow: 300ms ease;
+
+    /* Specific theme color accents */
+    --theme-accent: #C6FF3D;
+    --theme-accent-rgb: 198, 255, 61;
+    --theme-secondary: #7C5CFF;
+    --theme-pink: #FF3DA5;
+    --theme-cyan: #3DE8FF;
+    --theme-orange: #FF8A3D;
+
+    /* Neo-Brutal offsets & borders */
+    --neo-shadow-color: #000000;
+    --neo-border-color: #383852;
+    --neo-accent-shadow: #7C5CFF;
+
+    /* Ambient Aurora blobs */
+    --aurora-blob-1: rgba(124, 92, 255, 0.28);
+    --aurora-blob-2: rgba(255, 61, 165, 0.24);
+    --aurora-blob-3: rgba(61, 232, 255, 0.20);
+  }
+
+  /* =========================================================================
+     Theme 2: Y2K Chrome (Cyber Metallic Silver + Electric Cyan + Hot Magenta)
+     ========================================================================= */
+  [data-vibe="y2k"],
+  .theme-y2k {
+    --theme-name: 'y2k';
+    --background: 233 24% 7%;          /* #0D0E15 */
+    --foreground: 220 20% 96%;
+    --card: 231 22% 12%;               /* #161824 */
+    --card-foreground: 220 25% 96%;
+    --popover: 231 22% 13%;
+    --popover-foreground: 220 25% 96%;
+    --primary: 184 100% 50%;           /* #00F0FF Electric Cyan */
+    --primary-foreground: 233 24% 7%;
+    --secondary: 221 14% 78%;          /* #C0C5D0 Metallic Silver */
+    --secondary-foreground: 233 24% 7%;
+    --muted: 231 16% 18%;
+    --muted-foreground: 221 14% 65%;
+    --accent: 330 100% 50%;            /* #FF007F Cyber Magenta */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 330 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 226 20% 28%;             /* #3A4056 */
+    --input: 226 20% 28%;
+    --ring: 184 100% 50%;
+    --radius: 14px;
+    --sidebar: 233 24% 8%;
+    --sidebar-foreground: 220 20% 85%;
+    --sidebar-muted: 220 15% 50%;
+    --sidebar-border: 226 20% 22%;
+
+    --theme-accent: #00F0FF;
+    --theme-accent-rgb: 0, 240, 255;
+    --theme-secondary: #C0C5D0;
+    --theme-pink: #FF007F;
+    --theme-cyan: #00F0FF;
+    --theme-orange: #FF8000;
+
+    --neo-shadow-color: #00F0FF;
+    --neo-border-color: #515B7C;
+    --neo-accent-shadow: #FF007F;
+
+    --aurora-blob-1: rgba(0, 240, 255, 0.22);
+    --aurora-blob-2: rgba(255, 0, 127, 0.20);
+    --aurora-blob-3: rgba(192, 197, 208, 0.15);
+  }
+
+  /* =========================================================================
+     Theme 3: Cyber Lime (Hacker Obsidian + High-Contrast Acid Lime + Matrix Green)
+     ========================================================================= */
+  [data-vibe="cyber"],
+  .theme-cyber {
+    --theme-name: 'cyber';
+    --background: 140 30% 3%;          /* #050A06 */
+    --foreground: 120 40% 95%;
+    --card: 135 25% 7%;                /* #0D160F */
+    --card-foreground: 120 40% 95%;
+    --popover: 135 25% 8%;
+    --popover-foreground: 120 40% 95%;
+    --primary: 77 100% 62%;            /* #C6FF3D Acid Lime */
+    --primary-foreground: 140 30% 3%;
+    --secondary: 152 100% 50%;         /* #00FF88 Matrix Green */
+    --secondary-foreground: 140 30% 3%;
+    --muted: 135 20% 14%;
+    --muted-foreground: 135 15% 60%;
+    --accent: 54 100% 50%;             /* #FFE600 Hazard Yellow */
+    --accent-foreground: 140 30% 3%;
+    --destructive: 0 100% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 140 40% 20%;             /* #1F3B24 */
+    --input: 140 40% 20%;
+    --ring: 77 100% 62%;
+    --radius: 12px;
+    --sidebar: 140 30% 4%;
+    --sidebar-foreground: 120 30% 85%;
+    --sidebar-muted: 120 20% 50%;
+    --sidebar-border: 140 40% 16%;
+
+    --theme-accent: #C6FF3D;
+    --theme-accent-rgb: 198, 255, 61;
+    --theme-secondary: #00FF88;
+    --theme-pink: #FF3D77;
+    --theme-cyan: #00FFCC;
+    --theme-orange: #FFE600;
+
+    --neo-shadow-color: #C6FF3D;
+    --neo-border-color: #2F5936;
+    --neo-accent-shadow: #00FF88;
+
+    --aurora-blob-1: rgba(198, 255, 61, 0.22);
+    --aurora-blob-2: rgba(0, 255, 136, 0.18);
+    --aurora-blob-3: rgba(255, 230, 0, 0.14);
+  }
+
+  /* =========================================================================
+     Theme 4: Pastel Dreamy (Midnight Indigo + Dreamy Lilac + Cloud Mint)
+     ========================================================================= */
+  [data-vibe="pastel"],
+  .theme-pastel {
+    --theme-name: 'pastel';
+    --background: 248 32% 9%;          /* #12101F */
+    --foreground: 250 30% 96%;
+    --card: 248 26% 14%;               /* #1B172E */
+    --card-foreground: 250 30% 96%;
+    --popover: 248 26% 15%;
+    --popover-foreground: 250 30% 96%;
+    --primary: 252 95% 85%;            /* #C4B5FD Dreamy Lilac */
+    --primary-foreground: 248 32% 9%;
+    --secondary: 156 72% 67%;          /* #6EE7B7 Cloud Mint */
+    --secondary-foreground: 248 32% 9%;
+    --muted: 248 20% 20%;
+    --muted-foreground: 248 15% 70%;
+    --accent: 325 78% 86%;             /* #FBCFE8 Soft Pink */
+    --accent-foreground: 248 32% 9%;
+    --destructive: 350 85% 75%;
+    --destructive-foreground: 248 32% 9%;
+    --border: 248 22% 28%;             /* #3A3258 */
+    --input: 248 22% 28%;
+    --ring: 252 95% 85%;
+    --radius: 24px;
+    --sidebar: 248 32% 10%;
+    --sidebar-foreground: 250 20% 85%;
+    --sidebar-muted: 250 15% 55%;
+    --sidebar-border: 248 22% 22%;
+
+    --theme-accent: #C4B5FD;
+    --theme-accent-rgb: 196, 181, 253;
+    --theme-secondary: #6EE7B7;
+    --theme-pink: #FBCFE8;
+    --theme-cyan: #A5F3FC;
+    --theme-orange: #FED7AA;
+
+    --neo-shadow-color: #A78BFA;
+    --neo-border-color: #50447A;
+    --neo-accent-shadow: #F472B6;
+
+    --aurora-blob-1: rgba(196, 181, 253, 0.22);
+    --aurora-blob-2: rgba(110, 231, 183, 0.18);
+    --aurora-blob-3: rgba(251, 207, 232, 0.16);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(circle at 85% 15%, var(--aurora-blob-1) 0%, transparent 45%),
+      radial-gradient(circle at 15% 35%, var(--aurora-blob-2) 0%, transparent 40%),
+      radial-gradient(circle at 50% 85%, var(--aurora-blob-3) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  /* Crisp Neo-Brutal Border */
+  .hard-border {
+    border: 2px solid var(--neo-border-color, rgba(255, 255, 255, 0.18));
+  }
+
+  /* Neo-Brutal Card Utility */
+  .neo-card {
+    background-color: hsl(var(--card));
+    border: 2px solid var(--neo-border-color, rgba(255, 255, 255, 0.18));
+    border-radius: 24px;
+    box-shadow: 6px 6px 0px 0px var(--neo-shadow-color, #000000);
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+
+  .neo-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0px 0px var(--neo-shadow-color, #000000);
+  }
+
+  .neo-card:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px var(--neo-shadow-color, #000000);
+  }
+
+  /* Neo-Brutal Hard Shadow Utilities */
+  .neo-shadow {
+    box-shadow: 6px 6px 0px 0px var(--neo-shadow-color, #000000);
+  }
+  .neo-shadow-sm {
+    box-shadow: 3px 3px 0px 0px var(--neo-shadow-color, #000000);
+  }
+  .neo-shadow-lg {
+    box-shadow: 10px 10px 0px 0px var(--neo-shadow-color, #000000);
+  }
+  .neo-shadow-accent {
+    box-shadow: 6px 6px 0px 0px var(--theme-accent, #C6FF3D);
+  }
+
+  /* Rotated Sticker Badge */
+  .sticker-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    font-family: 'Space Grotesk', 'Unbounded', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 2px solid var(--neo-border-color, currentColor);
+    border-radius: 9999px;
+    box-shadow: 3px 3px 0px 0px var(--neo-shadow-color, #000000);
+    transform: rotate(-1.5deg);
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.15s ease;
+    cursor: default;
+    user-select: none;
+  }
+
+  .sticker-badge:hover {
+    transform: rotate(0deg) scale(1.05);
+    box-shadow: 4px 4px 0px 0px var(--neo-shadow-color, #000000);
+  }
+
+  .sticker-badge-alt {
+    transform: rotate(1.5deg);
+  }
+  .sticker-badge-alt:hover {
+    transform: rotate(0deg) scale(1.05);
+  }
+
+  /* 4% Noise Grain Texture */
+  .aurora-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted));
+    border-radius: 4px;
+  }
+
+  /* Typography utilities */
+  .text-xs { font-size: var(--font-size-xs); }
+  .text-sm { font-size: var(--font-size-sm); }
+  .text-base { font-size: var(--font-size-base); }
+  .text-lg { font-size: var(--font-size-lg); }
+  .text-xl { font-size: var(--font-size-xl); }
+  .text-2xl { font-size: var(--font-size-2xl); }
+  .text-3xl { font-size: var(--font-size-3xl); }
+
+  .leading-tight { line-height: 1.25; }
+  .leading-normal { line-height: 1.5; }
+  .leading-relaxed { line-height: 1.625; }
+
+  .font-normal { font-weight: 400; }
+  .font-medium { font-weight: 500; }
+  .font-semibold { font-weight: 600; }
+  .font-bold { font-weight: 700; }
+
+  .tracking-tight { letter-spacing: -0.025em; }
+  .tracking-normal { letter-spacing: 0; }
+  .tracking-wide { letter-spacing: 0.025em; }
+
+  /* Responsive spacing */
+  .section-gap {
+    @apply space-y-6 md:space-y-8;
+  }
+  .page-padding {
+    @apply px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10;
+  }
+  .card-grid {
+    @apply grid gap-4 sm:grid-cols-2 lg:grid-cols-4;
+  }
+
+  .surface-glow {
+    box-shadow: 0 24px 70px -42px hsl(217 91% 60% / 0.75);
+  }
+
+  .ai-surface {
+    background: linear-gradient(135deg, hsl(252 42% 16% / .95), hsl(222 31% 10% / .98));
+    border-color: hsl(252 65% 55% / .32);
+  }
+  .content-grid {
+    @apply grid gap-4 md:grid-cols-2;
+  }
+
+  /* Animation */
+  .fade-in {
+    animation: fadeIn var(--transition-normal) ease-out;
+  }
+  .slide-up {
+    animation: slideUp var(--transition-normal) ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Skeleton */
+  .skeleton {
+    @apply animate-pulse rounded-md bg-muted;
+  }
+}
+
+/* =========================================================================
+   Reduced Motion Accessibility (prefers-reduced-motion & .reduced-motion)
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .neo-card:hover,
+  .sticker-badge:hover,
+  .sticker-badge-alt:hover,
+  [data-tilt] {
+    transform: none !important;
+    box-shadow: 6px 6px 0px 0px var(--neo-shadow-color, #000000) !important;
+  }
+}
+
+.reduced-motion,
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after,
+[data-reduced-motion="true"],
+[data-reduced-motion="true"] * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+.reduced-motion .neo-card:hover,
+.reduced-motion .sticker-badge:hover,
+.reduced-motion .sticker-badge-alt:hover,
+.reduced-motion [data-tilt],
+[data-reduced-motion="true"] .neo-card:hover,
+[data-reduced-motion="true"] .sticker-badge:hover,
+[data-reduced-motion="true"] .sticker-badge-alt:hover,
+[data-reduced-motion="true"] [data-tilt] {
+  transform: none !important;
+  box-shadow: 6px 6px 0px 0px var(--neo-shadow-color, #000000) !important;
+}

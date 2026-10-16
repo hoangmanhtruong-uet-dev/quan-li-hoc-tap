@@ -1,0 +1,50 @@
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  1
+CAMPUSOS
+STUDY. GROW. CONNECT. LIVE.
+TÀI LIỆU MÔ TẢ SẢN PHẨM, YÊU CẦU HỆ
+THỐNG
+VÀ LỘ TRÌNH TRIỂN KHAI THEO PHASE
+Bản định hướng dùng để thiết kế, vibe code, review và kiểm soát phạm vi dự án
+STUDY📚
+Học tập
+ROADMAP🧭
+Kỹ năng nghề nghiệp
+COMMUNITY👥
+CLB và đội nhóm
+LIVING🏡
+Phòng trọ và chi tiêu
+Phiên bản 1.0  •  Ngày 12/07/2026
+Nguyên tắc cốt lõi💡
+CampusOS là một nền tảng thống nhất có các engine dùng chung. Không xây bốn ứng dụng rời rồi
+ghép vào cùng một menu.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  2
+0. CÁCH SỬ DỤNG TÀI LIỆU
+Tài liệu này vừa là product blueprint, vừa là checklist kỹ thuật và lộ trình giao
+việc cho AI agent.
+Tài liệu trả lời những câu hỏi nào?
+• CampusOS giải quyết vấn đề gì, dành cho ai và khác gì so với việc dùng nhiều ứng dụng rời rạc?
+• Bốn module Study, Roadmap, Community và Living liên kết với nhau như thế nào?
+• Các engine dùng chung, role, workspace, dữ liệu và luồng nghiệp vụ được thiết kế ra sao?
+• MVP cần làm gì, chưa làm gì và tiêu chí nghiệm thu của từng phần là gì?
+• Mỗi phase phải tạo ra deliverable nào, phải test gì và chỉ được sang phase tiếp theo khi nào?
+• Cần kiểm soát bảo mật, hiệu năng, exception, khả năng mở rộng và quy trình vibe code như thế nào?
+Quy ước mức độ ưu tiên
+Mức Ý nghĩa Cách xử lý
+MUST Bắt buộc để MVP chạy đúng hoặc để
+bảo đảm an toàn dữ liệu.
+Phải hoàn thành trước khi release.
+SHOULD Quan trọng cho trải nghiệm hoặc
+chất lượng, nhưng có thể lùi ngắn
+hạn.
+Ưu tiên sau MUST trong cùng
+module.
+COULD Tăng giá trị sản phẩm nhưng không
+chặn MVP.
+Đưa vào backlog sau khi luồng lõi ổn
+định.
+WON’T NOW Chủ động không làm trong bản hiện
+tại.
+Ghi rõ để ngăn AI agent tự mở rộng
+scope.

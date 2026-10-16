@@ -1,0 +1,50 @@
+{
+  "name": "campusos-web",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "migrate:phase5b": "node scripts/migrate-phase-5b.mjs"
+  },
+  "dependencies": {
+    "@radix-ui/react-separator": "^1.1.15",
+    "@radix-ui/react-slot": "^1.3.3",
+    "@radix-ui/react-tooltip": "^1.2.16",
+    "@supabase/supabase-js": "^2.117.3",
+    "@types/three": "^0.186.0",
+    "ai": "^7.0.70",
+    "bcryptjs": "^3.0.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "jose": "^6.2.3",
+    "lucide-react": "^1.24.0",
+    "msedge-tts": "^2.0.9",
+    "mysql2": "^3.22.6",
+    "next": "14.2.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "resend": "^6.32.1",
+    "streamdown": "^2.5.0",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss-animate": "^1.0.7",
+    "three": "^0.186.1",
+    "use-stick-to-bottom": "^1.1.6"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "20.14.10",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.20",
+    "eslint": "8.57.0",
+    "eslint-config-next": "14.2.5",
+    "postcss": "8.4.47",
+    "tailwindcss": "3.4.10",
+    "typescript": "5.5.4"
+  }
+}

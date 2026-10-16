@@ -1,0 +1,50 @@
+# DISPATCH — Reviewer 2: Milestone M3 Profile, Notifications & Settings
+
+## Mission
+Conduct an independent adversarial review of Milestone M3 (`/profile`, `/notifications`, `/settings`).
+
+## Authoritative Inputs
+- Original Request: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md` (timestamp `## 2026-10-16T17:39:47Z`)
+- Master Plan: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\orchestrator_13\PROJECT.md`
+- Worker R3 Handoff: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_r3_profile\handoff.md`
+- Working Directory: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web`
+- Your Metadata Directory: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_2_r3\`
+
+## Review Scope & Instructions
+1. Inspect all files touched by Worker R3:
+   - `src/lib/notifications-engine.ts`
+   - `src/components/profile/*`
+   - `src/components/notifications/*`
+   - `src/components/settings/*`
+   - `src/app/(main)/profile/page.tsx`
+   - `src/app/(main)/notifications/page.tsx`
+   - `src/app/(main)/settings/page.tsx`
+   - `tests/profile-notifications-settings.test.ts`
+2. Independently execute verification commands in `web/`:
+   - `npm run typecheck`
+   - `npm test`
+   - `npm run build`
+3. Stress test corner cases:
+   - Does deleting a notification allow undo restoration within 5 seconds?
+   - Does password validation reject passwords < 8 characters or lacking symbols/numbers?
+   - Does 2FA modal validate 6-digit TOTP format?
+   - Does Google Calendar sync card correctly produce valid RFC 5545 `.ics` payload?
+   - Is `<PomodoroSupervisorSettings />` preserved without regression?
+   - Are there any layout overflow or SSR hydration errors?
+4. Render an explicit verdict in your report: **APPROVE** or **REQUEST_CHANGES**.
+5. Write your complete report to `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_2_r3\handoff.md` and send a message back to orchestrator (`2edd309a-1f42-49e0-9c2a-571cbec23f81`).
+
+## 2026-10-16T18:54:19Z
+Read ORIGINAL_REQUEST.md at d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md (timestamp ## 2026-10-16T17:39:47Z).
+Read PROJECT.md at d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\orchestrator_13\PROJECT.md.
+Read Worker R3 handoff at d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_r3_profile\handoff.md.
+Read your DISPATCH.md at d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_2_r3\DISPATCH.md.
+
+Perform an adversarial challenge review of Milestone M3 (Profile, Notifications & Settings).
+Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web.
+Your metadata directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_2_r3\.
+
+Run verification commands: npm run typecheck, npm test, npm run build in web/.
+Check corner cases and render a clear verdict: APPROVE or REQUEST_CHANGES.
+Write your full report to handoff.md and send message back to orchestrator (ID: 2edd309a-1f42-49e0-9c2a-571cbec23f81).
+

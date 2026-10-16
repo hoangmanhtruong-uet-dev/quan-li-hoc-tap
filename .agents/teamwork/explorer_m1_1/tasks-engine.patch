@@ -1,0 +1,198 @@
+Index: web/src/lib/tasks-engine.ts
+===================================================================
+--- web/src/lib/tasks-engine.ts
++++ web/src/lib/tasks-engine.ts
+@@ -160,6 +160,7 @@
+   const isImportant =
+     task.priority === 'high' ||
++    (task.priority as string) === 'urgent' ||
+     task.difficulty >= 4 ||
+     academicKeywordRegex.test(task.title);
+ 
+@@ -303,4 +304,5 @@
+   { key: /kỹ thuật lập trình/i, name: 'Kỹ thuật lập trình' },
+   { key: /dự án web|lập trình web|web/i, name: 'Dự án Web' },
+   { key: /clb công nghệ/i, name: 'CLB Công nghệ' },
++  { key: /giải tích/i, name: 'Giải tích' },
+ ];
+@@ -351,12 +353,28 @@
+   // -----------------------------------------------------------------
+   // Pass 1: Time Extraction
+   // -----------------------------------------------------------------
+-  const colonTimeRegex = /(?:lúc\s+|vào\s+)?(\d{1,2}):(\d{2})(?:\s*(sáng|chiều|chieu|tối|toi))?/i;
+-  const combinedTimeRegex = /(?:lúc\s+|vào\s+)?(\d{1,2})h(\d{2})(?:\s*(sáng|chiều|chieu|tối|toi))?/i;
+-  const prefixedHourRegex = /(?:lúc|vào)\s+(\d{1,2})h?(?:\s*(sáng|chiều|chieu|tối|toi))?/i;
+-  const periodHourRegex = /(\d{1,2})h\s*(sáng|chiều|chieu|tối|toi)/i;
+-  const hourNearDateRegex = /(\d{1,2})h(?:\s*(?:ngày|hôm|mai|mốt|thứ|chủ nhật|cn))/i;
++  const PERIOD_WORDS = 'sáng|sang|trưa|trua|chiều|chieu|tối|toi|đêm|dem|khuya';
++  const endOfDayRegex = /(?:^|[^\p{L}\p{N}])(?:vào\s+|lúc\s+|trước\s+)?(cuối\s+ngày|hết\s+ngày)(?=$|[^\p{L}\p{N}])/ui;
++
++  // Colon time: 14:30, 8:00 sáng, 11:00 đêm
++  const colonTimeRegex = new RegExp(
++    `(?:lúc\\s+|vào\\s+|trước\\s+)?(\\d{1,2}):(\\d{2})(?:\\s*(${PERIOD_WORDS}))?`,
++    'i'
++  );
++  // Hour + Minute: 14h30, 14 giờ 30, 14 giờ 30 phút, 8h15 sáng
++  const combinedTimeRegex = new RegExp(
++    `(?:lúc\\s+|vào\\s+|trước\\s+)?(\\d{1,2})\\s*(?:h|giờ|gio)\\s*(\\d{2})(?:\\s*(?:phút|p))?(?:\\s*(${PERIOD_WORDS}))?`,
++    'i'
++  );
++  // Hour with period: 11 giờ đêm, 8 giờ sáng, 2h chiều, 12h trưa, 12h đêm
++  const periodHourRegex = new RegExp(
++    `(?:lúc\\s+|vào\\s+|trước\\s+)?(\\d{1,2})\\s*(?:h|giờ|gio)?\\s*(${PERIOD_WORDS})`,
++    'i'
++  );
++  // Prefixed hour: lúc 11 giờ, vào 8 giờ, trước 23h, lúc 15 giờ
++  const prefixedHourRegex = new RegExp(
++    `(?:lúc|vào|trước)\\s+(\\d{1,2})\\s*(?:h|giờ|gio)?(?:\\s*(${PERIOD_WORDS}))?`,
++    'i'
++  );
++  const hourNearDateRegex = /(\d{1,2})\s*(?:h|giờ|gio)(?:\s*(?:ngày|hôm|mai|mốt|thứ|chủ nhật|cn|cuối tuần|tuần sau))/i;
+   const standaloneHourRegex = /(?:^|[^\p{L}\p{N}])(\d{1,2})\s*h(?=$|[^\p{L}\p{N}])/ui;
+@@ -377,20 +395,29 @@
+   } else if ((timeMatch = working.match(periodHourRegex)) && timeMatch[1]) {
+     timeMatchStr = timeMatch[0];
+     h = parseInt(timeMatch[1], 10);
+     m = 0;
+     period = timeMatch[2]?.toLowerCase();
+   } else if ((timeMatch = working.match(prefixedHourRegex)) && timeMatch[1]) {
+     timeMatchStr = timeMatch[0];
+     h = parseInt(timeMatch[1], 10);
+     m = 0;
+     period = timeMatch[2]?.toLowerCase();
+   } else if ((timeMatch = working.match(hourNearDateRegex)) && timeMatch[1]) {
+-    timeMatchStr = timeMatch[0].match(/(\d{1,2})h/)![0];
++    timeMatchStr = timeMatch[0].match(/(\d{1,2})\s*(?:h|giờ|gio)/i)![0];
+     h = parseInt(timeMatch[1], 10);
+     m = 0;
+   } else {
+-    const hasExplicitMinuteDur = /(?:^|[^\p{L}\p{N}])\d+(?:\.\d+)?\s*(?:p|phút|phut|min|m)(?=$|[^\p{L}\p{N}])/ui.test(working);
+-    const hasDeadlineOrAction = /(?:deadline|hạn|nộp|gửi|trước|thi|kiểm tra|họp|báo cáo)/ui.test(working);
+-    const matchStandalone = working.match(standaloneHourRegex);
+-    if (matchStandalone && matchStandalone[1]) {
+-      const val = parseInt(matchStandalone[1], 10);
+-      if (hasExplicitMinuteDur || hasDeadlineOrAction || (val >= 13 && val <= 23)) {
+-        timeMatchStr = matchStandalone[0].match(/(\d{1,2})\s*h/i)![0];
+-        h = val;
+-        m = 0;
+-      }
+-    }
++    const endOfDayMatch = working.match(endOfDayRegex);
++    if (endOfDayMatch) {
++      timeMatchStr = endOfDayMatch[0];
++      h = 23;
++      m = 59;
++    } else {
++      const hasExplicitMinuteDur = /(?:^|[^\p{L}\p{N}])\d+(?:\.\d+)?\s*(?:p|phút|phut|min|m)(?=$|[^\p{L}\p{N}])/ui.test(working);
++      const hasDeadlineOrAction = /(?:deadline|hạn|nộp|gửi|trước|thi|kiểm tra|họp|báo cáo)/ui.test(working);
++      const matchStandalone = working.match(standaloneHourRegex);
++      if (matchStandalone && matchStandalone[1]) {
++        const val = parseInt(matchStandalone[1], 10);
++        if (hasExplicitMinuteDur || hasDeadlineOrAction || (val >= 13 && val <= 23)) {
++          timeMatchStr = matchStandalone[0].match(/(\d{1,2})\s*h/i)![0];
++          h = val;
++          m = 0;
++        }
++      }
++    }
+   }
+ 
+   if (h >= 0 && h <= 24) {
+-    if ((period === 'chiều' || period === 'chieu' || period === 'tối' || period === 'toi') && h < 12) {
++    const p = period?.toLowerCase();
++    if ((p === 'chiều' || p === 'chieu' || p === 'tối' || p === 'toi') && h < 12) {
+       h += 12;
++    } else if ((p === 'đêm' || p === 'dem' || p === 'khuya') && h < 12) {
++      h += 12;
++    } else if ((p === 'đêm' || p === 'dem' || p === 'khuya') && h === 12) {
++      h = 0;
++    } else if ((p === 'sáng' || p === 'sang') && h === 12) {
++      h = 0;
+     }
+     if (h === 24) {
+       h = 0;
+     }
+     detectedDueTime = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+     working = working.replace(timeMatchStr, ' ');
+     confidence += 0.15;
+   }
+@@ -452,14 +479,20 @@
+   // -----------------------------------------------------------------
+   // Pass 3: Priority Extraction (Unicode safe)
+   // -----------------------------------------------------------------
+-  const highPriorityRegex = /(?:^|[^\p{L}\p{N}])(?:ưu tiên\s+cao|gấp|urgent|p1|quan trọng)(?=$|[^\p{L}\p{N}])/ui;
+-  const lowPriorityRegex = /(?:^|[^\p{L}\p{N}])(?:ưu tiên\s+thấp|không gấp|p3)(?=$|[^\p{L}\p{N}])/ui;
+-  const medPriorityRegex = /(?:^|[^\p{L}\p{N}])(?:ưu tiên\s+vừa|bình thường|p2|trung bình)(?=$|[^\p{L}\p{N}])/ui;
+-
+-  if (highPriorityRegex.test(working)) {
++  const urgentPriorityRegex = /(?:^|[^\p{L}\p{N}])(?:siêu\s+gấp|khẩn\s+cấp|cực\s+gấp|siêu\s+ưu\s+tiên|urgent|p0)(?=$|[^\p{L}\p{N}])/ui;
++  const highPriorityRegex = /(?:^|[^\p{L}\p{N}])(?:ưu\s+tiên\s+cao|gấp|p1|quan\s+trọng|cao)(?=$|[^\p{L}\p{N}])/ui;
++  const lowPriorityRegex = /(?:^|[^\p{L}\p{N}])(?:ưu\s+tiên\s+thấp|không\s+gấp|p3|thấp)(?=$|[^\p{L}\p{N}])/ui;
++  const medPriorityRegex = /(?:^|[^\p{L}\p{N}])(?:ưu\s+tiên\s+vừa|bình\s+thường|p2|trung\s+bình|vừa)(?=$|[^\p{L}\p{N}])/ui;
++
++  if (urgentPriorityRegex.test(working)) {
++    detectedPriority = 'urgent' as TaskPriority;
++    working = working.replace(/(?:siêu\s+gấp|khẩn\s+cấp|cực\s+gấp|siêu\s+ưu\s+tiên|urgent|p0)/ui, ' ');
++    confidence += 0.15;
++  } else if (highPriorityRegex.test(working)) {
+     detectedPriority = 'high';
+-    working = working.replace(/(?:ưu tiên\s+cao|gấp|urgent|p1|quan trọng)/ui, ' ');
++    working = working.replace(/(?:ưu\s+tiên\s+cao|gấp|p1|quan\s+trọng|cao)/ui, ' ');
+     confidence += 0.15;
+   } else if (lowPriorityRegex.test(working)) {
+     detectedPriority = 'low';
+-    working = working.replace(/(?:ưu tiên\s+thấp|không gấp|p3)/ui, ' ');
++    working = working.replace(/(?:ưu\s+tiên\s+thấp|không\s+gấp|p3|thấp)/ui, ' ');
+     confidence += 0.15;
+   } else if (medPriorityRegex.test(working)) {
+     detectedPriority = 'medium';
+-    working = working.replace(/(?:ưu tiên\s+vừa|bình thường|p2|trung bình)/ui, ' ');
++    working = working.replace(/(?:ưu\s+tiên\s+vừa|bình\s+thường|p2|trung\s+bình|vừa)/ui, ' ');
+     confidence += 0.1;
+   }
+@@ -493,12 +526,20 @@
+   } else if (lowerWorking.includes('ngày kia') || lowerWorking.includes('ngày mốt') || /\bmốt\b/i.test(working)) {
+     detectedDueDate = formatIsoDateOnly(referenceDate, 2);
+     working = working.replace(/(?:ngày kia|ngày mốt|\bmốt\b)/gi, ' ');
+     confidence += 0.15;
++  } else if (lowerWorking.includes('cuối tuần')) {
++    const isNextWeek = /(?:cuối\s+tuần\s+sau|tuần\s+sau)/i.test(working);
++    const currentDay = referenceDate.getDay();
++    let diff = (6 - currentDay + 7) % 7;
++    if (diff === 0 && currentDay !== 6) diff = 7;
++    if (isNextWeek) diff += 7;
++    detectedDueDate = formatIsoDateOnly(referenceDate, diff);
++    working = working.replace(/(?:vào\s+)?cuối\s+tuần(?:\s+sau)?/gi, ' ');
++    confidence += 0.15;
+   } else {
+-    // Day of week matching
+-    const dowRegex = /(?:^|[^\p{L}\p{N}])(?:thứ\s*([2-7]|hai|ba|tư|năm|sáu|bảy)|chủ nhật|cn)(?=$|[^\p{L}\p{N}])/ui;
++    // Day of week matching with optional "tuần sau" or "tới"
++    const dowRegex = /(?:^|[^\p{L}\p{N}])(?:thứ\s*([2-7]|hai|ba|tư|năm|sáu|bảy)|chủ nhật|cn)(?:\s+(tuần\s+sau|tới))?(?=$|[^\p{L}\p{N}])/ui;
+     const dowMatch = working.match(dowRegex);
+     if (dowMatch) {
+       const val = dowMatch[1]?.toLowerCase() || dowMatch[0].trim().toLowerCase();
+@@ -511,6 +552,9 @@
+       const currentDay = referenceDate.getDay();
+       let diff = (targetDay - currentDay + 7) % 7;
+       if (diff === 0) diff = 7;
++      if (dowMatch[2]) {
++        diff += 7;
++      }
+       detectedDueDate = formatIsoDateOnly(referenceDate, diff);
+       working = working.replace(dowMatch[0], ' ');
+       confidence += 0.15;
++    } else if (lowerWorking.includes('tuần sau')) {
++      detectedDueDate = formatIsoDateOnly(referenceDate, 7);
++      working = working.replace(/(?:vào\s+)?tuần\s+sau/gi, ' ');
++      confidence += 0.15;
+     } else {
+@@ -544,7 +588,7 @@
+   // Pass 6: Title cleaning and normalization
+   // -----------------------------------------------------------------
+   let cleanedTitle = working
+-    .replace(/\b(?:nộp|làm|học|vào|lúc|ngày|cho|môn|deadline)\b/gi, ' ')
++    .replace(/\b(?:nộp|làm|học|vào|lúc|ngày|cho|môn|deadline|trước|hết|cuối)\b/gi, ' ')
+     .replace(/[\[\]()#@!?:;*~_]/g, ' ')
+     .replace(/\s+/g, ' ')
+     .trim();

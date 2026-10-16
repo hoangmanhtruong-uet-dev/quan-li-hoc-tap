@@ -1,0 +1,530 @@
+Plan chi tiết: Pomodoro C ự c Đoan (AI Giám
+Sát Học Tập)
+Oct 13, 2026  ·  @Hoàng Tr ườ ng
+1. T ổ ng quan s ả n ph ẩ m
+Đây là web app Pomodoro có mộ t "ng ườ i giám sát" AI biế t nhìn và biế t mắ ng bằ ng giọng
+nói; s ả n ph ẩ m bán nhân vậ t và gói giọng, còn viral đế n t ừ  clip reaction bị mắ ng. Plan này đi
+t ừ  setup repo đế n go-live trong kho ả ng 8 tuầ n cho mộ t dev làm solo.
+Vấn đề: học mộ t mình dễ  mấ t tậ p trung, các app Pomodoro hiệ n có ch ỉ  đế m gi ờ  và không
+có áp l ự c xã hộ i.
+Gi ả i pháp: áp l ự c gi ả  lậ p t ừ  mộ t nhân vậ t có cá tính, ph ả n ứ ng ngay khi ng ườ i dùng l ơ  là.
+Đối t ượ ng ư u tiên: sinh viên, học sinh cấ p 3 ôn thi, dân văn phòng học ch ứ ng ch ỉ  (IELTS,
+CNTT), Gen Z hay làm content TikTok.
+Giá trị khác biệt (USP):
+Ph ả n ứ ng t ứ c thì bằ ng giọng nói, có cá tính, không ch ỉ  là thông báo khô khan.
+Camera chạy ngay trên máy ng ườ i dùng, không upload video nên ít v ướ ng quyề n riêng
+t ư .
+Thiế t kế  đ ể  quay clip: có nút quay nhanh và th ẻ  chia s ẻ  "Hall of Shame".
+Nguyên tắc s ả n ph ẩ m:
+1. MVP ph ả i chạy tố t trên Chrome/Edge desktop tr ướ c, mobile đ ể  sau.
+2. Giọng mắ ng dùng audio render sẵ n, không sinh realtime, đ ể  r ẻ  và không bị trễ .
+3. Có thanh "m ứ c độ  c ự c đoan" (Nhẹ, V ừ a, C ự c đoan) đ ể  tránh gây khó chịu hoặ c ph ả n
+c ả m.
+4. Không dùng giọng, hình ả nh c ủ a ng ườ i thậ t hoặ c nhân vậ t có b ả n quyề n; ch ỉ  dùng nhân
+vậ t và giọng gố c.
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 1 of 13
+2. Tính kh ả  thi kỹ thuật (đọc kỹ phần này)
+Web app thuầ n không th ể  biế t ng ườ i dùng đang m ở  Facebook hay YouTube ở  tab khác,
+nên ph ả i chia tính năng theo t ừ ng l ớ p công nghệ . Các gi ớ i hạn d ướ i đây là c ủ a trình duyệ t,
+cầ n chấ p nhậ n ngay t ừ  thiế t kế .
+Hệ qu ả  thiết kế:
+Tính năng Làm đ ượ c bằ ng gì Gi ớ i hạn Giai đoạn
+Biế t ng ườ i dùng r ờ i tab Page Visibility API
+(visibilitychange) và s ự
+kiệ n blur c ủ a window
+Ch ỉ  biế t "r ờ i tab",
+không biế t họ đang ở
+trang nào
+MVP
+Biế t đúng trang
+Facebook/YouTube
+Chrome Extension
+(Manifest V3) v ớ i quyề n
+tabs, đố i chiế u URL v ớ i
+blocklist
+Ph ả i cài extension, ch ỉ
+chạy trên trình duyệ t
+nhân Chromium
+V2
+Phát hiệ n không thao
+tác
+Idle Detection API hoặ c t ự
+đế m s ự  kiệ n chuộ t/phím
+Idle Detection ch ỉ  có
+trên Chromium và cầ n
+xin quyề n
+MVP
+Phát hiệ n r ờ i ghế , quay
+đi, buồ n ng ủ
+MediaPipe Tasks Vision
+(Face Landmarker) chạy
+trong trình duyệ t bằ ng
+WASM/WebGL
+Tố n CPU/GPU, kém
+trên máy yế u, cầ n ánh
+sáng đ ủ
+V1
+Phát hiệ n cầ m điệ n
+thoại
+MediaPipe Object
+Detector (l ớ p cell phone)
+Độ  chính xác trung
+bình, dễ  báo nhầ m
+V2, th ử
+nghiệ m
+Phát giọng nói t ứ c thì Audio render sẵ n phát
+bằ ng Web Audio
+Trình duyệ t chặ n
+autoplay, ph ả i m ở
+khóa âm thanh bằ ng
+mộ t cú click khi bấ m
+Bắ t đầ u
+MVP
+Gi ữ  avatar n ổ i khi sang
+tab khác
+Document Picture-in-
+Picture API
+Ch ỉ  có trên Chromium
+m ớ i, cầ n fallback
+V1
+Thông báo "trách móc" Web Notifications API iOS ch ỉ  nhậ n khi cài
+PWA vào màn hình
+chính
+V1
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 2 of 13
+1. MVP dùng "r ờ i tab" làm tín hiệ u chính, kèm camera ở  V1; mấ t tab thì avatar mắ ng ngay
+khi ng ườ i dùng quay lại và có th ể  phát giọng nhắ c khi đang ở  tab khác nế u âm thanh đã
+đ ượ c m ở  khóa.
+2. Extension là b ả n nâng cấ p có giá trị cao nhấ t (đọc đ ượ c đúng trang), nên đ ể  dành làm
+tính năng Pro.
+3. Mobile ch ỉ  cầ n nhắ m sau khi desktop ổ n; tracking trên mobile gầ n nh ư  không đáng tin
+cậ y.
+4. Camera là tính năng tùy chọn, mặ c định tắ t; x ử  lý hoàn toàn trên máy ng ườ i dùng,
+không g ử i video lên server.
+Các tên API và m ứ c hỗ  tr ợ  trình duyệ t ở  trên là theo hi ể u biế t c ủ a tao, cầ n ki ể m tra lại trên
+MDN và caniuse tr ướ c khi code t ừ ng tính năng.
+3. Tech stack đề xuất
+Nên gi ữ  stack giố ng các project web tr ướ c c ủ a mày (Next.js, Supabase, Cloudflare R2) đ ể
+tái dùng code auth, thanh toán và cấ u hình deploy, thay vì học thêm công nghệ  m ớ i cho
+project này.
+L ớ p L ự a chọn Lý do
+Framework Next.js (App Router) + TypeScript SSR cho landing page SEO, API
+routes cho backend nhẹ
+UI Tailwind CSS + shadcn/ui D ự ng nhanh, dễ  tùy biế n
+State client Zustand Đ ơ n gi ả n cho state phiên học,
+timer, trạng thái vi phạm
+Avatar Rive hoặ c Lottie (2D, theo state: idle,
+nhìn, t ứ c giậ n, mắ ng)
+Nhẹ h ơ n 3D/Live2D rấ t nhiề u, đ ủ
+đ ể  quay clip
+Lip-sync Web Audio AnalyserNode, miệ ng
+nhép theo biên độ
+Không cầ n th ư  việ n nặ ng
+Camera AI MediaPipe Tasks Vision (Face
+Landmarker, Object Detector)
+Chạy phía client, miễ n phí, không
+upload video
+Auth + DB Supabase (Auth, Postgres, Row
+Level Security)
+Có sẵ n, RLS b ả o vệ  d ữ  liệ u theo
+user
+L ư u audio Cloudflare R2 + CDN R ẻ , không tính phí băng thông ra
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 3 of 13
+L ư u ý: giá và hạn m ứ c c ủ a các dịch vụ trên thay đ ổ i th ườ ng xuyên, cầ n xem lại b ả ng giá
+hiệ n tại tr ướ c khi chố t.
+4. Cấu trúc th ư  mục
+Dùng mộ t monorepo gồ m web app, extension và script render audio, đ ể  chia s ẻ  ki ể u d ữ
+liệ u và logic phát hiệ n gi ữ a web và extension.
+strict-pomodoro/
+├ ─ apps/
+│  ├ ─ web/                          # Next.js app (App Router)
+│  │  ├ ─ src/
+│  │  │  ├ ─ app/
+│  │  │  │  ├ ─ (marketing)/        # landing, pricing, privacy, terms
+│  │  │  │  ├ ─ (app)/
+│  │  │  │  │  ├ ─ focus/           # màn hình phiên học chính
+│  │  │  │  │  ├ ─ characters/      # chọn nhân vật giám sát
+│  │  │  │  │  ├ ─ store/           # c ử a hàng gói giọng/nhân vật
+│  │  │  │  │  ├ ─ stats/           # thống kê, streak, Hall of Shame
+L ớ p L ự a chọn Lý do
+TTS (render
+sẵ n)
+Mộ t nhà cung cấ p hỗ  tr ợ  tiế ng Việ t
+tố t (đánh giá FPT.AI, Google Cloud
+TTS, Azure vi-VN, ElevenLabs)
+Render offline mộ t lầ n, không phát
+sinh chi phí theo l ượ t dùng
+LLM Gemini hoặ c OpenAI, ch ỉ  dùng đ ể
+sinh kịch b ả n l ờ i mắ ng khi cầ n
+Không gọi trong vòng lặ p realtime
+Thanh toán PayOS hoặ c SePay (VietQR) cho VN;
+Lemon Squeezy hoặ c Stripe nế u bán
+quố c tế
+VietQR phù h ợ p mua gói l ẻ  giá nh ỏ
+Extension Chrome Extension Manifest V3
+(TypeScript, build bằ ng Vite/CRXJS)
+Giai đoạn V2
+Analytics và
+lỗ i
+PostHog, Sentry Đo funnel và bắ t lỗ i
+Hosting Vercel cho web, Supabase cloud cho
+DB
+Deploy nhanh, ít vậ n hành
+Test Vitest, Playwright Unit và e2e luồ ng phiên học
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 4 of 13
+│  │  │  │  │  └─ settings/        # quyền camera, blocklist, m ứ c c ự c đoan
+│  │  │  │  ├ ─ api/
+│  │  │  │  │  ├ ─ sessions/       # tạo/kết thúc phiên, ghi s ự  kiện
+│  │  │  │  │  ├ ─ characters/     # danh sách, quyền s ở  h ữ u
+│  │  │  │  │  ├ ─ checkout/       # tạo đ ơ n PayOS/SePay
+│  │  │  │  │  ├ ─ webhooks/       # payos, sepay (xác th ự c ch ữ  ký)
+│  │  │  │  │  └─ share/          # sinh th ẻ  chia s ẻ  (OG image)
+│  │  │  ├ ─ features/
+│  │  │  │  ├ ─ timer/             # logic Pomodoro, state machine
+│  │  │  │  ├ ─ detection/         # tab, idle, camera (hook + service)
+│  │  │  │  ├ ─ supervisor/        # chọn câu mắng, cooldown, m ứ c c ự c đoan
+│  │  │  │  ├ ─ avatar/            # Rive/Lottie, lip-sync
+│  │  │  │  ├ ─ audio/             # unlock autoplay, preload, phát
+│  │  │  │  ├ ─ recorder/          # MediaRecorder quay clip
+│  │  │  │  ├ ─ billing/
+│  │  │  │  └─ stats/
+│  │  │  ├ ─ components/            # UI dùng chung (shadcn)
+│  │  │  ├ ─ lib/                   # supabase client, env, utils
+│  │  │  └─ stores/                # Zustand
+│  │  ├ ─ public/                   # model MediaPipe, asset tĩnh
+│  │  └─ tests/                    # unit + e2e (Playwright)
+│  └─ extension/                   # Chrome Extension MV3 (V2)
+│     ├ ─ src/background/           # theo dõi tab, blocklist
+│     ├ ─ src/content/              # cầu nối v ớ i web app
+│     └─ manifest.json
+├ ─ packages/
+│  ├ ─ shared/                      # types, hằng số, schema (zod)
+│  ├ ─ detection-core/              # logic phát hiện dùng chung web + 
+extension
+│  └─ content/                     # kịch b ả n câu mắng (JSON) theo nhân vật
+├ ─ tools/
+│  └─ tts-render/                  # script render audio hàng loạt -> upload 
+R2
+├ ─ supabase/
+│  ├ ─ migrations/                  # SQL schema + RLS policy
+│  └─ seed.sql                     # nhân vật mặc định, d ữ  liệu mẫu
+├ ─ docs/                           # PRD, ADR, runbook, checklist go-live
+├ ─ .github/workflows/              # CI: lint, test, build, deploy
+├ ─ turbo.json / pnpm-workspace.yaml
+└─ README.md
+Quy ướ c: mỗ i th ư  mục trong features/  t ự  ch ứ a component, hook và test c ủ a nó;
+detection  và supervisor  không import UI đ ể  test đ ượ c bằ ng unit test thuầ n.
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 5 of 13
+5. Kiến trúc phát hiện mất tập trung và luồng phiên học
+Lõi c ủ a app là mộ t vòng lặ p: các nguồ n tín hiệ u đ ẩ y s ự  kiệ n vào mộ t bộ  phân x ử , bộ  phân
+x ử  quyế t định có mắ ng hay không, rồ i avatar và audio ph ả n ứ ng.
+Luồng một phiên học:
+1. Ng ườ i dùng chọn nhân vậ t, m ứ c c ự c đoan, th ờ i l ượ ng (mặ c định 25 phút học, 5 phút
+ngh ỉ ) và bấ m Bắ t đầ u.
+2. Cú click này m ở  khóa âm thanh, xin quyề n camera (nế u bậ t) và preload các audio c ủ a
+nhân vậ t.
+3. Timer chạy dạng state machine: Idle, Focus, Break, Paused, Finished.
+4. Trong Focus, các detector g ử i s ự  kiệ n: tab ẩ n, window mấ t focus, không thao tác, không
+thấ y mặ t, quay đi, nhắ m mắ t lâu, có điệ n thoại.
+5. Bộ  phân x ử  (supervisor) lọc nhiễ u rồ i chọn câu mắ ng; avatar đ ổ i trạng thái và phát
+audio.
+6. Mọi s ự  kiệ n đ ượ c ghi lại đ ể  tính đi ể m k ỷ  luậ t, streak và th ẻ  chia s ẻ .
+7. Hế t gi ờ , app t ổ ng kế t: số  lầ n bị mắ ng, th ờ i gian tậ p trung thậ t, đi ể m k ỷ  luậ t.
+Quy tắc lọc nhiễu, cần chốt s ớ m vì quyết định tr ả i nghiệm:
+Tín hiệ u Ng ưỡ ng g ợ i ý (cầ n tinh ch ỉ nh khi
+test)
+Ph ả n ứ ng
+R ờ i tab/blur Sau 3 giây, b ỏ  qua nế u d ướ i 3 giây Mắ ng khi quay lại hoặ c nhắ c ngay
+nế u âm thanh đã m ở
+Không thao tác 90 giây trong Focus Nhắ c nhẹ
+Không thấ y
+mặ t
+8 giây liên tục H ỏ i "đi đâu rồ i"
+Quay đi/nhìn
+xuố ng
+10 giây liên tục Nhắ c tậ p trung
+Nhắ m mắ t kéo
+dài
+5 giây Gọi dậ y
+Lặ p lại vi phạm Tăng cấ p độ  mắ ng sau mỗ i lầ n
+trong cùng phiên
+Leo thang cá tính
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 6 of 13
+Chống khó chịu: có cooldown tố i thi ể u gi ữ a hai lầ n mắ ng (g ợ i ý 20 giây), gi ớ i hạn số  lầ n
+mắ ng tố i đa mỗ i phiên, và nút "Tôi đang tra tài liệ u" tạm miễ n tr ừ  2 phút (đ ể  học bằ ng
+YouTube không bị phạt oan).
+B ả o mật camera: frame video ch ỉ  x ử  lý trong bộ  nh ớ  trình duyệ t, không ghi, không g ử i đi;
+ch ỉ  l ư u các s ự  kiệ n dạng văn b ả n (loại s ự  kiệ n và th ờ i đi ể m). Ph ả i nói rõ điề u này trên giao
+diệ n và trong chính sách riêng t ư .
+6. Nhân vật, kịch b ả n mắng và TTS
+Chi phí TTS gầ n nh ư  bằ ng không nế u mày render sẵ n toàn bộ  câu thoại thành file audio và
+ch ỉ  phát lại, thay vì gọi TTS mỗ i lầ n ng ườ i dùng bị mắ ng.
+Mô hình nội dung: mỗ i nhân vậ t có mộ t bộ  câu thoại chia theo tình huố ng và cấ p độ .
+Tình huố ng: bắ t đầ u phiên, r ờ i tab, không thao tác, r ờ i ghế , buồ n ng ủ , cầ m điệ n thoại,
+quay lại, hoàn thành, b ỏ  cuộ c.
+Cấ p độ : Nhẹ, V ừ a, C ự c đoan.
+Mỗ i ô (tình huố ng x cấ p độ ) có 3 đế n 5 biế n th ể  đ ể  không bị lặ p. Ướ c tính kho ả ng 100
+đế n 150 câu mỗ i nhân vậ t.
+Quy trình tạo nội dung:
+1. Dùng LLM sinh kịch b ả n thô theo cá tính nhân vậ t, mày duyệ t tay và ch ỉ nh giọng điệ u.
+2. L ư u thành JSON trong packages/content/ .
+3. Chạy tools/tts-render  đ ể  sinh audio, chu ẩ n hóa âm l ượ ng, nén thành mp3/opus.
+4. Upload lên R2, ghi đ ườ ng dẫ n vào b ả ng voice_lines .
+5. Client ch ỉ  preload bộ  câu c ủ a nhân vậ t đang dùng khi bắ t đầ u phiên.
+Nhân vật g ợ i ý cho đ ợ t đầu:
+Nhân vậ t Gói Cá tính
+Cô giáo ch ủ  nhiệ m Miễ n
+phí
+Nghiêm khắ c ki ể u mẫ u m ự c, nhắ c nh ở
+"cô gọi phụ huynh"
+Sế p khó tính Miễ n
+phí
+Công s ở , deadline, KPI
+T ổ ng tài lạnh lùng Tr ả  phí Giọng trầ m, phong cách ti ể u thuyế t
+ngôn tình
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 7 of 13
+Vấn đề b ả n quyền và quyền nhân thân, không nên b ỏ  qua:
+Không clone giọng idol hoặ c ng ườ i n ổ i tiế ng, và không dùng nhân vậ t anime/game có
+b ả n quyề n; "giọng anime" nên hi ể u là phong cách do mày t ự  thiế t kế  v ớ i nhân vậ t gố c.
+Nế u muố n có idol thậ t, ph ả i ký h ợ p đồ ng cấ p phép giọng và hình ả nh bằ ng văn b ả n; đây
+là h ướ ng h ợ p tác sau khi s ả n ph ẩ m có l ượ ng ng ườ i dùng.
+Dùng giọng TTS th ươ ng mại cầ n ki ể m tra điề u kho ả n cho phép dùng th ươ ng mại và
+phân phố i lại audio.
+Gi ớ i hạn nội dung l ờ i mắng: không ch ử i tục nặ ng, không miệ t thị ngoại hình, gi ớ i tính, vùng
+miề n, và không có câu gây áp l ự c tâm lý nặ ng nề . M ứ c "C ự c đoan" nên mang tính hài h ướ c,
+có yế u tố  diễ n kịch, đ ể  ng ườ i dùng quay clip vui ch ứ  không bị t ổ n th ươ ng. Có nút tắ t giọng,
+nút đ ổ i về  m ứ c Nhẹ, và mộ t đ ườ ng dẫ n hỗ  tr ợ  nế u ng ườ i dùng c ả m thấ y quá áp l ự c.
+7. Database schema và API
+Schema ch ỉ  cầ n 9 b ả ng cho MVP; bậ t Row Level Security ngay t ừ  đầ u đ ể  mỗ i user ch ỉ  đọc
+đ ượ c d ữ  liệ u c ủ a mình.
+Nhân vậ t Gói Cá tính
+Nhân vậ t phong cách anime (gố c, do
+mày t ự  thiế t kế )
+Tr ả  phí Giọng cao, kịch tính, hô kh ẩ u hiệ u
+Huấ n luyệ n viên quân s ự Tr ả  phí Hô to, ngắ n gọn
+Bà mẹ Việ t Nam Tr ả  phí Hài, "mày học đi con" ki ể u quen thuộ c
+B ả ng Cộ t chính Ghi chú
+profiles id (= auth.users.id), display_name,
+roast_level, camera_enabled,
+created_at
+Cài đặ t ng ườ i dùng
+characters id, slug, name, persona, is_free,
+price_vnd, preview_url, active
+Danh mục nhân vậ t
+voice_packs id, character_id, name, price_vnd,
+sample_url
+Gói giọng, có th ể  gộ p vào
+characters ở  MVP
+voice_lines id, character_id, situation, level,
+variant, audio_url, text, duration_ms
+Câu thoại đã render
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 8 of 13
+API chính (route handlers):
+POST /api/sessions  tạo phiên; PATCH /api/sessions/:id  kế t thúc phiên; POST
+/api/sessions/:id/events  ghi s ự  kiệ n (g ử i theo lô khi kế t thúc đ ể  gi ả m request).
+GET /api/characters  danh sách kèm trạng thái s ở  h ữ u c ủ a user.
+POST /api/checkout  tạo đ ơ n và link thanh toán; POST /api/webhooks/payos  và
+/sepay  xác th ự c ch ữ  ký, cậ p nhậ t đ ơ n, cấ p entitlement (x ử  lý idempotent, chố ng nhậ n
+trùng).
+GET /api/share/:sessionId  tr ả  ả nh OG c ủ a th ẻ  chia s ẻ .
+Audio c ủ a nhân vậ t tr ả  phí: dùng signed URL có hạn t ừ  R2, ch ỉ  cấ p khi user có
+entitlement.
+Chống gian lận: ki ể m tra entitlement ở  server, không tin c ờ  "đã mua" t ừ  client; gi ớ i hạn tầ n
+suấ t API bằ ng Upstash Redis hoặ c middleware.
+8. Monetization
+Mô hình nên là freemium: miễ n phí đ ủ  đ ể  ng ườ i dùng quay clip và lan truyề n, tr ả  tiề n đ ể  có
+cá tính m ớ i và tính năng "xịn". M ứ c giá d ướ i đây ch ỉ  là g ợ i ý ban đầ u, cầ n A/B test.
+B ả ng Cộ t chính Ghi chú
+entitlements id, user_id, character_id hoặ c
+voice_pack_id, source
+(purchase/promo), granted_at
+Quyề n s ở  h ữ u
+orders id, user_id, item_id, amount_vnd,
+provider, provider_ref, status,
+created_at, paid_at
+Đ ơ n hàng, đố i soát webhook
+study_sessions id, user_id, character_id,
+focus_minutes, planned_minutes,
+started_at, ended_at,
+discipline_score
+Phiên học
+distraction_events id, session_id, type, level,
+occurred_at, duration_ms
+S ự  kiệ n mấ t tậ p trung (ch ỉ
+metadata)
+daily_stats user_id, date, focus_minutes,
+sessions, shame_count, streak
+T ổ ng h ợ p theo ngày đ ể  vẽ
+bi ể u đồ  nhanh
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 9 of 13
+Các đòn b ẩ y chuy ể n đ ổ i:
+Cho nghe th ử  (preview) 3 câu c ủ a mỗ i nhân vậ t tr ả  phí ngay trong màn chọn nhân vậ t.
+Khóa m ứ c "C ự c đoan" c ủ a nhân vậ t miễ n phí sau Pro, vì đây là m ứ c ng ườ i dùng muố n
+quay clip nhấ t.
+Clip quay b ả n miễ n phí có watermark và link app; đây cũng là kênh phát tán.
+Mua chung theo nhóm (study group) gi ả m giá, tậ n dụng việ c học nhóm.
+Thanh toán: VietQR qua PayOS hoặ c SePay cho giao dịch nh ỏ ; webhook cấ p quyề n t ự
+độ ng trong vài giây. Cầ n có trang lịch s ử  đ ơ n hàng và quy trình hoàn tiề n rõ ràng. Nế u bán
+quố c tế  sau này, thêm Lemon Squeezy hoặ c Stripe.
+Việc cần làm về mặt kinh doanh: đăng ký hộ  kinh doanh hoặ c đ ơ n vị phù h ợ p đ ể  nhậ n tiề n
+và xuấ t hóa đ ơ n khi doanh thu tăng; ki ể m tra v ớ i kế  toán hoặ c luậ t s ư  về  nghĩa vụ thuế  cho
+dịch vụ số .
+9. Roadmap 8 tuần đến go-live
+Th ứ  t ự  ư u tiên: ch ứ ng minh vòng lặ p "bị mắ ng" vui tr ướ c, rồ i m ớ i làm tiề n và các tính năng
+nặ ng. Mỗ i tuầ n có mộ t c ổ ng (gate) đ ể  quyế t định đi tiế p hay ch ỉ nh lại.
+Gói Nộ i dung Giá g ợ i ý
+Miễ n phí 2 nhân vậ t c ơ  b ả n, m ứ c Nhẹ và V ừ a,
+thố ng kê 7 ngày, gi ớ i hạn số  phiên có
+camera mỗ i ngày
+0 đ
+Mua l ẻ  nhân vậ t/gói
+giọng
+M ở  vĩnh viễ n mộ t nhân vậ t (t ổ ng tài,
+anime gố c, huấ n luyệ n viên...)
+29.000 đế n 79.000 đ mỗ i gói
+Pro tháng/năm M ở  tấ t c ả  nhân vậ t, m ứ c C ự c đoan,
+extension chặ n đúng trang, thố ng
+kê dài hạn, quay clip không
+watermark
+49.000 đ/tháng hoặ c kho ả ng
+399.000 đ/năm
+Gói gi ớ i hạn th ờ i
+gian
+Nhân vậ t theo mùa/s ự  kiệ n (mùa thi,
+Tế t)
+19.000 đế n 39.000 đ
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 10 of 13
+Tuầ n Công việ c C ổ ng nghiệ m thu
+0 (2 đế n 3
+ngày)
+Tạo monorepo, CI, Supabase project,
+Vercel, đặ t tên và mua domain, d ự ng
+landing page có form đăng ký ch ờ
+Landing page chạy, bắ t đầ u thu
+email
+1 Timer Pomodoro (state machine), UI
+màn Focus, chọn nhân vậ t, l ư u cài đặ t
+cục bộ
+Chạy đ ượ c mộ t phiên 25 phút trọn
+vẹn
+2 Phát hiệ n r ờ i tab/blur/idle, bộ  phân x ử
++ cooldown, audio unlock, phát audio,
+avatar 2D nhiề u trạng thái. Render 2
+nhân vậ t miễ n phí (kho ả ng 100 câu mỗ i
+nhân vậ t)
+R ờ i tab thì nhân vậ t mắ ng đúng,
+đúng lúc, có th ể  quay clip vui
+3 Camera: MediaPipe Face Landmarker,
+phát hiệ n không thấ y mặ t, quay đi,
+buồ n ng ủ ; màn xin quyề n và gi ả i thích
+riêng t ư ; chế  độ  chạy khi máy yế u
+Đo FPS và CPU trên ít nhấ t 3 loại
+máy, báo nhầ m d ướ i m ứ c chấ p nhậ n
+4 Auth Supabase, l ư u phiên và s ự  kiệ n,
+thố ng kê, streak, đi ể m k ỷ  luậ t, th ẻ  chia
+s ẻ  (OG image)
+Đăng ký, học, xem thố ng kê hoạt
+độ ng đầ y đ ủ
+5 C ử a hàng, nghe th ử , PayOS/SePay,
+webhook cấ p entitlement, 2 đế n 3
+nhân vậ t tr ả  phí
+Mua th ử  bằ ng tiề n thậ t 1 đ ơ n, nhân
+vậ t đ ượ c m ở  t ự  độ ng
+6 Nút quay clip (MediaRecorder: avatar
++ camera + âm thanh) có watermark,
+Document Picture-in-Picture cho
+avatar n ổ i; bắ t đầ u extension chặ n
+trang (nế u kịp)
+Quay mộ t clip hoàn ch ỉ nh, xuấ t file
+dùng đ ượ c cho TikTok
+7 Closed beta 30 đế n 50 ng ườ i, s ử a lỗ i,
+tố i ư u hiệ u năng, viế t chính sách riêng
+t ư  và điề u kho ả n, b ả o mậ t, test thanh
+toán, sao l ư u
+Không còn lỗ i nghiêm trọng, t ỉ  lệ
+crash thấ p, hoàn thành checklist ở
+mục 10
+8 Go-live công khai, đăng clip seeding,
+theo dõi số  liệ u hằ ng ngày, s ử a lỗ i nóng
+Đạt các ch ỉ  số  mục tiêu tuầ n đầ u ở
+mục 10
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 11 of 13
+Nế u trễ  tiế n độ , cắ t theo th ứ  t ự : extension, Document Picture-in-Picture, phát hiệ n cầ m
+điệ n thoại, mua chung theo nhóm. Không cắ t: audio render sẵ n, r ờ i tab, thanh toán, chính
+sách riêng t ư .
+10. Go-live, viral, chi phí và r ủ i ro
+Checklist go-live:
+Kế hoạch viral:
+1. Tr ướ c launch 2 tuầ n: đăng 5 đế n 10 clip ngắ n ki ể u "bị AI mắ ng khi học" trên TikTok,
+Reels, Shorts, dẫ n về  form đăng ký ch ờ .
+2. G ử i b ả n dùng th ử  cho 10 đế n 20 creator nh ỏ  trong m ả ng học tậ p, sinh viên,
+productivity, kèm mã Pro miễ n phí.
+3. Trong app: nút "Quay reaction" mộ t chạm, watermark có link, th ẻ  chia s ẻ  "Hôm nay tao
+bị mắ ng N lầ n".
+4. Th ử  thách theo ch ủ  đề  (ví dụ "7 ngày bị cô giáo AI qu ả n") có hashtag riêng.
+5. Đăng ở  cộ ng đồ ng sinh viên, nhóm ôn thi, Reddit, Product Hunt khi có b ả n tiế ng Anh.
+Ch ỉ  số tuần đầu, nên đặt mục tiêu sau khi có số beta: số  l ượ t đăng ký, t ỉ  lệ  hoàn thành
+phiên đầ u, số  phiên mỗ i ng ườ i, t ỉ  lệ  bậ t camera, số  clip đ ượ c quay, t ỉ  lệ  chuy ể n đ ổ i sang tr ả
+phí, t ỉ  lệ  quay lại ngày 7.
+Domain, HTTPS, biế n môi tr ườ ng production tách biệ t v ớ i staging
+Supabase: RLS bậ t cho mọi b ả ng, test truy cậ p chéo user, bậ t sao l ư u định kỳ
+Thanh toán: test đ ủ  ca (thành công, h ủ y, trùng webhook, webhook trễ ), có trang đố i
+soát đ ơ n
+Audio tr ả  phí dùng signed URL, ki ể m tra không t ả i đ ượ c khi ch ư a mua
+Chính sách riêng t ư  và điề u kho ả n, nói rõ camera x ử  lý trên máy, không l ư u video
+Màn xin quyề n camera có gi ả i thích, có l ự a chọn dùng không camera
+Sentry, PostHog, uptime monitor, c ả nh báo khi lỗ i hoặ c webhook thấ t bại
+Ki ể m th ử  trên Chrome, Edge, Safari, Firefox; có thông báo rõ khi trình duyệ t không hỗ
+tr ợ  tính năng
+Rate limit API, chố ng spam đăng ký, cấ u hình CORS và CSP
+Trang hỗ  tr ợ , email liên hệ , quy trình hoàn tiề n
+Landing page có demo video 15 đế n 30 giây, th ẻ  OG chu ẩ n đ ể  chia s ẻ
+Kế  hoạch rollback: gi ữ  b ả n deploy tr ướ c đ ể  quay lại nhanh
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 12 of 13
+Chi phí vận hành ban đầu (cần tra giá hiện tại): domain, Vercel, Supabase, R2 và
+Sentry/PostHog th ườ ng đ ủ  dùng ở  gói miễ n phí hoặ c thấ p khi m ớ i ra mắ t. Kho ả n chính là
+render TTS mộ t lầ n cho vài trăm câu thoại và, nế u cầ n, họa sĩ vẽ  nhân vậ t gố c và animation,
+đây th ườ ng là chi phí l ớ n nhấ t c ủ a d ự  án.
+R ủ i ro chính và cách x ử  lý:
+Đây là t ư  vấ n kỹ  thuậ t và s ả n ph ẩ m, không ph ả i t ư  vấ n pháp lý hay thuế ; các đi ể m về  d ữ
+liệ u cá nhân, b ả n quyề n giọng nói và độ  tu ổ i nên đ ượ c luậ t s ư  xác nhậ n tr ướ c khi go-live.
+Việc nên làm ngay trong 48 gi ờ  t ớ i:
+1. Chố t tên s ả n ph ẩ m và mua domain.
+2. Tạo monorepo theo mục 4 và d ự ng landing page thu email.
+3. Chọn nhà cung cấ p TTS bằ ng cách render th ử  cùng mộ t đoạn thoại và nghe chấ t l ượ ng
+tiế ng Việ t.
+4. Viế t kịch b ả n 30 câu đầ u cho nhân vậ t cô giáo đ ể  th ử  tuầ n 2.
+R ủ i ro Cách x ử  lý
+Camera báo nhầ m, mắ ng oan, gây b ự c Ng ưỡ ng b ả o th ủ , cooldown, nút miễ n tr ừ ,
+mặ c định tắ t camera
+Web không biế t ng ườ i dùng ở  trang nào Nói rõ gi ớ i hạn, đ ẩ y extension thành tính
+năng Pro
+Ng ườ i dùng ch ỉ  vui lầ n đầ u rồ i b ỏ Streak, đi ể m k ỷ  luậ t, nhân vậ t m ớ i theo mùa,
+thố ng kê dài hạn
+Quyề n riêng t ư  và luậ t d ữ  liệ u cá nhân (ví dụ
+Nghị định 13/2023/NĐ-CP)
+X ử  lý camera trên máy, xin đồ ng ý rõ ràng,
+chính sách minh bạch, h ỏ i luậ t s ư  tr ướ c khi
+m ở  rộ ng
+Ng ườ i dùng d ướ i 18 tu ổ i Điề u kho ả n về  độ  tu ổ i, cân nhắ c đồ ng ý c ủ a
+phụ huynh, không thu thậ p d ữ  liệ u th ừ a
+Giọng/nhân vậ t vi phạm b ả n quyề n Ch ỉ  dùng nhân vậ t và giọng gố c hoặ c có cấ p
+phép bằ ng văn b ả n
+Nộ i dung mắ ng bị coi là xúc phạm Ki ể m duyệ t kịch b ả n, gi ớ i hạn t ừ  ng ữ , có m ứ c
+Nhẹ
+Máy yế u bị giậ t khi chạy camera Chế  độ  gi ả m FPS, tắ t camera t ự  độ ng khi quá
+t ả i
+Plan chi tiết: Pomodoro Cực Đoan (AI Giám Sát Học Tập)
+Page 13 of 13

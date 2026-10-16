@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Mèo Mập Giám Thị Cực Đoan (CampusOS)",
+  "version": "1.0.0",
+  "description": "Hiện Mèo Mập Cam + Đồng hồ đếm ngược 0:52 lườm nguýt và mắng bằng giọng Bắc khi bạn lướt Reddit, Facebook, YouTube, TikTok trong giờ học.",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.reddit.com/*",
+        "*://*.facebook.com/*",
+        "*://*.youtube.com/*",
+        "*://*.tiktok.com/*",
+        "*://*.instagram.com/*",
+        "*://*.x.com/*",
+        "*://*.twitter.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/fat-orange-cat.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

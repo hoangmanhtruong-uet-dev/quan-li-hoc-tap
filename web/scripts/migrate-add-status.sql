@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN status ENUM('active','banned') NOT NULL DEFAULT 'active';

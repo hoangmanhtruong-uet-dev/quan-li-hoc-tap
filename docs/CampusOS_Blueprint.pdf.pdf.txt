@@ -1,0 +1,2411 @@
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  1
+CAMPUSOS
+STUDY. GROW. CONNECT. LIVE.
+TÀI LIỆU MÔ TẢ SẢN PHẨM, YÊU CẦU HỆ 
+THỐNG
+VÀ LỘ TRÌNH TRIỂN KHAI THEO PHASE
+Bản định hướng dùng để thiết kế, vibe code, review và kiểm soát phạm vi dự án
+ STUDY📚
+Học tập
+ ROADMAP🧭
+Kỹ năng nghề nghiệp
+ COMMUNITY👥
+CLB và đội nhóm
+ LIVING🏡
+Phòng trọ và chi tiêu
+Phiên bản 1.0  •  Ngày 12/07/2026
+ Nguyên tắc cốt lõi💡
+CampusOS là một nền tảng thống nhất có các engine dùng chung. Không xây bốn ứng dụng rời rồi 
+ghép vào cùng một menu.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  2
+0. CÁCH SỬ DỤNG TÀI LIỆU
+Tài liệu này vừa là product blueprint, vừa là checklist kỹ thuật và lộ trình giao 
+việc cho AI agent.
+Tài liệu trả lời những câu hỏi nào?
+• CampusOS giải quyết vấn đề gì, dành cho ai và khác gì so với việc dùng nhiều ứng dụng rời rạc?
+• Bốn module Study, Roadmap, Community và Living liên kết với nhau như thế nào?
+• Các engine dùng chung, role, workspace, dữ liệu và luồng nghiệp vụ được thiết kế ra sao?
+• MVP cần làm gì, chưa làm gì và tiêu chí nghiệm thu của từng phần là gì?
+• Mỗi phase phải tạo ra deliverable nào, phải test gì và chỉ được sang phase tiếp theo khi nào?
+• Cần kiểm soát bảo mật, hiệu năng, exception, khả năng mở rộng và quy trình vibe code như thế nào?
+Quy ước mức độ ưu tiên
+Mức Ý nghĩa Cách xử lý
+MUST Bắt buộc để MVP chạy đúng hoặc để 
+bảo đảm an toàn dữ liệu.
+Phải hoàn thành trước khi release.
+SHOULD Quan trọng cho trải nghiệm hoặc 
+chất lượng, nhưng có thể lùi ngắn 
+hạn.
+Ưu tiên sau MUST trong cùng 
+module.
+COULD Tăng giá trị sản phẩm nhưng không 
+chặn MVP.
+Đưa vào backlog sau khi luồng lõi ổn 
+định.
+WON’T NOW Chủ động không làm trong bản hiện 
+tại.
+Ghi rõ để ngăn AI agent tự mở rộng 
+scope.
+Trạng thái dự án theo cuộc trao đổi
+ Mốc hiện tại📍
+Dự án đang đi theo lộ trình đã thống nhất và đang chuẩn bị/triển khai Phase 6 - Study Vertical 
+Slice. Tài liệu này mô tả toàn bộ đích đến; trạng thái code thực tế vẫn phải được kiểm tra trong 
+repo, không được suy đoán chỉ từ tên phase.
+Cách dùng khi giao việc cho AI agent
+1. Chỉ giao một phase hoặc một vertical slice rõ ràng trong mỗi prompt lớn.
+2. Yêu cầu agent đọc repo, tài liệu và convention hiện tại trước khi sửa.
+3. Tách audit khỏi implementation: audit trước, sửa sau, rồi chạy test/build.
+4. Không tin câu “đã hoàn thành”; phải kiểm tra route, database, permission, edge case và build thực tế.
+5. Mỗi phase xong phải commit Git và ghi lại những gì còn mock hoặc chưa triển khai.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  3
+A. BẢN ĐỒ NỘI DUNG
+Đi từ tầm nhìn sản phẩm đến yêu cầu chi tiết, kiến trúc và các phase triển khai.
+1. Tổng quan sản phẩm và định vị
+2. Người dùng mục tiêu và hành trình chính
+3. Kiến trúc sản phẩm thống nhất
+4. Yêu cầu chức năng theo module
+5. Luồng liên kết giữa các module
+6. Workspace, role và permission
+7. Kiến trúc dữ liệu và route
+8. Yêu cầu UI/UX và design system
+9. Yêu cầu phi chức năng và khả năng mở rộng
+10. Bảo mật, riêng tư và audit
+11. Exception và edge case
+12. Chiến lược AI và automation
+13. Chỉ số sản phẩm và analytics
+14. Định nghĩa MVP và ranh giới phạm vi
+15. Các phase triển khai chi tiết
+16. Quy trình test, review và Definition of Done
+17. Triển khai production, vận hành và scale
+Phụ lục. Danh mục route, model, error code và checklist
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  4
+1. TỔNG QUAN SẢN PHẨM VÀ ĐỊNH VỊ
+CampusOS là “hệ điều hành đời sống sinh viên”: một nơi để học, phát triển, 
+cộng tác và quản lý cuộc sống chung.
+1.1 Tên, tagline và tuyên bố sản phẩm
+Thành phần Nội dung
+Tên làm việc CampusOS
+Tagline tiếng Anh Study. Grow. Connect. Live.
+Thông điệp tiếng Việt Một nơi cho toàn bộ đời sống sinh viên.
+Loại sản phẩm Web app / PWA đa module, hướng SaaS, ưu tiên trải 
+nghiệm cá nhân và workspace cộng tác.
+Định vị Không thay thế hoàn toàn Notion, LMS, app chia tiền hay 
+phần mềm CLB; CampusOS kết nối các nhu cầu phổ biến 
+của sinh viên bằng dữ liệu và lịch chung.
+1.2 Vấn đề cần giải quyết
+Sinh viên thường phải dùng nhiều công cụ rời rạc: lịch học nằm trong ảnh hoặc bảng tính; deadline 
+nằm trong nhóm chat; roadmap nghề nghiệp nằm trong ghi chú; công việc CLB ở Trello; chi tiêu 
+phòng trọ ở tin nhắn. Dữ liệu bị phân mảnh khiến người dùng quên việc, khó ưu tiên, không nhìn được 
+toàn cảnh và phải nhập lại cùng một thông tin ở nhiều nơi.
+• Không có một dashboard thống nhất cho lịch học, deadline, roadmap, sự kiện CLB và khoản cần thanh 
+toán.
+• Các app quản lý chung thường quá tổng quát, chưa hiểu ngữ cảnh học kỳ, môn học, tín chỉ, roadmap kỹ 
+năng hay workspace CLB/phòng trọ.
+• AI chatbot độc lập không biết dữ liệu thật của người dùng nên chỉ đưa lời khuyên chung chung.
+• CLB sinh viên thường thiếu công cụ quản lý thành viên, phân ban, sự kiện, nhiệm vụ và quỹ ở cùng một 
+nơi.
+• Nhóm ở trọ khó theo dõi chi phí, công nợ, việc nhà, tài liệu thuê trọ và trách nhiệm từng người.
+1.3 Tầm nhìn
+ Tầm nhìn dài hạn🌱
+CampusOS trở thành lớp điều phối chung cho đời sống sinh viên: mọi lịch, task, tiến độ và nghĩa 
+vụ quan trọng được đưa về một dòng thời gian thống nhất, sau đó AI sử dụng dữ liệu có quyền 
+truy cập để gợi ý hành động phù hợp.
+1.4 Giá trị khác biệt
+Giá trị Mô tả
+Một lịch chung Lịch học, lịch thi, deadline, roadmap, lịch CLB, việc nhà 
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  5
+Giá trị Mô tả
+và hạn thanh toán cùng xuất hiện trong Calendar Engine.
+Một hệ task chung Assignment, bài học roadmap, nhiệm vụ CLB và việc nhà 
+đều dùng Task Engine nhưng giữ ngữ cảnh nguồn.
+Một AI có ngữ cảnh AI đọc dữ liệu được phép từ các module để lập kế hoạch, 
+phát hiện xung đột và đưa gợi ý có thể hành động.
+Workspace linh hoạt Study/Roadmap là cá nhân; Club/Living là workspace 
+nhiều người với role và permission theo ngữ cảnh.
+Từ MVP đến quy mô lớn Bắt đầu bằng modular monolith dễ phát triển, nhưng giữ 
+ranh giới module, tenant scope và event contract để mở 
+rộng sau.
+1.5 Nguyên tắc thiết kế sản phẩm
+1. Hợp nhất trải nghiệm, không hợp nhất dữ liệu một cách tùy tiện: mỗi module có domain riêng nhưng 
+dùng engine chung khi thực sự cùng bản chất.
+2. MVP trước, thông minh sau: AI chỉ được thêm khi đã có dữ liệu thật, quy tắc quyền rõ và luồng thủ công 
+hoạt động ổn định.
+3. Mọi thao tác quan trọng phải có trạng thái loading, empty, success, error và recovery hợp lý.
+4. Security nằm ở server; việc ẩn nút ở client chỉ là UX.
+5. Không tối ưu quá sớm cho 1 triệu user, nhưng mọi model và query phải có tenant scope, index và khả 
+năng tách module khi cần.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  6
+2. NGƯỜI DÙNG MỤC TIÊU VÀ HÀNH TRÌNH CHÍNH
+Thiết kế cho sinh viên trước, nhưng vẫn hỗ trợ vai trò quản lý CLB và nhóm sống  
+chung.
+2.1 Persona chính
+Persona Nhu cầu cốt lõi Module ưu tiên
+P1 - Sinh viên năm nhất Lịch học dày, chưa có phương pháp 
+quản lý deadline, đang khám phá 
+ngành và lộ trình nghề nghiệp.
+Study, Calendar, Task, Roadmap, AI 
+planning.
+P2 - Sinh viên định hướng nghề nghiệp Đã có mục tiêu Java Backend/Full-
+stack/AI nhưng chưa biết thứ tự học, 
+thiếu cách đo tiến độ.
+Roadmap, skill progress, project 
+checklist, AI mentor.
+P3 - Thành viên CLB Tham gia một hoặc nhiều CLB, cần theo 
+dõi task, lịch họp, sự kiện, tài liệu và 
+thông báo.
+Community, Task, Calendar, 
+Notifications.
+P4 - Ban chủ nhiệm/Trưởng ban Cần quản lý thành viên, role, task, sự 
+kiện, check-in và báo cáo hoạt động.
+Workspace RBAC, member 
+management, events, analytics.
+P5 - Sinh viên ở trọ Cần chia tiền, theo dõi nợ, phân việc 
+nhà và giữ tài liệu thuê trọ.
+Living, shared finance, chores, 
+reminders.
+P6 - Platform Admin Cần xử lý báo cáo, hỗ trợ người dùng, 
+quản lý nội dung và theo dõi sức khỏe 
+hệ thống.
+Admin, moderation, audit, metrics.
+2.2 Hành trình onboarding
+Đăng ký → Xác thực email → Đăng nhập → Onboarding ngắn → Tạo Profile → Tạo Personal Workspace 
+idempotent → Chọn mục tiêu ban đầu → Dashboard
+• Onboarding chỉ hỏi thông tin cần thiết: tên, tên hiển thị; trường/ngành/năm học và mục tiêu nghề 
+nghiệp là tùy chọn hoặc có thể bỏ qua.
+• Không buộc người dùng tạo ngay CLB hoặc phòng trọ.
+• Nếu chưa có dữ liệu, dashboard phải hướng dẫn bằng empty state có CTA rõ, không hiển thị widget giả.
+2.3 Hành trình học tập
+Tạo học kỳ → Tạo môn → Thêm lịch học → Tạo assignment → Sinh task + calendar event → Theo dõi deadline → 
+Nhập điểm → Xem tiến độ
+2.4 Hành trình roadmap nghề nghiệp
+Chọn mục tiêu nghề nghiệp → Nhận roadmap mẫu → Tùy chỉnh → Học lesson/skill → Làm quiz/project → Cập 
+nhật tiến độ → AI gợi ý bước tiếp
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  7
+2.5 Hành trình CLB
+Tạo/Tham gia Club Workspace → Vào ban → Nhận task → Đăng ký sự kiện → Check-in → Theo dõi thông báo/quỹ 
+theo quyền
+2.6 Hành trình phòng trọ
+Tạo/Tham gia Household → Thêm thành viên → Ghi chi phí → Chia tiền → Ghi nhận thanh toán → Theo dõi công 
+nợ → Phân công việc nhà
+2.7 Những “khoảnh khắc giá trị” cần đạt
+• Người dùng nhìn dashboard và biết ngay hôm nay cần làm gì, cái gì sắp quá hạn và có xung đột lịch 
+nào.
+• Tạo một assignment chỉ một lần nhưng nó tự xuất hiện đúng trong Course, Task và Calendar.
+• Một thành viên CLB không cần hỏi lại task ở nhóm chat vì đã thấy người phụ trách, deadline và trạng 
+thái.
+• Một khoản chi chung được chia minh bạch, mọi người biết mình nợ ai và vì sao.
+• AI không chỉ “nói”, mà tạo kế hoạch hoặc đề xuất gắn với dữ liệu thật và cho phép người dùng duyệt 
+trước khi áp dụng.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  8
+3. KIẾN TRÚC SẢN PHẨM THỐNG NHẤT
+Bốn domain riêng dùng chung các nền tảng lõi để tạo trải nghiệm liền mạch mà 
+không biến codebase thành một khối rối.
+3.1 Bốn trụ cột sản phẩm
+Trụ cột Mục tiêu Đối tượng dữ liệu chính
+Study Quản lý học kỳ, môn, lịch học, bài tập, 
+điểm và tiến độ học.
+Semester, Course, Schedule, 
+Assignment, Grade, StudySession.
+Roadmap Biến mục tiêu nghề nghiệp thành lộ 
+trình kỹ năng, bài học, quiz và project.
+CareerPath, Roadmap, Skill, Lesson, 
+Progress, Quiz, Project.
+Community Quản lý CLB/đội nhóm, thành viên, ban, 
+task, sự kiện và quỹ.
+Club, Department, Membership, 
+Position, Event, Registration, Fund.
+Living Quản lý household, chi phí, chia tiền, 
+công nợ, việc nhà và tài liệu.
+Household, Expense, Split, Payment, 
+Chore, Maintenance, Document.
+3.2 Các engine dùng chung
+Engine Dùng cho Nguyên tắc
+Identity & Workspace Tài khoản, profile, personal workspace, 
+club workspace, household workspace.
+Session server-side, tenant scope, 
+membership và permission rõ.
+Task Engine Assignment, roadmap task, club task, 
+chore.
+Một model lõi có sourceType/contextId; 
+không tạo bốn model task trùng nhau 
+nếu hành vi cốt lõi giống nhau.
+Calendar Engine Lịch học, deadline, sự kiện CLB, việc 
+nhà, hạn thanh toán.
+Chuẩn timezone; phân loại event; có 
+thể mở rộng recurrence nhưng không 
+làm quá phức tạp ở MVP.
+Notification Engine Nhắc deadline, sự kiện, lời mời, công 
+nợ, thay đổi task.
+In-app trước; email/push sau; tránh 
+spam và có preference.
+Finance Engine Quỹ CLB và chi phí Living. Chung khái niệm transaction nhưng rule 
+domain khác; không ép toàn bộ vào 
+một model nếu làm mất tính rõ ràng.
+File Engine Tài liệu môn, tài liệu CLB, hợp đồng 
+thuê, hóa đơn.
+Object storage, metadata DB, quyền 
+theo workspace/resource.
+AI Orchestration Lập kế hoạch, gợi ý roadmap, tóm tắt, 
+phát hiện xung đột.
+Tool calling có quyền, có audit, có giới 
+hạn chi phí và bước xác nhận.
+Audit & Observability Thao tác nhạy cảm, lỗi, metrics, job. Có trace/request id, audit event, log 
+không chứa secret.
+3.3 Kiến trúc triển khai khuyến nghị
+Client (Next.js App Router)
+        ↓
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  9
+Server Components / Server Actions / Route Handlers
+        ↓
+Application Services + Authorization Guards
+        ↓
+Domain Modules (Study | Roadmap | Club | Living | Shared)
+        ↓
+Prisma / PostgreSQL + Object Storage
+        ↓
+Redis / Queue / Worker (chỉ khi có nhu cầu thật: AI, notification, import, report)
+ Khuyến nghị kiến trúc🏗️
+Bắt đầu bằng modular monolith trong một repo để phát triển nhanh. Tách ranh giới module, 
+service và event ngay trong code; chỉ tách microservice khi có lý do vận hành hoặc tải thật.
+3.4 Nguyên tắc single source of truth
+• Assignment là nguồn nghiệp vụ của bài tập môn học; Task là lớp thực thi dùng chung. Cần quy định rõ 
+trường nào đồng bộ một chiều hoặc hai chiều.
+• CalendarEvent không được giữ bản sao dữ liệu mâu thuẫn với source; phải có sourceType/sourceId hoặc 
+mapping rõ.
+• Role phía client không phải nguồn sự thật; role/membership phải đọc và kiểm tra lại ở server.
+• Trạng thái thanh toán/công nợ phải suy ra từ transaction/split/payment có quy tắc, không chỉ từ một 
+boolean dễ sai.
+• AI recommendation là đề xuất; dữ liệu chính chỉ thay đổi sau khi người dùng xác nhận hoặc khi rule tự 
+động đã được cho phép.
+3.5 Event nội bộ nên chuẩn bị
+Event Phát sinh khi Consumer tiềm năng
+assignment.created Tạo assignment Task sync, Calendar sync, Notification 
+scheduler.
+assignment.updated Đổi deadline/status Task/Calendar update, audit.
+task.completed Task hoàn thành Progress analytics, source sync.
+workspace.member_added Thành viên tham gia Notification, onboarding workspace.
+club.event_published Sự kiện được công bố Calendar, notification.
+expense.created Tạo chi phí Split calculation, debt update, 
+notification.
+payment.recorded Ghi nhận thanh toán Debt reconciliation, audit.
+ai.plan_approved Người dùng duyệt kế hoạch AI Task/calendar creation.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  10
+4. YÊU CẦU CHỨC NĂNG THEO MODULE
+Danh mục yêu cầu chức năng có mã, mức ưu tiên và tiêu chí rõ để dùng làm 
+PRD, backlog và tiêu chuẩn review.
+4.1 Tài khoản, Profile và Onboarding
+ID Ưu tiên Yêu cầu
+ACC-001 MUST Người dùng có thể đăng ký bằng email 
+và mật khẩu theo auth provider đã 
+chọn.
+ACC-002 MUST Hỗ trợ đăng nhập, đăng xuất và session 
+phía server.
+ACC-003 MUST Hỗ trợ xác thực email nếu provider hỗ 
+trợ và dự án bật tính năng này.
+ACC-004 MUST Hỗ trợ quên mật khẩu và đặt lại mật 
+khẩu bằng token/link có hạn.
+ACC-005 MUST Route riêng tư phải yêu cầu session hợp 
+lệ; server action/API phải tự kiểm tra lại.
+ACC-006 MUST Onboarding tạo/cập nhật Profile và tạo 
+Personal Workspace theo cách 
+idempotent.
+ACC-007 MUST Người dùng có thể cập nhật tên, ảnh đại 
+diện, trường, ngành, năm học và mục 
+tiêu nghề nghiệp.
+ACC-008 SHOULD Cho phép cài timezone, ngôn ngữ, định 
+dạng ngày và tuần bắt đầu từ thứ 
+Hai/Chủ Nhật.
+ACC-009 MUST Không cho client quyết định userId, 
+ownerId hoặc platformRole.
+ACC-010 SHOULD Cho phép đăng xuất khỏi tất cả thiết bị 
+hoặc vô hiệu hóa session khi tài khoản 
+bị khóa.
+ACC-011 SHOULD Cho phép xuất và xóa dữ liệu cá nhân 
+theo chính sách sản phẩm.
+ACC-012 COULD Social login có thể thêm sau khi 
+email/password ổn định.
+4.2 Dashboard
+ID Ưu tiên Yêu cầu
+DSH-001 MUST Dashboard hiển thị lịch hôm nay từ các 
+nguồn người dùng có quyền truy cập.
+DSH-002 MUST Hiển thị task sắp tới, quá hạn và ưu tiên 
+cao.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  11
+ID Ưu tiên Yêu cầu
+DSH-003 MUST Hiển thị học kỳ hiện tại và các môn 
+đang học.
+DSH-004 SHOULD Hiển thị tiến độ roadmap tuần/tháng.
+DSH-005 SHOULD Hiển thị sự kiện CLB sắp tới và các task 
+được giao.
+DSH-006 SHOULD Hiển thị khoản cần trả hoặc công nợ 
+Living theo quyền.
+DSH-007 MUST User mới phải thấy empty state có CTA 
+thay vì số liệu giả.
+DSH-008 SHOULD Cho phép ẩn/hiện và sắp xếp widget ở 
+bản sau.
+DSH-009 MUST Query dashboard phải tránh N+1 và 
+không lặp cùng dữ liệu ở nhiều widget.
+DSH-010 COULD AI briefing buổi sáng/tối chỉ thêm sau 
+khi có dữ liệu và preference.
+4.3 Study
+ID Ưu tiên Yêu cầu
+STU-001 MUST Tạo, sửa, xem và lưu trữ học kỳ; kiểm 
+tra ngày bắt đầu/kết thúc.
+STU-002 MUST Tạo môn trong học kỳ với tên, mã môn, 
+tín chỉ, giảng viên, màu/icon tùy chọn.
+STU-003 MUST Một môn có nhiều lịch học trong tuần 
+với thứ, giờ và địa điểm.
+STU-004 MUST Tạo assignment/deadline cho môn với 
+title, mô tả, deadline, priority, status.
+STU-005 MUST Tạo assignment phải tạo/liên kết Task 
+và CalendarEvent nhất quán.
+STU-006 MUST Chỉnh deadline/status phải cập nhật các 
+bản ghi liên quan theo rule đồng bộ đã 
+định.
+STU-007 MUST Người dùng chỉ đọc/sửa dữ liệu Study 
+trong personal scope của mình.
+STU-008 MUST Trang course detail hiển thị thông tin 
+môn, lịch, assignment, điểm và tài liệu.
+STU-009 SHOULD Hỗ trợ nhập cấu trúc điểm thành phần 
+và tính điểm hiện tại/GPA dự kiến.
+STU-010 SHOULD Hỗ trợ study session/pomodoro và 
+thống kê thời lượng học.
+STU-011 SHOULD Cho phép gắn tài liệu, link và ghi chú 
+vào môn.
+STU-012 COULD Import thời khóa biểu từ file/ảnh chỉ làm 
+sau khi CRUD thủ công ổn định.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  12
+ID Ưu tiên Yêu cầu
+STU-013 COULD Đồng bộ LMS/trường là tích hợp riêng, 
+không thuộc MVP.
+STU-014 SHOULD Có archive thay vì hard delete cho học 
+kỳ/môn khi có dữ liệu lịch sử quan 
+trọng.
+4.4 Task Engine
+ID Ưu tiên Yêu cầu
+TSK-001 MUST Task có title, description, status, 
+priority, dueAt, sourceType, 
+sourceId/context.
+TSK-002 MUST Task cá nhân chỉ thuộc user/personal 
+workspace; task chung thuộc 
+workspace và có assignee.
+TSK-003 MUST Người dùng có thể tạo, sửa, hoàn thành, 
+mở lại và lọc task mình được phép thao 
+tác.
+TSK-004 MUST Task từ Study hiển thị tên môn; task 
+Club hiển thị CLB/ban; chore hiển thị 
+household.
+TSK-005 MUST Không tạo task trùng khi source request 
+bị gửi lại.
+TSK-006 MUST Thay đổi trạng thái phải tuân theo 
+source sync rule và không tạo vòng lặp 
+event.
+TSK-007 SHOULD Hỗ trợ assignee nhiều người cho task 
+workspace nếu domain cần.
+TSK-008 SHOULD Hỗ trợ checklist/subtask ở bản sau, 
+không chặn MVP.
+TSK-009 COULD Kanban và drag-drop là UX mở rộng, 
+không phải lõi.
+TSK-010 MUST Query task luôn scope theo current user 
++ membership + permission.
+4.5 Calendar Engine
+ID Ưu tiên Yêu cầu
+CAL-001 MUST Hiển thị lịch học, deadline và sự kiện 
+trong cùng calendar với loại nguồn rõ.
+CAL-002 MUST Hỗ trợ view tuần/tháng ở mức đủ dùng; 
+mobile có trải nghiệm không tràn.
+CAL-003 MUST Chuẩn hóa timezone và lưu timestamp 
+theo quy ước thống nhất.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  13
+ID Ưu tiên Yêu cầu
+CAL-004 MUST Event có sourceType/sourceId để liên 
+kết nguồn và tránh dữ liệu mồ côi.
+CAL-005 MUST Chỉnh/xóa source phải cập nhật hoặc 
+xóa event theo chính sách.
+CAL-006 SHOULD Hỗ trợ event thủ công của người dùng.
+CAL-007 SHOULD Hỗ trợ recurrence cơ bản nhưng không 
+xây recurrence engine quá sớm.
+CAL-008 COULD Google Calendar/Outlook sync là tích 
+hợp hậu MVP.
+CAL-009 SHOULD Phát hiện xung đột thời gian và hiển thị 
+cảnh báo.
+CAL-010 MUST Không lộ tên event của workspace mà 
+user không còn quyền truy cập.
+4.6 Roadmap và Skill
+ID Ưu tiên Yêu cầu
+RDM-001 MUST Người dùng chọn một hoặc nhiều mục 
+tiêu nghề nghiệp.
+RDM-002 MUST Hệ thống cung cấp roadmap template 
+có version và nguồn quản trị rõ.
+RDM-003 MUST Roadmap gồm node/skill có thứ tự, 
+prerequisite, trạng thái và trọng số tiến 
+độ.
+RDM-004 MUST Người dùng có thể đánh dấu bắt đầu, 
+đang học, hoàn thành hoặc bỏ qua skill.
+RDM-005 MUST Mỗi skill có lesson/checklist/resource và 
+tiêu chí hoàn thành.
+RDM-006 SHOULD Có quiz hoặc self-assessment để củng 
+cố kiến thức.
+RDM-007 SHOULD Có project/milestone gắn kỹ năng và 
+portfolio.
+RDM-008 MUST Tiến độ roadmap được tính nhất quán, 
+không chỉ đếm số node nếu trọng số 
+khác nhau.
+RDM-009 SHOULD Cho phép tùy chỉnh roadmap cá nhân 
+mà không làm thay đổi template toàn 
+hệ thống.
+RDM-010 SHOULD AI đề xuất bước tiếp theo dựa trên tiến 
+độ, thời gian rảnh và mục tiêu.
+RDM-011 COULD Cộng đồng chia sẻ roadmap là tính 
+năng hậu MVP và cần moderation.
+RDM-012 MUST Resource bên ngoài phải được validate 
+URL và quản lý trạng thái hỏng/ẩn.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  14
+4.7 Club / Community
+ID Ưu tiên Yêu cầu
+CLB-001 MUST Người dùng có thể tạo Club Workspace 
+và trở thành OWNER.
+CLB-002 MUST Có membership, role, ban/department 
+và chức danh nghiệp vụ tách biệt.
+CLB-003 MUST Hỗ trợ mời/tham gia thành viên theo 
+flow có token hoặc approval.
+CLB-004 MUST OWNER/ADMIN quản lý member trong 
+giới hạn permission; không tự làm mất 
+OWNER cuối cùng.
+CLB-005 MUST Tạo task CLB, giao người phụ trách, 
+deadline và trạng thái.
+CLB-006 MUST Tạo sự kiện, mở đăng ký, giới hạn chỗ 
+và trạng thái publish.
+CLB-007 SHOULD Check-in QR có token ngắn hạn/chống 
+dùng lại, không chỉ là ID tĩnh.
+CLB-008 SHOULD Có thông báo/announcement theo toàn 
+CLB hoặc theo ban.
+CLB-009 SHOULD Quản lý tài liệu theo thư mục/tag và 
+quyền workspace.
+CLB-010 SHOULD Quản lý quỹ, khoản thu/chi, chứng từ và 
+người duyệt theo permission.
+CLB-011 SHOULD Dashboard hoạt động: thành viên, task, 
+sự kiện, tỷ lệ check-in, dòng tiền.
+CLB-012 COULD Chat thời gian thực không thuộc MVP; 
+có thể tích hợp sau.
+CLB-013 MUST Mọi query/action phải scope workspace 
+và kiểm tra membership server-side.
+CLB-014 SHOULD Có audit log cho đổi role, xóa thành 
+viên, thay đổi quỹ và publish sự kiện.
+4.8 Living / Household
+ID Ưu tiên Yêu cầu
+LIV-001 MUST Người dùng tạo Household Workspace 
+và mời thành viên.
+LIV-002 MUST Tạo expense với số tiền, người trả, 
+category, ngày, mô tả và chứng từ tùy 
+chọn.
+LIV-003 MUST Hỗ trợ chia đều, chia theo số tiền, phần 
+trăm hoặc trọng số/số ngày ở.
+LIV-004 MUST Tổng split phải khớp tổng expense theo 
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  15
+ID Ưu tiên Yêu cầu
+quy tắc làm tròn được định nghĩa.
+LIV-005 MUST Tính công nợ theo ledger/split/payment, 
+không cập nhật thủ công một số dư dễ 
+sai.
+LIV-006 MUST Ghi nhận thanh toán giữa thành viên và 
+đối soát công nợ.
+LIV-007 MUST Chỉ thành viên có quyền mới xem chi 
+tiết tài chính household.
+LIV-008 SHOULD Nhắc khoản đến hạn/quá hạn với 
+preference chống spam.
+LIV-009 SHOULD Tạo chore, phân công, lịch lặp và đánh 
+dấu hoàn thành.
+LIV-010 SHOULD Quản lý báo hỏng/bảo trì với trạng thái 
+và ảnh.
+LIV-011 SHOULD Lưu hợp đồng, tiền cọc và tài liệu thuê 
+theo quyền.
+LIV-012 COULD Thanh toán ngân hàng thật không 
+thuộc MVP; chỉ ghi nhận thủ công ban 
+đầu.
+LIV-013 MUST Không cho sửa/xóa giao dịch đã khóa 
+hoặc đã đối soát nếu không có 
+audit/điều chỉnh.
+LIV-014 SHOULD Có export báo cáo chi tiêu/công nợ theo 
+tháng.
+4.9 Notification và File
+ID Ưu tiên Yêu cầu
+NTF-001 MUST Có notification in-app với type, title, 
+body, link, readAt và source.
+NTF-002 MUST Người dùng chỉ đọc notification của 
+chính mình.
+NTF-003 MUST Đánh dấu đã đọc/một phần/toàn bộ 
+theo cách idempotent.
+NTF-004 SHOULD Có preference theo loại: deadline, CLB, 
+finance, AI.
+NTF-005 SHOULD Gom notification lặp để tránh spam.
+NTF-006 COULD Email/push triển khai sau bằng queue 
+và worker.
+FIL-001 MUST Upload file qua cơ chế an toàn, giới hạn 
+loại/kích thước và không tin MIME từ 
+client.
+FIL-002 MUST Metadata file gắn với 
+owner/workspace/resource và kiểm tra 
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  16
+ID Ưu tiên Yêu cầu
+quyền khi tải.
+FIL-003 MUST Tên file lưu trữ phải tránh collision/path 
+traversal.
+FIL-004 SHOULD Có trạng thái upload/processing/failed 
+và cleanup file mồ côi.
+FIL-005 SHOULD Quét virus hoặc provider scan khi 
+scale/production yêu cầu.
+FIL-006 COULD Version file và collaborative editing 
+không thuộc MVP.
+4.10 AI Assistant
+ID Ưu tiên Yêu cầu
+AI-001 MUST AI chỉ đọc dữ liệu mà current user có 
+quyền truy cập.
+AI-002 MUST Mọi tool call phải có server-side 
+authorization và audit.
+AI-003 MUST AI lập kế hoạch học dựa trên lịch, 
+deadline, tiến độ, ưu tiên và thời gian 
+rảnh.
+AI-004 MUST Kế hoạch do AI tạo phải cho người dùng 
+xem và duyệt trước khi ghi 
+task/calendar.
+AI-005 SHOULD AI gợi ý roadmap/bước tiếp theo dựa 
+trên skill progress và mục tiêu.
+AI-006 SHOULD AI phát hiện xung đột lịch, quá tải tuần 
+và deadline rủi ro.
+AI-007 SHOULD AI tóm tắt tuần và đề xuất 3 hành động 
+ưu tiên.
+AI-008 SHOULD AI hỗ trợ CLB chia task/tóm tắt kế 
+hoạch nhưng không tự đổi role hoặc 
+thao tác tài chính.
+AI-009 MUST Có rate limit, quota/cost tracking và 
+fallback khi provider lỗi.
+AI-010 MUST Không đưa secret, token, dữ liệu 
+workspace khác hoặc PII không cần 
+thiết vào prompt.
+AI-011 MUST Hiển thị rõ AI có thể sai; các quyết định 
+quan trọng cần xác nhận.
+AI-012 COULD RAG tài liệu cá nhân/CLB chỉ triển khai 
+sau khi File Engine và permission ổn.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  17
+4.11 Platform Admin
+ID Ưu tiên Yêu cầu
+ADM-001 SHOULD Admin có dashboard sức khỏe sản 
+phẩm, user growth, active workspace 
+và lỗi/job.
+ADM-002 MUST Admin route/action kiểm tra platform 
+permission phía server.
+ADM-003 SHOULD Quản lý user: xem trạng thái, khóa/mở 
+khóa, vô hiệu hóa session, không tùy 
+tiện đọc dữ liệu riêng tư.
+ADM-004 SHOULD Xử lý báo cáo nội dung/workspace và 
+moderation.
+ADM-005 MUST Mọi thao tác admin nhạy cảm có audit 
+log.
+ADM-006 SHOULD Quản lý roadmap template, resource và 
+version.
+ADM-007 SHOULD Theo dõi AI usage/quota/cost và job 
+thất bại.
+ADM-008 COULD Hệ thống permission động đầy đủ chỉ 
+cần khi đội vận hành lớn.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  18
+5. LUỒNG LIÊN KẾT GIỮA CÁC MODULE
+Giá trị của CampusOS nằm ở liên kết có kiểm soát, không phải chỉ ở số lượng 
+tính năng.
+5.1 Assignment → Task → Calendar → Dashboard
+Tạo Assignment
+   ├─ ghi Assignment (nguồn nghiệp vụ)
+   ├─ tạo/liên kết Task (thực thi)
+   ├─ tạo/liên kết CalendarEvent (thời gian)
+   └─ xuất hiện trên Dashboard query
+Cập nhật deadline/status phải đi qua service đồng bộ có transaction/idempotency.
+• Không để UI tự tạo ba request rời vì dễ tạo dữ liệu một phần.
+• Nếu transaction không thể bao trùm hệ thống khác nhau, dùng outbox/event + retry và trạng thái xử lý 
+rõ.
+• Cần quyết định trường nào thuộc source: ví dụ title/description ở Assignment, status thực thi có thể ở 
+Task nhưng phải có rule đồng bộ.
+5.2 Roadmap → Task → Calendar
+Người dùng chọn “Lập kế hoạch học skill trong 2 tuần”
+→ tạo Plan nháp
+→ user duyệt
+→ sinh Task/StudySession
+→ đặt vào Calendar
+→ progress cập nhật khi task/milestone hoàn thành
+5.3 Club → Task/Calendar/Notification
+Publish sự kiện CLB
+→ Calendar event cho thành viên đủ điều kiện
+→ Notification theo audience
+→ Registration
+→ Check-in
+→ Analytics sự kiện
+5.4 Living → Finance/Task/Notification
+Tạo Expense
+→ tính Split
+→ cập nhật Debt projection
+→ Notification cho người liên quan
+→ khi ghi Payment: đối soát và giảm nghĩa vụ
+Tạo Chore
+→ Task Engine
+→ Calendar recurrence nếu có
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  19
+→ Notification trước hạn
+5.5 AI → kế hoạch có thể áp dụng
+Bước Yêu cầu
+1. Thu thập context Chỉ lấy lịch, deadline, progress và preference mà user có 
+quyền truy cập.
+2. Lập đề xuất AI trả plan có cấu trúc: mục tiêu, task, thời lượng, thời 
+điểm, lý do.
+3. Kiểm tra rule Server validate thời gian, permission, quota và conflict.
+4. Người dùng duyệt Cho sửa/xóa từng item; không ghi dữ liệu tự động mặc 
+định.
+5. Áp dụng Tạo Task/Calendar trong transaction hoặc job có 
+idempotency.
+6. Theo dõi Đo plan accepted, completion rate và feedback để cải 
+thiện.
+5.6 Quy tắc chống “generic engine quá đà”
+⚖️  Không phải cái gì giống nhau cũng phải dùng chung model
+Task và Calendar có thể dùng engine chung vì hành vi lõi tương đồng. Nhưng quỹ CLB và chia tiền 
+phòng trọ có quy tắc kế toán/permission khác; có thể dùng transaction primitive chung nhưng giữ 
+service/domain model riêng để code dễ hiểu và an toàn.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  20
+6. WORKSPACE, ROLE VÀ PERMISSION
+Authentication trả lời “mày là ai”; Authorization trả lời “mày được làm gì trong 
+tài nguyên/workspace này”.
+6.1 Mô hình workspace
+Workspace Type Mục đích Quyền sở hữu
+PERSONAL Dữ liệu cá nhân: Study, Roadmap, 
+task/calendar cá nhân.
+Mỗi user có một personal workspace 
+mặc định; không được rời hoặc xóa 
+tùy tiện.
+CLUB CLB/đội nhóm nhiều thành viên. Người tạo là OWNER; có thể thêm 
+admin/manager/member/viewer.
+HOUSEHOLD Phòng trọ/nhóm sống chung. Người tạo là OWNER; role workspace 
+kiểm soát thành viên và dữ liệu 
+chung.
+6.2 Platform role
+USER
+PLATFORM_ADMIN
+Không đưa CLUB_PRESIDENT, TREASURER, ROOM_OWNER hoặc STUDENT vào platform role. Chức 
+danh CLB là dữ liệu nghiệp vụ; vai trò trong household là membership/permission theo workspace.
+6.3 Workspace role
+Role Quyền khái quát Giới hạn quan trọng
+OWNER Toàn quyền workspace, quản lý role, 
+cấu hình và xóa/đóng workspace.
+Không được để workspace không còn 
+OWNER; thao tác nhạy cảm có audit.
+ADMIN Quản lý phần lớn thành viên và cấu 
+hình vận hành.
+Không đổi/xóa OWNER hoặc tự cấp 
+OWNER nếu rule không cho phép.
+MANAGER Quản lý domain được giao: task, sự 
+kiện, nội dung hoặc finance theo 
+permission.
+Không quản lý role cấp cao trừ khi 
+permission riêng cho phép.
+MEMBER Xem và thao tác dữ liệu làm việc thông 
+thường.
+Không quản lý role/cấu hình nhạy cảm.
+VIEWER Chỉ đọc dữ liệu được cho phép. Không mutation.
+6.4 Permission matrix MVP
+Permission Vai trò mặc định / Rule
+workspace.view OWNER, ADMIN, MANAGER, MEMBER, VIEWER
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  21
+Permission Vai trò mặc định / Rule
+workspace.update OWNER, ADMIN
+workspace.delete OWNER
+member.view OWNER, ADMIN, MANAGER, MEMBER
+member.invite OWNER, ADMIN
+member.update_role OWNER; ADMIN chỉ với role thấp hơn theo rule
+member.remove OWNER, ADMIN trong giới hạn
+task.create OWNER, ADMIN, MANAGER, MEMBER (tùy module)
+task.assign OWNER, ADMIN, MANAGER
+task.update Người tạo/assignee hoặc role quản lý theo rule
+task.delete OWNER, ADMIN, MANAGER hoặc người tạo theo policy
+event.manage OWNER, ADMIN, MANAGER có quyền sự kiện
+finance.view OWNER, ADMIN, FINANCE_MANAGER hoặc member theo 
+policy
+finance.manage OWNER, ADMIN, FINANCE_MANAGER
+document.manage Theo workspace role + resource scope
+audit.view OWNER/ADMIN hoặc platform admin theo policy
+6.5 Guard server khuyến nghị
+getCurrentUser()
+requireUser()
+getWorkspaceMembership(workspaceId)
+requireWorkspaceMember(workspaceId)
+requireWorkspaceRole(workspaceId, roles)
+requireWorkspacePermission(workspaceId, permission)
+requireResourceAccess(resourceId, action)
+6.6 Quy tắc bắt buộc
+• Không nhận userId, ownerId, currentRole hoặc permission từ client làm căn cứ authorization.
+• Middleware chỉ redirect/UX; server action, route handler và query riêng tư vẫn tự xác thực.
+• Mọi query đa tenant phải có điều kiện user/workspace scope ngay trong database query; không fetch 
+toàn bộ rồi lọc ở client.
+• Đổi workspaceId/resourceId trên URL không được làm lộ metadata, tên, số lượng hoặc nội dung của 
+tenant khác.
+• Các thao tác đổi role, xóa thành viên, tài chính và admin phải có audit log đủ actor, target, before/after, 
+timestamp và request id.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  22
+7. KIẾN TRÚC DỮ LIỆU VÀ ROUTE
+Danh sách model và route là bản đồ kiến trúc; chỉ tạo model khi phase tương 
+ứng bắt đầu để tránh schema phình sớm.
+7.1 Nhóm model Core
+Model Trách nhiệm
+User Danh tính ứng dụng; liên kết auth provider; trạng 
+thái/role nền tảng.
+Profile Thông tin hiển thị, trường, ngành, năm học, timezone, 
+preference.
+Workspace Tenant chung: PERSONAL, CLUB, HOUSEHOLD.
+WorkspaceMember Quan hệ user-workspace, role, trạng thái, ngày tham gia.
+Invitation Lời mời tham gia workspace, token hash, email, role đề 
+xuất, expiry.
+UserPreference Cài đặt notification, giao diện, tuần, timezone.
+AuditLog Actor, action, target, workspace, metadata đã lọc, 
+request id.
+IdempotencyKey Chống xử lý lặp cho mutation quan trọng.
+7.2 Nhóm model Shared
+Model Trách nhiệm
+Task Công việc dùng chung, giữ sourceType/sourceId/context 
+và workspace scope.
+TaskAssignee Nhiều người được giao, trạng thái cá nhân nếu cần.
+CalendarEvent Sự kiện thời gian dùng chung; source mapping, visibility, 
+timezone.
+Notification Thông báo theo user, source, trạng thái đọc.
+FileAsset Metadata object storage, owner/workspace/resource, 
+checksum, status.
+Comment/Activity Chỉ thêm khi task collaboration cần; không bắt buộc ở 
+MVP đầu.
+OutboxEvent Event đáng tin cậy cho job/worker khi cần tách 
+transaction.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  23
+7.3 Nhóm model theo domain
+Domain Model dự kiến
+Study Semester, Course, CourseSchedule, Assignment, 
+GradeCategory, GradeItem, StudySession, CourseResource.
+Roadmap CareerPath, RoadmapTemplate, RoadmapVersion, 
+RoadmapNode, Skill, Lesson, LearningResource, Quiz, 
+QuizAttempt, UserSkillProgress, PortfolioProject.
+Club ClubProfile, Department, Position, ClubMemberProfile, 
+ClubEvent, EventRegistration, EventCheckin, Announcement, 
+ClubFund, ClubTransaction, ClubDocument.
+Living HouseholdProfile, HouseholdMemberProfile, Expense, 
+ExpenseSplit, Payment, Chore, ChoreAssignment, 
+MaintenanceRequest, RentalDocument, DepositRecord.
+AI AiConversation, AiMessage, AiPlan, AiPlanItem, 
+AiRecommendation, AiUsageEvent, AiFeedback.
+7.4 Index và constraint quan trọng
+• Unique personal workspace theo user hoặc unique membership/owner rule để onboarding không tạo 
+trùng.
+• Unique (workspaceId, userId) cho WorkspaceMember.
+• Index theo (workspaceId, createdAt), (userId, dueAt), (status, dueAt), (sourceType, sourceId).
+• Foreign key có onDelete được đánh giá theo domain; tránh cascade nguy hiểm với dữ liệu tài 
+chính/audit.
+• Unique/idempotency cho mapping Assignment→Task, Assignment→CalendarEvent hoặc source link 
+tương đương.
+• Check/validation cho amount > 0, split tổng khớp, start < end; nếu DB không hỗ trợ thuận tiện thì 
+validate server + test.
+7.5 Route map cấp cao
+Khu vực Route
+Public /, /login, /register, /forgot-password, /reset-password
+Onboarding /onboarding
+Core /dashboard, /tasks, /calendar, /notifications, /profile, /settings
+Study /study, /study/semesters, /study/courses, /study/courses/[id], 
+/study/grades
+Roadmap /roadmaps, /roadmaps/[id], /skills/[id], /projects/[id]
+Club /clubs, /clubs/[id], /clubs/[id]/members, /departments, 
+/tasks, /events, /finance, /documents, /settings
+Living /living, /living/[id], /expenses, /debts, /payments, /chores, 
+/maintenance, /documents, /settings
+Admin /admin, /admin/users, /admin/workspaces, /admin/reports, 
+/admin/roadmaps, /admin/ai-usage, /admin/audit-logs, 
+/admin/system
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  24
+7.6 Quy tắc route và data fetching
+• Server Component mặc định cho dữ liệu đọc; Client Component chỉ khi cần tương tác/trạng thái trình 
+duyệt.
+• Mutation qua Server Action hoặc Route Handler có schema validation và auth guard; chọn một 
+convention nhất quán.
+• Route động phải có not-found hoặc forbidden behavior rõ; không phân biệt quá chi tiết nếu gây lộ tài 
+nguyên.
+• Mỗi route quan trọng có loading/empty/error state phù hợp, không dùng một spinner toàn app cho mọi 
+trường hợp.
+• Không nhúng query Prisma rải rác trong component; đi qua query/service của module để scope và test 
+dễ hơn.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  25
+8. YÊU CẦU UI/UX VÀ DESIGN SYSTEM
+Giao diện hiện đại, trẻ, sạch theo phong cách SaaS; nhiều thông tin nhưng 
+không quá tải.
+8.1 Định hướng hình ảnh
+Yếu tố Định hướng
+Phong cách Linear + Notion + dashboard SaaS hiện đại; rõ hệ thống, 
+nhẹ, có khoảng thở.
+Màu Nền trung tính; mỗi module có accent nhẹ nhưng vẫn 
+dùng token chung. Tránh gradient và màu neon quá 
+nhiều.
+Typography Ưu tiên font sans dễ đọc; hierarchy rõ; body 14-16px trên 
+web tùy density.
+Card Dùng card khi nhóm nội dung; tránh “card hóa” mọi thứ. 
+Table/list ưu tiên cho dữ liệu dày.
+Icon Một bộ icon nhất quán; icon bổ trợ nhãn, không thay 
+hoàn toàn text ở thao tác quan trọng.
+Motion Transition ngắn, có mục đích; tôn trọng prefers-reduced-
+motion.
+8.2 Navigation
+Desktop Sidebar
+ Tổng quan🏠
+ Học tập📚
+ Lộ trình🧭
+ Cộng đồng👥
+ Không gian sống🏡
+ Lịch📅
+ Công việc✅
+ Thông báo🔔
+Mobile Bottom Nav
+Home | Calendar | Tasks | Community | Profile
+8.3 Dashboard widget
+• Lịch hôm nay và sự kiện tiếp theo.
+• Deadline/task ưu tiên, quá hạn và sắp tới.
+• Tiến độ học kỳ và roadmap.
+• Task/sự kiện CLB được giao.
+• Khoản cần thanh toán và việc nhà sắp đến hạn.
+• AI insight ngắn, có thể hành động, không chiếm toàn màn hình.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  26
+8.4 Trạng thái bắt buộc
+Trạng thái Yêu cầu UX
+Loading Skeleton theo cấu trúc nội dung; tránh layout shift lớn; 
+button có pending state.
+Empty Giải thích vì sao trống, lợi ích của hành động đầu tiên và CTA 
+rõ.
+Success Toast/inline feedback; điều hướng/revalidate đúng; không 
+toast mọi thao tác nhỏ.
+Validation Error Lỗi theo field, giữ dữ liệu đã nhập, focus tới lỗi đầu tiên khi 
+phù hợp.
+Permission Error Thông báo không có quyền, không lộ dữ liệu; có đường quay 
+lại.
+Not Found Nêu tài nguyên không tồn tại hoặc không khả dụng; không 
+hiện stack trace.
+Runtime Error Error boundary có retry; log request id; message thân thiện.
+Offline/Timeout Thông báo mất kết nối, cho retry; tránh hiển thị “đã lưu” khi 
+server chưa xác nhận.
+8.5 Responsive
+Viewport Yêu cầu
+375px Bottom nav, form một cột, drawer thay sidebar, table 
+chuyển card/list hoặc scroll có chủ đích.
+768px Sidebar thu gọn hoặc drawer; grid 2 cột khi hợp lý; 
+calendar/task vẫn thao tác được.
+1440px Sidebar đầy đủ, dashboard đa cột, giới hạn max-width để 
+không kéo dòng quá dài.
+8.6 Accessibility
+• Semantic HTML, label cho input, heading order đúng, focus visible và keyboard navigation.
+• Không dùng màu là tín hiệu duy nhất cho status/priority; có text/icon.
+• Contrast đủ; hỗ trợ zoom; modal có focus trap và trả focus đúng.
+• Chart phải có số liệu thay thế hoặc mô tả; tooltip không phải cách duy nhất để đọc dữ liệu.
+• Tôn trọng reduced motion và không autoplay nội dung gây khó chịu.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  27
+9. YÊU CẦU PHI CHỨC NĂNG VÀ KHẢ NĂNG MỞ RỘNG
+Mục tiêu “có thể phục vụ 1 triệu user” là định hướng kiến trúc dài hạn, không 
+phải lý do để xây hạ tầng quá mức ngay từ MVP.
+9.1 Performance
+ID Ưu tiên Yêu cầu
+NFR-PERF-001 MUST Trang chính không bị chặn bởi query 
+không cần thiết; dùng 
+select/pagination/index phù hợp.
+NFR-PERF-002 MUST Danh sách lớn phải pagination/cursor; 
+không tải toàn bộ lịch sử.
+NFR-PERF-003 SHOULD P95 API/query tương tác thông thường 
+mục tiêu < 500-800ms trong điều kiện 
+vận hành chuẩn.
+NFR-PERF-004 SHOULD Dashboard có thể dùng query tổng 
+hợp/cache ngắn nếu tải tăng; tránh 
+cache dữ liệu nhạy cảm sai scope.
+NFR-PERF-005 MUST Không có N+1 query ở route thường 
+dùng.
+NFR-PERF-006 SHOULD Ảnh/file dùng CDN/object storage và tối 
+ưu kích thước.
+9.2 Reliability và data integrity
+ID Ưu tiên Yêu cầu
+NFR-REL-001 MUST Mutation nhiều bước dùng transaction 
+hoặc outbox/job có retry để tránh dữ 
+liệu một phần.
+NFR-REL-002 MUST Mutation quan trọng có idempotency 
+hoặc unique constraint chống gửi lặp.
+NFR-REL-003 MUST Có backup DB, kiểm tra restore định kỳ 
+trước production lớn.
+NFR-REL-004 SHOULD Job có retry/backoff, dead-letter hoặc 
+dashboard xử lý thất bại.
+NFR-REL-005 MUST Migration có kế hoạch rollback/forward 
+fix và không làm mất dữ liệu.
+NFR-REL-006 SHOULD Soft delete/archive cho domain cần lịch 
+sử; hard delete có cascade được kiểm 
+soát.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  28
+9.3 Scalability theo tầng
+Mốc Kiến trúc phù hợp Chỉ nâng cấp khi
+MVP / vài nghìn user Next.js modular monolith + PostgreSQL 
++ object storage; queue tối thiểu cho 
+AI/email nếu cần.
+Luồng đúng, product-market signal và 
+metrics ổn.
+10k-100k user Redis cache/rate limit, queue/worker 
+chuẩn, observability, tối ưu 
+index/query, CDN, background 
+aggregation.
+DB/query/job hoặc chi phí AI bắt đầu là 
+bottleneck đo được.
+100k-1M user Read replica, partition/archive bảng lớn, 
+tách worker/module nóng, multi-
+region/CDN tùy thị trường, data 
+warehouse.
+Có tải thật, SLO, đội vận hành và ngân 
+sách phù hợp.
+ Không tối ưu mù📈
+Không cần microservice, Kafka hay Kubernetes chỉ vì mục tiêu 1 triệu user. Tối ưu dựa trên đo 
+đạc: query profile, p95 latency, throughput, queue lag, error rate và chi phí.
+9.4 Maintainability
+• TypeScript strict; không dùng any/@ts-ignore để che lỗi.
+• Module boundaries rõ; không import vòng; shared chỉ chứa primitive thực sự dùng chung.
+• Schema validation dùng chung cho server/client nhưng server luôn là lớp quyết định cuối.
+• Code style, lint, typecheck, unit/integration test và production build chạy trong CI.
+• ADR hoặc docs cho quyết định lớn: auth provider, workspace model, source sync, finance ledger, AI 
+provider.
+9.5 Compatibility và PWA
+• Ưu tiên Chrome/Edge/Safari/Firefox phiên bản hiện đại; test mobile web thật.
+• PWA có thể thêm sau; offline write phức tạp không thuộc MVP. Nếu hỗ trợ offline, phải có queue/conflict 
+policy rõ.
+• Không giả vờ sync thành công khi request chưa được server xác nhận.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  29
+10. BẢO MẬT, RIÊNG TƯ VÀ AUDIT
+CampusOS chứa lịch học, thông tin cá nhân, dữ liệu CLB và tài chính nhóm; bảo 
+mật phải được thiết kế từ đầu.
+10.1 Threat model ưu tiên
+Rủi ro Ví dụ Biện pháp chính
+IDOR / Cross-tenant access Đổi courseId/workspaceId để xem dữ 
+liệu người khác.
+Scope query server-side, 
+membership/permission guard, test 
+user A/B.
+Role escalation Member tự gọi action đổi mình thành 
+OWNER.
+Không tin role client; hierarchy rule; 
+transaction; audit.
+Session stale User bị khóa/đổi role nhưng token cũ 
+vẫn dùng.
+Kiểm tra trạng thái DB/session version ở 
+server cho action nhạy cảm.
+Mass assignment Client gửi ownerId, status nhạy cảm 
+hoặc field không được phép.
+Schema pick/whitelist; service quyết 
+định field hệ thống.
+XSS / unsafe content Mô tả, announcement, rich text chứa 
+script.
+Escape mặc định, sanitize nếu render 
+HTML, CSP.
+File upload abuse File giả MIME, quá lớn, malware, path 
+traversal.
+Allowlist, size limit, generated key, 
+scan, signed URL.
+AI data leakage Prompt chứa dữ liệu workspace khác 
+hoặc secret.
+Context builder có auth; redaction; 
+logging tối thiểu; tool guard.
+Finance tampering Sửa/xóa transaction đã đối soát. Ledger/adjustment, immutable audit, 
+permission và confirmation.
+10.2 Security baseline
+• Secrets chỉ ở environment/secret manager; không commit .env hoặc log token.
+• Password do auth provider xử lý an toàn; không tự lưu plain text hoặc tự viết crypto.
+• Rate limit login, reset password, invitation, upload, AI và các endpoint dễ abuse.
+• CSRF strategy phù hợp với cơ chế session/cookie; cookie HttpOnly, Secure, SameSite theo kiến trúc.
+• CORS chỉ mở origin cần thiết; không dùng wildcard với credential.
+• Input validation server-side cho ID, enum, ngày, số tiền, URL và file.
+• Header bảo mật và CSP được cấu hình phù hợp; tránh dangerouslySetInnerHTML không sanitize.
+• Dependency scanning và update có kiểm soát; lockfile được commit.
+10.3 Privacy
+• Thu thập tối thiểu; trường/ngành/năm học không cần bắt buộc nếu không phục vụ tính năng.
+• Không cho Platform Admin mặc định đọc toàn bộ nội dung riêng tư; quyền support cần policy và audit.
+• Cho người dùng biết dữ liệu nào được gửi sang AI provider và có lựa chọn tắt khi hợp lý.
+• Có chính sách retention cho log, audit, notification, AI conversation và file đã xóa.
+• Xuất/xóa tài khoản phải xử lý dữ liệu thuộc workspace chung theo ownership và nghĩa vụ lưu trữ.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  30
+10.4 Audit log
+Nhóm hành động Bắt buộc audit
+Role & membership Mời, chấp nhận, đổi role, xóa/khóa thành viên, chuyển 
+ownership.
+Workspace Đổi cấu hình quan trọng, archive/xóa workspace.
+Finance Tạo/sửa/xóa/điều chỉnh giao dịch, ghi nhận thanh toán, 
+khóa kỳ.
+Admin Khóa user, thay role nền tảng, truy cập hỗ trợ đặc biệt, 
+moderation.
+AI Tool action có ghi dữ liệu, plan được duyệt, lỗi 
+policy/quota.
+Security Reset session, thay email, thất bại auth bất thường, rate-
+limit trigger.
+10.5 Kiểm thử authorization bắt buộc
+• User A không đọc/sửa/xóa resource của User B bằng đổi ID hoặc gọi action trực tiếp.
+• User không thuộc workspace không đọc được cả metadata nhạy cảm.
+• VIEWER không mutation; MEMBER/MANAGER/ADMIN chỉ làm đúng permission.
+• ADMIN không thay đổi OWNER trái rule; không thể xóa OWNER cuối cùng.
+• User bị remove khỏi workspace mất quyền ngay ở server; cache/session không giữ quyền cũ quá lâu.
+• Platform Admin route/action không chỉ dựa vào middleware hoặc JWT claim cũ.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  31
+11. EXCEPTION VÀ EDGE CASE
+Mỗi luồng phải được thiết kế cho điều kiện lỗi, request lặp, concurrency và dữ 
+liệu thay đổi giữa lúc người dùng thao tác.
+11.1 Network và client
+Tình huống Hành vi mong muốn
+Mất mạng trước submit Không gửi request; giữ dữ liệu form; báo offline; cho 
+retry.
+Mất mạng sau submit Không khẳng định thất bại/thành công khi chưa biết; 
+retry idempotent hoặc refresh trạng thái.
+Double click / submit lặp Disable UI + idempotency/unique constraint phía server.
+Timeout Hiển thị trạng thái không chắc chắn; request id; retry có 
+kiểm soát.
+Tab cũ Server validate version/state; trả conflict và yêu cầu 
+refresh.
+Session hết hạn Redirect/login lại nhưng tránh mất form nếu có thể.
+11.2 Study
+Tình huống Xử lý
+Ngày kết thúc học kỳ trước ngày bắt đầu Validation error theo field; không ghi DB.
+Tạo course vào semester của user khác FORBIDDEN/NOT_FOUND an toàn; audit nếu bất thường.
+Giờ kết thúc <= giờ bắt đầu Từ chối server-side.
+Assignment deadline đổi Task và Calendar đồng bộ trong transaction/service.
+Xóa assignment có task đã hoàn thành Policy rõ: archive/cascade mapping; không tạo orphan.
+Request tạo assignment lặp Một assignment/mapping duy nhất theo idempotency.
+Timezone lệch ngày Lưu UTC + timezone; test boundary 00:00/DST nếu thị 
+trường cần.
+11.3 Workspace và role
+Tình huống Xử lý
+Hai admin cùng đổi role Transaction/version check; rule cuối cùng nhất quán; audit 
+cả hai request.
+OWNER tự rời Chỉ cho rời sau khi chuyển ownership hoặc còn OWNER khác.
+Xóa thành viên đang có task Giữ lịch sử; unassign/reassign theo policy, không xóa task.
+Invite hết hạn/đã dùng Thông báo rõ; token one-time; không tạo duplicate 
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  32
+Tình huống Xử lý
+membership.
+User bị remove khi đang mở trang Mutation tiếp theo bị server từ chối; UI refresh và rời 
+workspace.
+11.4 Finance
+Tình huống Xử lý
+Split không khớp tổng Từ chối; quy tắc làm tròn rõ; phần dư phân bổ xác định.
+Expense âm/0 Từ chối trừ loại giao dịch điều chỉnh được thiết kế riêng.
+Xóa expense đã có payment Không hard delete; dùng reversal/adjustment và audit.
+Hai người ghi payment cùng lúc Transaction/unique reference; đối soát sau ghi.
+Người rời household còn nợ Giữ membership lịch sử/financial participant; không mất 
+ledger.
+Currency khác nhau MVP dùng một currency/workspace; multi-currency để sau.
+11.5 AI
+Tình huống Xử lý
+Provider timeout/rate limit Retry có backoff, fallback message, không tạo dữ liệu một 
+phần.
+AI trả JSON sai schema Validate/repair có giới hạn; nếu vẫn sai thì báo lỗi, không áp 
+dụng.
+AI đề xuất trùng lịch Server conflict check; hiển thị cảnh báo trước khi duyệt.
+AI cố gọi tool không được quyền Tool guard từ chối; audit; không tiết lộ dữ liệu.
+Chi phí/quota vượt Chặn trước call; hiển thị quota và lựa chọn thủ công.
+Prompt injection từ tài liệu Tách system/tool policy, giới hạn tool, coi nội dung file là dữ 
+liệu không tin cậy.
+11.6 Error code chuẩn
+Mã Ý nghĩa
+UNAUTHENTICATED Chưa đăng nhập/session không hợp lệ.
+FORBIDDEN Đã đăng nhập nhưng không có quyền.
+VALIDATION_ERROR Input không hợp lệ; kèm field errors an toàn.
+RESOURCE_NOT_FOUND Tài nguyên không tồn tại hoặc không khả dụng.
+WORKSPACE_NOT_FOUND Workspace không tồn tại/không thể truy cập.
+MEMBERSHIP_NOT_FOUND Không có membership hợp lệ.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  33
+Mã Ý nghĩa
+INSUFFICIENT_PERMISSION Thiếu permission cụ thể.
+CONFLICT State thay đổi hoặc thao tác mâu thuẫn.
+DUPLICATE_REQUEST Request lặp/idempotency key đã xử lý.
+LAST_OWNER_CANNOT_LEAVE Không được làm workspace mất OWNER.
+RATE_LIMITED Vượt giới hạn.
+PROVIDER_UNAVAILABLE Dịch vụ ngoài/AI/storage không khả dụng.
+INTERNAL_ERROR Lỗi ngoài dự kiến; có request id, không lộ stack.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  34
+12. CHIẾN LƯỢC AI VÀ AUTOMATION
+AI là lớp điều phối có ngữ cảnh và quyền, không phải chatbot trang trí.
+12.1 AI use case ưu tiên
+Use case Đầu vào Đầu ra
+Lập kế hoạch ôn thi Lịch học, lịch thi, deadline, môn yếu, 
+thời gian rảnh, preference.
+Plan theo ngày/phiên; task/calendar 
+nháp để user duyệt.
+Weekly planning Task tồn, event, progress roadmap, 
+workload.
+Top 3 ưu tiên, lịch gợi ý, cảnh báo quá 
+tải.
+Roadmap mentor Mục tiêu nghề nghiệp, skill đã hoàn 
+thành, thời gian tuần.
+Bước tiếp theo, tài liệu, mini project, lý 
+do.
+Conflict detector Calendar đa module. Xung đột, khoảng trống, deadline rủi ro.
+Club planning Mục tiêu sự kiện, member/role, 
+deadline.
+Work breakdown và phân công gợi ý, 
+không tự áp dụng.
+Living insight Chi tiêu đã được phép, category, kỳ. Tóm tắt xu hướng và nhắc bất thường, 
+không phán quyết tài chính cá nhân.
+12.2 Kiến trúc AI
+UI Chat/Planner
+   ↓
+AI Gateway (auth, quota, prompt policy, model routing)
+   ↓
+Context Builder (workspace/resource scope)
+   ↓
+LLM
+   ↓
+Structured Output Validator
+   ↓
+Tool Executor (permission guard + idempotency + audit)
+   ↓
+Draft/Approval → Domain Service → DB
+12.3 Quy tắc an toàn
+• AI không được tự đổi role, xóa workspace, thực hiện thanh toán hoặc sửa ledger mà không có flow xác 
+nhận đặc biệt.
+• Tool định nghĩa input schema hẹp; server tự suy ra actor/user/workspace từ session và context, không 
+tin model gửi.
+• Tài liệu người dùng là dữ liệu không tin cậy; không cho prompt injection thay đổi system policy.
+• Structured output phải validate; không parse tự do rồi ghi DB.
+• Log prompt/response theo chính sách privacy; ưu tiên metadata/trace, redaction và sampling thay vì lưu 
+toàn bộ mặc định.
+• Có quota theo user/workspace, rate limit, cost budget và circuit breaker khi provider lỗi.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  35
+12.4 AI plan approval
+Trạng thái Ý nghĩa
+DRAFT AI vừa tạo, chưa ghi task/calendar thật.
+REVIEWING User đang chỉnh thời gian/nội dung.
+APPROVED Đã xác nhận; server chuẩn bị áp dụng.
+APPLYING Đang tạo dữ liệu; có idempotency/job status.
+APPLIED Đã tạo thành công và lưu mapping.
+FAILED Có lỗi; hiển thị nguyên nhân có thể hiểu và cho retry an 
+toàn.
+DISMISSED User bỏ đề xuất; dùng cho feedback nếu họ đồng ý.
+12.5 Đánh giá chất lượng AI
+• Tỷ lệ plan được chấp nhận và tỷ lệ item bị user sửa/xóa.
+• Completion rate của task do AI tạo so với task tự tạo.
+• Tỷ lệ conflict hoặc validation fail sau khi AI đề xuất.
+• Latency, cost/user, token usage, provider error rate.
+• Feedback hữu ích/không hữu ích và lý do định tính.
+• Không dùng engagement đơn thuần để kết luận AI giúp học tốt hơn.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  36
+13. CHỈ SỐ SẢN PHẨM VÀ ANALYTICS
+Đo xem người dùng có thật sự quản lý tốt hơn hay chỉ mở app nhiều hơn.
+13.1 North Star đề xuất
+ Weekly Coordinated Actions⭐
+Số hành động có giá trị được hoàn thành mỗi tuần thông qua CampusOS: hoàn thành task, tham 
+gia sự kiện, cập nhật skill milestone, đối soát khoản chi hoặc hoàn thành chore. Chỉ số này nên 
+được phân tích theo module và chất lượng, không chạy theo số click.
+13.2 Funnel chính
+Funnel Sự kiện gợi ý
+Activation register → onboarding_completed → first_semester_created 
+→ first_course_created → first_task_completed
+Study retention weekly_active_study_user, assignment_created, 
+task_completed, calendar_viewed
+Roadmap adoption career_goal_selected → roadmap_started → skill_started → 
+skill_completed
+Club activation club_created/joined → first_task_assigned → event_registered 
+→ checkin
+Living activation household_created/joined → first_expense → first_split → 
+first_payment_recorded
+AI value ai_plan_generated → ai_plan_approved → ai_item_completed 
+→ feedback
+13.3 Chỉ số vận hành
+• DAU/WAU/MAU, retention D1/D7/D30 theo cohort và module.
+• P95 latency, error rate, DB connections, slow query, queue lag, job failure.
+• Notification delivery/read/click và tỷ lệ mute để phát hiện spam.
+• Storage usage, upload fail, file orphan.
+• AI cost/user, cost/approved plan, quota hit, latency, validation fail.
+• Support tickets, permission error bất thường, security event.
+13.4 Privacy của analytics
+• Dùng event name và metadata tối thiểu; không gửi nội dung assignment, ghi chú hay tài liệu vào 
+analytics mặc định.
+• Không coi email/tên là event property khi không cần.
+• Có môi trường dev/staging tách khỏi production để không làm bẩn dữ liệu.
+• Document event schema và version để dashboard không sai nghĩa sau khi đổi logic.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  37
+14. ĐỊNH NGHĨA MVP VÀ RANH GIỚI PHẠM VI
+MVP phải tạo ra một vòng lặp giá trị hoàn chỉnh, không phải một danh sách rất 
+dài các trang skeleton.
+14.1 MVP Release 1 - Student Core
+☐ Auth, profile, onboarding, personal workspace.
+☐ Study: semester, course, schedule, assignment, grade cơ bản.
+☐ Task và Calendar dùng dữ liệu thật.
+☐ Dashboard cá nhân dùng dữ liệu thật.
+☐ Notification in-app tối thiểu cho deadline/task.
+☐ Loading/empty/error/not-found, responsive, accessibility cơ bản.
+☐ Authorization, test, build, deploy staging/production.
+14.2 Release 2 - Career Growth
+☐ Career goal, roadmap template/version.
+☐ Skill/lesson/checklist/progress.
+☐ Quiz/project cơ bản.
+☐ Liên kết roadmap task với Task/Calendar.
+☐ AI mentor chỉ sau khi dữ liệu roadmap ổn.
+14.3 Release 3 - Community
+☐ Club workspace, invite/member/role/department.
+☐ Task, event, registration, notification.
+☐ Check-in QR và analytics cơ bản.
+☐ Quỹ/tài liệu ở mức được kiểm soát.
+14.4 Release 4 - Living
+☐ Household, membership.
+☐ Expense, split, debt, payment record.
+☐ Chore và reminder.
+☐ Maintenance/document cơ bản.
+14.5 Release 5 - AI Orchestration
+☐ AI planning, weekly briefing, roadmap recommendation.
+☐ Structured output + approval + tool execution.
+☐ Quota, cost tracking, audit, fallback.
+14.6 Chủ động chưa làm trong MVP đầu
+Không làm ngay Lý do
+Chat realtime toàn hệ thống Scope lớn, moderation và hạ tầng realtime; chưa tạo giá trị 
+cốt lõi hơn Task/Calendar.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  38
+Không làm ngay Lý do
+Thanh toán ngân hàng thật Yêu cầu pháp lý, đối tác, webhook, đối soát và bảo mật cao.
+Marketplace sinh viên Lệch khỏi bốn trụ cột và cần moderation/fraud handling.
+Social feed đầy đủ Dễ biến thành mạng xã hội, tăng moderation và làm loãng 
+sản phẩm.
+Microservices/Kubernetes Chưa có tải thật; tăng chi phí phát triển và vận hành.
+AI tự động toàn quyền Rủi ro dữ liệu/quyền và khó kiểm soát; ưu tiên draft + 
+approval.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  39
+15. CÁC PHASE TRIỂN KHAI CHI TIẾT
+Mỗi phase có mục tiêu, phạm vi, tiêu chí nghiệm thu, test và prompt khung để 
+giao cho AI agent.
+ Trình tự chính🗺️
+Phase 1 Docs → Phase 2 Frontend Skeleton → Phase 3 Design System → Phase 4 Database → 
+Phase 5 Auth & Workspace → Phase 6 Study Slice → Phase 7 Roadmap → Phase 8 Club → Phase 9 
+Living → Phase 10 AI → Phase 11 Admin/Analytics → Phase 12 Production Hardening → Phase 13 
+Deploy & Operate.
+Luật chuyển phase
+1. Mỗi phase phải có phạm vi đóng; không cho agent tự làm sang module tiếp theo.
+2. Build pass chỉ là điều kiện cần. Phải test happy path, validation, permission, exception và data 
+integrity.
+3. Mọi mock còn lại phải được liệt kê; không để mock lẫn với production data mà không đánh dấu.
+4. Sau audit, sửa Critical/High trước; Medium/Low ghi backlog với lý do.
+5. Commit/tag sau mỗi phase để có điểm quay lại.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  40
+PHASE 1. PRODUCT FOUNDATION & DOCUMENTATION
+Chốt vấn đề, phạm vi, kiến trúc và backlog trước khi code.
+ Mục tiêu của phase🎯
+Tạo bộ tài liệu đủ rõ để agent và người phát triển không tự đoán sản phẩm, không thêm tính năng 
+ngoài mục tiêu và biết thứ tự phụ thuộc.
+Điều kiện đầu vào
+• Đã có ý tưởng CampusOS và bốn module chính.
+• Chưa cần code frontend/backend.
+Phạm vi phải hoàn thành
+☐ Tạo PRD.md với vision, persona, user journey, scope và success metrics.
+☐ Tạo DATABASE_SCHEMA.md ở mức khái niệm, chưa cần model thừa.
+☐ Tạo API_SPEC.md hoặc ACTIONS_SPEC.md cho luồng lõi.
+☐ Tạo TASKS.md chia phase, dependency, acceptance criteria.
+☐ Tạo SECURITY_CHECKLIST.md và KNOWN_ISSUES.md.
+☐ Chốt stack và convention repo.
+Ngoài phạm vi trong phase này
+• Không khởi tạo UI.
+• Không viết schema production chi tiết cho module hậu kỳ.
+• Không thêm AI/chat/payment nếu chưa nằm trong scope.
+Dữ liệu và model liên quan
+• Tài liệu markdown trong /docs hoặc thư mục đã chốt.
+Tiêu chí nghiệm thu
+☐ Tài liệu không mâu thuẫn về role/workspace.
+☐ MVP và hậu MVP được tách rõ.
+☐ Mỗi feature có acceptance criteria.
+☐ Không có mock/implementation giả.
+Test tối thiểu
+• Review chéo PRD ↔ schema ↔ task.
+• Kiểm tra route/model/role dùng cùng thuật ngữ.
+• Tìm scope creep và dependency thiếu.
+Deliverable cần có
+• PRD.md
+• DATABASE_SCHEMA.md
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  41
+• API_SPEC.md/ACTIONS_SPEC.md
+• TASKS.md
+• SECURITY_CHECKLIST.md
+• KNOWN_ISSUES.md
+• README gốc mô tả cấu trúc repo.
+Prompt khung để giao cho AI agent
+Bạn là senior product engineer và system architect. Đọc toàn bộ yêu cầu CampusOS. Chỉ tạo/cập nhật tài liệu 
+sản phẩm và kiến trúc; chưa viết code. Chốt MVP, module, shared engine, workspace/RBAC, data flow, edge 
+case, security, phase và acceptance criteria. Không thêm tính năng ngoài phạm vi. Cuối cùng kiểm tra tính 
+nhất quán giữa các tài liệu.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  42
+PHASE 2. FRONTEND SKELETON
+Dựng cấu trúc Next.js, layout và toàn bộ route skeleton.
+ Mục tiêu của phase🎯
+Tạo nền frontend có thể chạy, điều hướng được, responsive cơ bản và tách component hợp lý, 
+nhưng chưa giả vờ có dữ liệu/backend thật.
+Điều kiện đầu vào
+• Phase 1 đã chốt stack và route.
+• Repo chưa có frontend hoặc đã xác định thư mục /web.
+Phạm vi phải hoàn thành
+☐ Khởi tạo Next.js App Router + TypeScript strict + Tailwind + shadcn/ui.
+☐ Dùng cấu trúc src/, alias @/* và npm theo lựa chọn hiện tại.
+☐ Tạo public layout, app layout, sidebar, header, mobile bottom nav.
+☐ Tạo route skeleton cho core + Study + Roadmap + Club + Living + Settings.
+☐ Tạo shared Loading/Empty/Error/NotFound component.
+☐ Mock data tối thiểu chỉ để kiểm tra layout, đặt trong data/mock có đánh dấu rõ.
+Ngoài phạm vi trong phase này
+• Không database.
+• Không auth thật.
+• Không AI/API/business logic giả.
+• Không dựng dashboard quá chi tiết bằng dữ liệu giả.
+Route / bề mặt sản phẩm liên quan
+/
+/login
+/register
+/onboarding
+/dashboard
+/calendar
+/tasks
+/study/**
+/roadmaps/**
+/clubs/**
+/living/**
+/notifications
+/profile
+/settings
+Dữ liệu và model liên quan
+• Chưa tạo model nghiệp vụ; chỉ type UI tối thiểu nếu cần.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  43
+Tiêu chí nghiệm thu
+☐ npm run dev chạy.
+☐ Mọi route mở được và navigation đúng.
+☐ Sidebar không xuất hiện ở login/register.
+☐ Responsive 375/768/1440 không vỡ.
+☐ Không có TypeScript/ESLint error; production build pass.
+Test tối thiểu
+• Navigation link.
+• 404/not-found.
+• Responsive smoke test.
+• Keyboard focus cho menu/form cơ bản.
+Deliverable cần có
+• Frontend trong /web.
+• Cấu trúc app/components/config/lib/types/data rõ.
+• README chạy local.
+• Báo route nào chỉ là placeholder/mock.
+Prompt khung để giao cho AI agent
+Hãy triển khai Phase 2 - Frontend Skeleton cho CampusOS trong /web bằng npm, Next.js App Router, 
+TypeScript strict, Tailwind và shadcn/ui. Chỉ tạo layout, navigation, route skeleton, shared state component và 
+mock tối thiểu để kiểm tra bố cục. Không kết nối database, auth, AI hoặc business logic. Giữ component nhỏ, 
+responsive 375/768/1440, chạy lint/typecheck/build và liệt kê rõ phần còn placeholder.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  44
+PHASE 3. DESIGN SYSTEM & UI FOUNDATION
+Chuẩn hóa giao diện trước khi dữ liệu thật làm UI bị phân mảnh.
+ Mục tiêu của phase🎯
+Xây hệ token và component pattern thống nhất để các module phát triển nhanh mà không mỗi 
+trang một phong cách.
+Điều kiện đầu vào
+• Phase 2 skeleton chạy và route ổn.
+• Có định hướng visual CampusOS.
+Phạm vi phải hoàn thành
+☐ Chốt color tokens, typography, spacing, radius, shadow, status color.
+☐ Chuẩn hóa Button, Input, Select, Date/Time, Dialog, Sheet, Dropdown, Tabs, Badge, Table, Card.
+☐ Tạo pattern page header, filter bar, data list, form section, stat card.
+☐ Chuẩn hóa loading/empty/error/success/permission state.
+☐ Audit accessibility, focus, keyboard, contrast.
+☐ Polish dashboard skeleton ở mức layout, chưa tạo business fake.
+Ngoài phạm vi trong phase này
+• Không thay đổi database/auth.
+• Không viết CRUD thật.
+• Không nhét animation nặng hoặc gradient quá mức.
+Route / bề mặt sản phẩm liên quan
+Các route skeleton hiện có.
+Tiêu chí nghiệm thu
+☐ Token được dùng nhất quán.
+☐ Không duplicate component với cùng chức năng.
+☐ Dark mode chỉ làm nếu đã chốt; nếu chưa thì không ép.
+☐ Responsive và accessibility cơ bản pass.
+☐ Build/lint pass.
+Test tối thiểu
+• Visual QA 375/768/1440.
+• Keyboard navigation.
+• Modal focus/escape.
+• Error/empty/loading component render.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  45
+Deliverable cần có
+• Design token/config.
+• Component catalog hoặc Storybook nếu dự án đã dùng; không bắt buộc.
+• UI guideline ngắn trong docs.
+Prompt khung để giao cho AI agent
+Audit và chuẩn hóa toàn bộ UI foundation của CampusOS. Giữ nguyên kiến trúc, không thêm business feature. 
+Xây token và component pattern dùng chung, polish responsive 375/768/1440, loading/empty/error/success, 
+accessibility và navigation. Không tạo dữ liệu/backend giả. Chạy lint/typecheck/build và báo component nào 
+được chuẩn hóa.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  46
+PHASE 4. DATABASE FOUNDATION
+Thiết kế schema lõi, migration và nguyên tắc dữ liệu trước khi làm 
+auth/business.
+ Mục tiêu của phase🎯
+Tạo nền PostgreSQL/Prisma đủ cho Core, Workspace và Shared Engine trước mắt; chỉ thêm model 
+domain cần cho phase gần nhất.
+Điều kiện đầu vào
+• Phase 1 có schema khái niệm.
+• Stack DB/Auth đã chốt.
+Phạm vi phải hoàn thành
+☐ Cấu hình Prisma/PostgreSQL và env an toàn.
+☐ Tạo User/Profile mapping theo auth provider.
+☐ Tạo Workspace, WorkspaceMember, UserPreference, AuditLog, IdempotencyKey ở mức cần thiết.
+☐ Tạo enum platform role, workspace type, workspace role.
+☐ Thiết kế index, unique, FK, onDelete.
+☐ Tạo migration và seed dev tối thiểu nếu cần.
+☐ Tài liệu cách migrate/reset/seed.
+Ngoài phạm vi trong phase này
+• Không tạo hàng chục model Roadmap/Club/Living chưa dùng.
+• Không hardcode production credential.
+• Không dùng db push thay migration cho production flow.
+Dữ liệu và model liên quan
+• User
+• Profile
+• Workspace
+• WorkspaceMember
+• UserPreference
+• AuditLog
+• IdempotencyKey (nếu dùng từ sớm)
+Tiêu chí nghiệm thu
+☐ prisma format/validate pass.
+☐ Migration chạy trên DB sạch.
+☐ Unique membership/personal workspace có chiến lược rõ.
+☐ Index cho query chính.
+☐ Không cascade nguy hiểm không giải thích.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  47
+Test tối thiểu
+• Migration up trên DB test.
+• Tạo/xóa dữ liệu theo FK.
+• Unique constraint.
+• Seed chạy lặp an toàn nếu được thiết kế idempotent.
+Deliverable cần có
+• schema.prisma
+• Migration files
+• Seed/dev setup
+• DATABASE_SCHEMA.md cập nhật
+• README database.
+Prompt khung để giao cho AI agent
+Đọc PRD và code hiện tại, triển khai Phase 4 - Database Foundation bằng Prisma/PostgreSQL. Chỉ tạo 
+Core/Workspace model cần cho auth và phase gần nhất; không tạo toàn bộ domain tương lai. Thiết kế FK, 
+unique, index, onDelete, migration và seed dev tối thiểu. Không hardcode secret. Chạy prisma format/validate, 
+migration test, lint/typecheck/build và giải thích mọi quyết định schema quan trọng.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  48
+PHASE 5. AUTHENTICATION, PROFILE & WORKSPACE 
+AUTHORIZATION
+Tạo nền danh tính và quyền dùng chung cho mọi module.
+ Mục tiêu của phase🎯
+Hoàn thành đăng ký/đăng nhập/session/profile/onboarding và authorization theo workspace; 
+không trộn platform role với chức danh CLB/phòng trọ.
+Điều kiện đầu vào
+• Phase 4 schema lõi ổn.
+• Auth provider đã chốt trong code/docs.
+Phạm vi phải hoàn thành
+☐ Auth flow: register, login, logout, verify email nếu có, forgot/reset password.
+☐ Session server-side và route protection.
+☐ Profile + onboarding ngắn.
+☐ Tạo Personal Workspace idempotent.
+☐ Platform role USER/PLATFORM_ADMIN.
+☐ Workspace role OWNER/ADMIN/MANAGER/MEMBER/VIEWER.
+☐ Permission matrix code-based cho MVP.
+☐ Guard getCurrentUser/requireUser/requireWorkspacePermission.
+☐ Audit và test IDOR/role escalation.
+Ngoài phạm vi trong phase này
+• Không làm Club/Living đầy đủ.
+• Không invitation flow phức tạp nếu chưa cần.
+• Không admin dashboard đầy đủ.
+• Không AI.
+Route / bề mặt sản phẩm liên quan
+/login
+/register
+/forgot-password
+/reset-password
+/onboarding
+/profile
+/settings
+Các route private hiện có
+Dữ liệu và model liên quan
+• User/Profile
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  49
+• Workspace/WorkspaceMember
+• UserPreference
+• AuditLog
+• Session metadata theo provider nếu cần
+Tiêu chí nghiệm thu
+☐ Register→onboarding→personal workspace→dashboard chạy trọn.
+☐ Guest không vào route private.
+☐ User A không vào dữ liệu User B.
+☐ Role/membership không lấy từ client.
+☐ Không tạo duplicate personal workspace/membership.
+☐ Build và auth/authorization tests pass.
+Test tối thiểu
+• Auth happy/failure/expiry.
+• Onboarding submit lặp.
+• User A/B resource access.
+• Role hierarchy.
+• Last owner rule.
+• Session stale/locked user nếu hỗ trợ.
+Deliverable cần có
+• Auth helpers
+• Authorization helpers
+• Permission matrix
+• Protected routes
+• Tests
+• Docs auth/RBAC.
+Prompt khung để giao cho AI agent
+Triển khai Phase 5 - Authentication, Profile và Workspace Authorization theo code hiện tại. Giữ auth provider đã 
+chọn. Làm register/login/logout/verify/forgot-reset nếu hỗ trợ, session server-side, profile, onboarding và 
+personal workspace idempotent. Xây platform role USER/PLATFORM_ADMIN, workspace role 
+OWNER/ADMIN/MANAGER/MEMBER/VIEWER và permission matrix code-based. Không tin userId/role từ client; 
+middleware không phải lớp bảo mật duy nhất. Audit IDOR/role escalation, chạy test/typecheck/lint/build và 
+không chuyển sang module nghiệp vụ.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  50
+PHASE 6. STUDY VERTICAL SLICE + SHARED TASK/CALENDAR
+Biến skeleton thành vòng lặp giá trị đầu tiên dùng dữ liệu thật.
+ Mục tiêu của phase🎯
+Hoàn thành luồng Semester → Course → Schedule → Assignment → Task → Calendar → Dashboard 
+với transaction, permission và trạng thái UI đầy đủ.
+Điều kiện đầu vào
+• Phase 5 auth/workspace ổn.
+• Database migration và convention query/service đã rõ.
+Phạm vi phải hoàn thành
+☐ Tạo Semester CRUD.
+☐ Tạo Course CRUD trong semester.
+☐ Tạo nhiều CourseSchedule.
+☐ Tạo Assignment với validation.
+☐ Tạo/liên kết Task + CalendarEvent nhất quán, chống request lặp.
+☐ Hoàn thiện /tasks, /calendar và /dashboard bằng dữ liệu thật từ Study.
+☐ Grade cơ bản và course detail.
+☐ Loading/empty/error/not-found và responsive.
+☐ Audit data integrity, IDOR, timezone, query performance.
+Ngoài phạm vi trong phase này
+• Không AI lập kế hoạch.
+• Không Roadmap/Club/Living.
+• Không Google Calendar sync.
+• Không realtime nếu chưa cần.
+Route / bề mặt sản phẩm liên quan
+/study
+/study/semesters
+/study/courses
+/study/courses/[id]
+/study/grades
+/tasks
+/calendar
+/dashboard
+Dữ liệu và model liên quan
+• Semester
+• Course
+• CourseSchedule
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  51
+• Assignment
+• GradeCategory/GradeItem tối thiểu
+• Task
+• CalendarEvent
+• Notification tối thiểu nếu có
+Tiêu chí nghiệm thu
+☐ Luồng tạo assignment xuất hiện đúng ở Course, Task, Calendar, Dashboard.
+☐ Refresh không mất dữ liệu; không còn mock ở route trong scope.
+☐ Chỉnh deadline/status đồng bộ đúng.
+☐ User A/B test pass.
+☐ Timezone không lệch ngày.
+☐ Transaction/idempotency test pass.
+☐ Build pass.
+Test tối thiểu
+• Semester/date validation.
+• Course foreign ownership.
+• Schedule time validation.
+• Assignment transaction rollback.
+• Duplicate submit.
+• Task status sync.
+• Calendar timezone.
+• Dashboard empty state/N+1.
+Deliverable cần có
+• Schema/migration Study + Shared.
+• CRUD UI + server service.
+• Tests.
+• Audit report và danh sách mock còn lại.
+Prompt khung để giao cho AI agent
+Triển khai Phase 6 - Study Vertical Slice cho CampusOS. Đọc auth/workspace hiện tại và tái sử dụng guard. 
+Làm Semester, Course, CourseSchedule, Assignment, Grade cơ bản; khi tạo/cập nhật Assignment phải đồng bộ 
+Task và CalendarEvent bằng service/transaction/idempotency. Hoàn thiện /study, /tasks, /calendar, /dashboard 
+bằng DB thật, đầy đủ loading/empty/error/not-found. Test user A/B, validation, duplicate request, rollback, 
+timezone, query performance; không làm Roadmap/Club/Living/AI.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  52
+PHASE 7. ROADMAP & SKILL PROGRESSION
+Tạo lộ trình nghề nghiệp có cấu trúc và tiến độ thật.
+ Mục tiêu của phase🎯
+Cho người dùng chọn mục tiêu, theo roadmap versioned, học skill/lesson, làm quiz/project và đưa 
+công việc học vào Task/Calendar khi họ chủ động.
+Điều kiện đầu vào
+• Phase 6 shared Task/Calendar ổn.
+• Mô hình CareerPath/Roadmap đã được review.
+Phạm vi phải hoàn thành
+☐ Career goal onboarding/update.
+☐ Roadmap template + version + node prerequisite.
+☐ User roadmap instance/copy hoặc progress mapping.
+☐ Skill detail, lesson, resource, checklist.
+☐ Progress state và cách tính phần trăm có trọng số.
+☐ Quiz/self-assessment cơ bản.
+☐ Project/milestone cơ bản.
+☐ Tạo task học từ roadmap và đưa vào calendar theo user action.
+☐ Admin seed/manage template tối thiểu bằng script hoặc route nội bộ an toàn.
+Ngoài phạm vi trong phase này
+• Không AI mentor tự động ở đầu phase.
+• Không community marketplace/chia sẻ roadmap công khai.
+• Không chứng chỉ chính thức.
+Route / bề mặt sản phẩm liên quan
+/roadmaps
+/roadmaps/[id]
+/skills/[id]
+/projects/[id]
+Dashboard widget roadmap
+Dữ liệu và model liên quan
+• CareerPath
+• RoadmapTemplate
+• RoadmapVersion
+• RoadmapNode
+• Skill
+• Lesson
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  53
+• LearningResource
+• UserRoadmap/UserSkillProgress
+• Quiz/QuizAttempt
+• PortfolioProject
+Tiêu chí nghiệm thu
+☐ User chọn roadmap và thấy tiến độ thật.
+☐ Template update không phá progress cũ nhờ version.
+☐ Prerequisite/status rule nhất quán.
+☐ Task từ roadmap có source đúng.
+☐ Resource URL an toàn.
+☐ Build/test pass.
+Test tối thiểu
+• Progress calculation.
+• Version migration behavior.
+• Prerequisite.
+• User A/B.
+• Quiz scoring.
+• Task mapping duplicate.
+Deliverable cần có
+• Roadmap schema/migration.
+• Template seed/version strategy.
+• UI và service.
+• Test và docs.
+Prompt khung để giao cho AI agent
+Triển khai Phase 7 - Roadmap & Skill Progression. Dùng Task/Calendar hiện có, không tạo engine mới. Xây 
+CareerPath, roadmap template/version, node prerequisite, skill/lesson/resource, progress có trọng số, quiz và 
+project cơ bản. Cho user chủ động tạo task/calendar từ roadmap. Bảo vệ dữ liệu cá nhân, validate resource, 
+test progress/version/prerequisite/duplicate mapping, chạy lint/typecheck/test/build. Chưa làm AI mentor hoặc 
+social roadmap.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  54
+PHASE 8. CLUB WORKSPACE & TEAM MANAGEMENT
+Mở rộng CampusOS từ cá nhân sang cộng tác CLB có quyền rõ.
+ Mục tiêu của phase🎯
+Hoàn thành Club Workspace, thành viên, ban/chức danh, task, sự kiện, đăng ký, check-in và 
+notification; tái sử dụng workspace/RBAC/Task/Calendar.
+Điều kiện đầu vào
+• Phase 5 workspace authorization đã được audit.
+• Task/Calendar/Notification đủ ổn để dùng chung.
+Phạm vi phải hoàn thành
+☐ Tạo Club Profile gắn Workspace type CLUB.
+☐ Invitation/join flow.
+☐ Member, role workspace, department và position nghiệp vụ.
+☐ Task CLB, assignee và view theo ban.
+☐ Event lifecycle: draft/published/closed/cancelled.
+☐ Registration, capacity/waitlist nếu cần.
+☐ QR check-in an toàn ở mức MVP.
+☐ Announcement/notification.
+☐ Dashboard CLB.
+☐ Audit đổi role/member/event/check-in.
+Ngoài phạm vi trong phase này
+• Không chat realtime.
+• Không social feed toàn trường.
+• Quỹ nâng cao có thể tách subphase nếu scope lớn.
+• Không tự tạo permission động DB nếu matrix hiện tại đủ.
+Route / bề mặt sản phẩm liên quan
+/clubs
+/clubs/[id]
+/members
+/departments
+/tasks
+/events
+/finance (nếu có subphase)
+/documents
+/settings
+Dữ liệu và model liên quan
+• ClubProfile
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  55
+• Department
+• Position
+• Invitation
+• ClubMemberProfile
+• ClubEvent
+• EventRegistration
+• EventCheckin
+• Announcement
+• Task/Calendar/Notification dùng chung
+Tiêu chí nghiệm thu
+☐ Tạo CLB → mời → tham gia → giao task → đăng ký sự kiện → check-in chạy trọn.
+☐ Role hierarchy/last owner đúng.
+☐ Member bị remove mất quyền server-side.
+☐ QR không chỉ là ID tĩnh dễ giả.
+☐ Không lộ dữ liệu CLB khác.
+☐ Build/test pass.
+Test tối thiểu
+• Invite expiry/reuse.
+• Duplicate membership.
+• Role escalation.
+• Event capacity concurrency.
+• Check-in duplicate/expired token.
+• Removed member stale page.
+Deliverable cần có
+• Club schema/migration.
+• Member/event/task UI.
+• Permission tests.
+• Audit log.
+• Docs role/chức danh.
+Prompt khung để giao cho AI agent
+Triển khai Phase 8 - Club Workspace. Tái sử dụng Workspace/RBAC, Task, Calendar, Notification; không xây 
+auth hoặc task engine mới. Làm Club Profile, invitation/member, department/position, role/permission, task, 
+event lifecycle, registration, QR check-in an toàn, announcement và dashboard. Test IDOR, role escalation, last 
+owner, invite/check-in duplicate, capacity concurrency; audit thao tác nhạy cảm. Không thêm chat/social feed.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  56
+PHASE 9. LIVING, SHARED FINANCE & CHORES
+Quản lý nhóm ở trọ với dữ liệu tài chính nhất quán.
+ Mục tiêu của phase🎯
+Hoàn thành Household Workspace, expense, split, debt, payment record và chore; giữ lịch sử và 
+audit cho thao tác tài chính.
+Điều kiện đầu vào
+• Workspace/RBAC ổn.
+• Đã thống nhất ledger/split/payment rule và currency MVP.
+Phạm vi phải hoàn thành
+☐ Tạo Household Profile + invitation/member.
+☐ Expense CRUD theo trạng thái; chứng từ tùy chọn.
+☐ Split: equal, exact, percentage, weight/days.
+☐ Debt projection từ expense split và payment.
+☐ Ghi nhận payment, đối soát và lịch sử.
+☐ Chore, assignee, recurrence tối thiểu, Task/Calendar integration.
+☐ Reminder/notification.
+☐ Dashboard Living theo tháng.
+☐ Export/report cơ bản nếu còn thời gian.
+Ngoài phạm vi trong phase này
+• Không thanh toán ngân hàng thật.
+• Không multi-currency.
+• Không kế toán doanh nghiệp.
+• Không xóa cứng transaction đã đối soát.
+Route / bề mặt sản phẩm liên quan
+/living
+/living/[id]
+/expenses
+/debts
+/payments
+/chores
+/maintenance (có thể subphase)
+/documents
+/settings
+Dữ liệu và model liên quan
+• HouseholdProfile
+• Expense
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  57
+• ExpenseSplit
+• Payment
+• Chore
+• ChoreAssignment
+• MaintenanceRequest (optional)
+• RentalDocument (optional)
+• Task/Calendar/Notification/File dùng chung
+Tiêu chí nghiệm thu
+☐ Tạo expense → split → debt → payment chạy đúng và tổng khớp.
+☐ Rounding rule có test.
+☐ Rời household không làm mất lịch sử nợ.
+☐ Finance permission đúng.
+☐ Không duplicate payment/request.
+☐ Chore xuất hiện Task/Calendar đúng.
+☐ Build/test pass.
+Test tối thiểu
+• Split equal/exact/%/weight.
+• Rounding remainder.
+• Concurrent payment.
+• Delete/edit reconciled transaction.
+• Removed member with debt.
+• User A/B/role permission.
+Deliverable cần có
+• Finance domain doc.
+• Schema/migration.
+• UI/service/tests.
+• Audit và report cơ bản.
+Prompt khung để giao cho AI agent
+Triển khai Phase 9 - Living & Shared Finance. Tái sử dụng Household Workspace, Task, Calendar, Notification 
+và File. Thiết kế expense/split/payment/debt rõ, tổng split khớp amount, rounding deterministic, 
+transaction/idempotency, không hard delete dữ liệu đã đối soát. Làm chore integration. Test concurrency, 
+duplicate, role permission, member rời còn nợ, audit và build. Không tích hợp thanh toán thật hoặc multi-
+currency.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  58
+PHASE 10. AI ASSISTANT & AUTOMATION
+Biến dữ liệu CampusOS thành kế hoạch và gợi ý có thể hành động.
+ Mục tiêu của phase🎯
+Xây AI Gateway, context có quyền, structured output, plan approval và tool execution an toàn cho 
+Study/Roadmap trước; mở rộng Club/Living sau.
+Điều kiện đầu vào
+• Dữ liệu thật và rule domain của các module đã ổn.
+• Có metrics/quota plan và AI provider đã chọn.
+Phạm vi phải hoàn thành
+☐ AI Gateway: auth, rate limit, quota, model config.
+☐ Context Builder có workspace/resource scope.
+☐ Use case 1: study/exam planner.
+☐ Use case 2: weekly priority briefing.
+☐ Use case 3: roadmap next-step mentor.
+☐ Structured output schema + validation.
+☐ AiPlan/AiPlanItem với DRAFT→APPROVED→APPLIED.
+☐ Tool executor có permission/idempotency/audit.
+☐ Fallback/error/cost tracking.
+☐ Feedback hữu ích/không hữu ích.
+Ngoài phạm vi trong phase này
+• Không cho AI tự đổi role/xóa/tài chính.
+• Không RAG toàn bộ file ngay nếu File permission/chunking chưa ổn.
+• Không “AI everywhere” trên mọi trang.
+Route / bề mặt sản phẩm liên quan
+/assistant hoặc panel dùng chung
+/ai/plans/[id] (nếu cần)
+Dashboard AI insight
+Roadmap/Study action entry
+Dữ liệu và model liên quan
+• AiConversation/AiMessage tối thiểu
+• AiPlan
+• AiPlanItem
+• AiUsageEvent
+• AiFeedback
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  59
+• Outbox/Job nếu apply async
+Tiêu chí nghiệm thu
+☐ AI chỉ đọc context được phép.
+☐ Plan validate và user duyệt trước khi ghi dữ liệu.
+☐ Tool call trái quyền bị chặn.
+☐ Provider lỗi không tạo dữ liệu một phần.
+☐ Quota/rate limit/cost ghi nhận.
+☐ Prompt injection test cơ bản.
+Test tối thiểu
+• Structured output invalid.
+• Provider timeout/rate limit.
+• Cross-workspace context leak.
+• Unauthorized tool.
+• Duplicate apply.
+• Conflict calendar.
+• Quota exceed.
+Deliverable cần có
+• AI architecture doc.
+• Prompt/tool schema versioned.
+• Gateway/context/tool code.
+• Plan UI.
+• Security/evaluation report.
+Prompt khung để giao cho AI agent
+Triển khai Phase 10 - AI Assistant theo kiến trúc gateway → authorized context → structured output → plan 
+approval → guarded tools. Ưu tiên Study planner, weekly briefing và Roadmap mentor. Không cho model tự 
+quyết userId/workspace/permission; tool server-side guard, idempotency, audit, quota/cost/rate limit. Validate 
+output, xử lý provider lỗi, test cross-tenant leak/prompt injection/duplicate apply/conflict. Không tự động thao 
+tác role, xóa hoặc tài chính.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  60
+PHASE 11. PLATFORM ADMIN, MODERATION & ANALYTICS
+Tạo năng lực vận hành mà không biến admin thành quyền đọc mọi thứ vô hạn.
+ Mục tiêu của phase🎯
+Xây admin dashboard, user/workspace moderation, roadmap template management, audit 
+viewer, AI usage và product analytics cơ bản.
+Điều kiện đầu vào
+• Platform permission đã ổn.
+• Có audit log và analytics event schema.
+Phạm vi phải hoàn thành
+☐ Admin layout và server guard.
+☐ User status: view metadata cần thiết, lock/unlock, revoke session.
+☐ Workspace/report moderation.
+☐ Roadmap template/version management.
+☐ Audit log viewer có filter.
+☐ AI usage/quota/job health.
+☐ Product metrics cơ bản.
+☐ Support access có policy và audit nếu cần.
+Ngoài phạm vi trong phase này
+• Không cho admin mặc định đọc nội dung riêng tư.
+• Không xây permission builder động nếu chưa cần.
+• Không chỉnh dữ liệu tài chính người dùng tùy tiện.
+Route / bề mặt sản phẩm liên quan
+/admin
+/admin/users
+/admin/workspaces
+/admin/reports
+/admin/roadmaps
+/admin/ai-usage
+/admin/audit-logs
+/admin/system
+Dữ liệu và model liên quan
+• Report/Moderation models nếu cần
+• AdminAction/AuditLog dùng chung
+• Roadmap template models hiện có
+• Analytics read model/aggregation
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  61
+Tiêu chí nghiệm thu
+☐ Mọi admin action kiểm tra server-side.
+☐ Không dựa vào middleware/JWT cũ làm nguồn duy nhất.
+☐ Audit đầy đủ.
+☐ Không lộ content ngoài policy.
+☐ Dashboard dùng dữ liệu thật và pagination.
+☐ Build/test pass.
+Test tối thiểu
+• Non-admin direct API.
+• Stale role/session.
+• Self privilege change.
+• Audit integrity.
+• Pagination/filter.
+• Sensitive field redaction.
+Deliverable cần có
+• Admin UI/service/tests.
+• Moderation policy doc.
+• Analytics dashboard sơ bộ.
+• Audit review.
+Prompt khung để giao cho AI agent
+Triển khai Phase 11 - Platform Admin, Moderation & Analytics. Tất cả route/action phải require platform 
+permission server-side; middleware chỉ UX. Làm user status/session revoke, workspace/report moderation, 
+roadmap template/version, audit viewer, AI usage/job health và metrics cơ bản. Hạn chế đọc nội dung riêng tư, 
+redact field, audit mọi action. Test non-admin, stale role, self-escalation, pagination và build.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  62
+PHASE 12. PRODUCTION HARDENING & SCALE READINESS
+Đưa toàn hệ thống từ “chạy được” đến “đủ tin cậy để vận hành”.
+ Mục tiêu của phase🎯
+Audit toàn bộ security, data integrity, performance, accessibility, observability, backup, 
+dependency và tải; sửa Critical/High trước release.
+Điều kiện đầu vào
+• Các module release mục tiêu đã hoàn thành.
+• Có staging gần production.
+Phạm vi phải hoàn thành
+☐ Full security audit: auth, IDOR, RBAC, upload, XSS, CSRF, rate limit, secret, AI.
+☐ Data integrity audit: orphan, duplicate, transaction, cascade, finance reconciliation.
+☐ Performance: slow query, index, N+1, bundle, image, cache.
+☐ Load test luồng nóng.
+☐ Accessibility audit.
+☐ Error/empty/loading/offline review.
+☐ Observability: logs, metrics, traces, alerts, job dashboard.
+☐ Backup/restore drill.
+☐ Dependency/license/vulnerability review.
+☐ Privacy/retention review.
+Ngoài phạm vi trong phase này
+• Không rewrite toàn project chỉ để “clean code”.
+• Không thêm feature mới.
+• Không tối ưu microservice khi chưa có số liệu.
+Dữ liệu và model liên quan
+• Toàn bộ model production
+Tiêu chí nghiệm thu
+☐ Không còn Critical/High chưa xử lý hoặc phải có risk acceptance rõ.
+☐ Build/test/e2e pass.
+☐ SLO/alert baseline.
+☐ Backup restore đã thử.
+☐ Load test đạt target release.
+☐ Responsive/accessibility đạt checklist.
+Test tối thiểu
+• E2E critical journeys.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  63
+• Authorization matrix.
+• Concurrency/duplicate.
+• Load/rate limit.
+• Failure injection cho provider/job.
+• Backup restore.
+• Security scans.
+Deliverable cần có
+• Audit report theo severity.
+• Fix log.
+• Performance baseline.
+• SLO/runbook.
+• Release checklist.
+Prompt khung để giao cho AI agent
+Bạn là senior full-stack, security, QA và SRE. Audit toàn bộ CampusOS production readiness, chưa sửa code 
+trước. Kiểm tra auth/RBAC/IDOR/upload/XSS/CSRF/rate-limit/secret/AI, data integrity/concurrency/finance, 
+query/index/N+1/bundle/cache, accessibility, error states, observability, backup/restore, dependency và 
+privacy. Phân loại Critical/High/Medium/Low; sửa Critical/High tối thiểu, không thêm feature/rewrite. Chạy full 
+test/typecheck/lint/build/load smoke và tạo release report.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  64
+PHASE 13. DEPLOYMENT, OBSERVABILITY & OPERATIONS
+Release có kiểm soát và có khả năng phát hiện/phục hồi sự cố.
+ Mục tiêu của phase🎯
+Triển khai staging/production, migration an toàn, worker/job, monitoring, alert, runbook và quy 
+trình rollback.
+Điều kiện đầu vào
+• Phase 12 quality gate đạt.
+• Đã chốt cloud/provider/region và ngân sách.
+Phạm vi phải hoàn thành
+☐ Tách env local/staging/production.
+☐ CI: install, lint, typecheck, test, build, migration checks.
+☐ CD staging trước, smoke/e2e rồi production.
+☐ Migration deploy có backup và rollback/forward fix plan.
+☐ Cấu hình domain/HTTPS/CSP/env/secret.
+☐ Deploy worker/queue nếu dùng.
+☐ Monitoring log/metric/trace, alert error/latency/job/DB.
+☐ Runbook: outage, DB, auth, AI provider, storage, queue.
+☐ Feature flag/gradual rollout nếu phù hợp.
+☐ Post-release monitoring và incident review.
+Ngoài phạm vi trong phase này
+• Không chạy migration phá dữ liệu trực tiếp không backup.
+• Không deploy production từ máy cá nhân không kiểm soát.
+• Không log secret/PII.
+Dữ liệu và model liên quan
+• Deployment config
+• Migration history
+• Observability data
+• Feature flags nếu dùng
+Tiêu chí nghiệm thu
+☐ Staging giống production ở cấu hình quan trọng.
+☐ Production deploy repeatable.
+☐ Health check/monitoring/alert hoạt động.
+☐ Rollback hoặc forward fix được diễn tập.
+☐ Migration và worker không lệch version.
+☐ Runbook đủ để xử lý sự cố phổ biến.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  65
+Test tối thiểu
+• Smoke auth/dashboard/study.
+• Critical E2E sau deploy.
+• Health endpoint.
+• Alert test.
+• Backup/restore/rollback drill.
+• Job retry/dead-letter.
+Deliverable cần có
+• CI/CD files.
+• Environment matrix.
+• Deployment guide.
+• Runbook.
+• Release notes.
+• Post-deploy checklist.
+Prompt khung để giao cho AI agent
+Triển khai Phase 13 - Deployment & Operations. Thiết lập CI lint/typecheck/test/build, staging→production CD, 
+migration an toàn, secret/env, domain/HTTPS/security headers, worker/queue nếu có, logs/metrics/traces/alerts 
+và runbook. Test smoke/E2E/health/alert/backup/rollback. Không log PII/secret, không deploy phá dữ liệu. Báo 
+rõ cấu hình, kết quả và giới hạn vận hành.
+ Cổng chất lượng trước khi sang phase tiếp theo🚧
+Không sang phase tiếp theo nếu còn lỗi build, lỗi TypeScript/ESLint, route chính còn mock ngoài 
+phạm vi cho phép, hoặc luồng chính chưa chạy trọn vẹn từ UI đến database.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  66
+16. QUY TRÌNH TEST, REVIEW VÀ DEFINITION OF DONE
+“Build pass” không đồng nghĩa “feature đúng”. Mỗi vertical slice phải qua nhiều  
+lớp kiểm tra.
+16.1 Test pyramid thực dụng
+Lớp Mục tiêu Ví dụ
+Unit Rule thuần, nhanh, nhiều case. Progress, split/rounding, permission 
+matrix, date validation.
+Integration DB/service/transaction/authorization. Tạo assignment sinh task/calendar; 
+expense split/payment; invitation.
+Component/UI Form, state, interaction. Validation error, pending state, empty 
+state, dialog.
+E2E Luồng người dùng quan trọng. Register→onboarding→semester→cours
+e→assignment→dashboard.
+Security/Abuse Tấn công logic/quyền. User A/B, role escalation, rate limit, 
+file/AI tool abuse.
+Load/Resilience Tải và lỗi phụ thuộc. Concurrent registration/event/payment; 
+provider timeout; queue retry.
+16.2 Definition of Done cho một feature
+☐ Yêu cầu và out-of-scope rõ; không có scope creep.
+☐ Schema/migration/service/UI/document cùng dùng thuật ngữ nhất quán.
+☐ Auth/authorization server-side và tenant scope đã test.
+☐ Validation, duplicate request, concurrency và transaction đã đánh giá.
+☐ Loading, empty, success, error, not-found, permission và mobile state hoàn chỉnh.
+☐ Không còn mock trong phạm vi feature hoặc mock được đánh dấu rõ chỉ cho dev/demo.
+☐ Unit/integration/E2E cần thiết pass; regression test được thêm cho bug đã sửa.
+☐ Typecheck, lint, test, production build pass; không che lỗi bằng any/@ts-ignore/tắt rule.
+☐ Performance query/index được review; không N+1 rõ ràng.
+☐ Docs/README/changelog cập nhật; commit rõ ràng.
+16.3 Quy trình audit trước khi sửa
+1. Đọc code và tái hiện; không kết luận từ tên file hoặc tài liệu cũ.
+2. Liệt kê finding với file, logic, cách tái hiện, ảnh hưởng và severity.
+3. Phân biệt bug thật, technical debt, improvement và feature request.
+4. Sửa Critical/High trước; tránh rewrite nếu bản sửa tối thiểu đủ an toàn.
+5. Chạy regression test, typecheck, lint, build; kiểm tra route liên quan bằng trình duyệt.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  67
+16.4 Severity
+Severity Định nghĩa Ví dụ
+Critical Mất dữ liệu, bypass auth/quyền nghiêm 
+trọng, rò dữ liệu diện rộng, hệ thống 
+không dùng được.
+Cross-tenant read/write, finance 
+corruption, secret leak.
+High Ảnh hưởng lớn tới luồng chính/an toàn 
+nhưng có phạm vi hoặc workaround.
+Role escalation hạn chế, transaction tạo 
+dữ liệu dở dang, auth flow hỏng.
+Medium Lỗi cục bộ, UX/logic không lý tưởng, 
+performance có tác động nhưng chưa 
+nghiêm trọng.
+Thiếu validation edge, slow query, 
+mobile overflow.
+Low Polish, consistency, maintainability ít rủi 
+ro.
+Spacing, naming, minor duplication.
+16.5 Lệnh quality gate tham khảo
+npm run lint
+npm run typecheck
+npm run test
+npm run test:e2e   # khi đã có
+npm run build
+npx prisma format
+npx prisma validate
+npx prisma migrate deploy  # staging/production theo quy trình
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  68
+17. TRIỂN KHAI PRODUCTION, VẬN HÀNH VÀ SCALE
+Thiết kế để phát triển từ MVP nhưng chỉ trả chi phí phức tạp khi có nhu cầu đo 
+được.
+17.1 Môi trường
+Môi trường Mục đích Quy tắc
+Local Phát triển cá nhân. DB riêng/dev, seed an toàn, không 
+dùng secret production.
+Preview Mỗi PR nếu nền tảng hỗ trợ. Dữ liệu tạm, không chứa PII thật.
+Staging Kiểm tra gần production. Cùng loại DB/storage/worker, 
+migration và smoke/E2E trước 
+release.
+Production Người dùng thật. Secret manager, backup, monitoring, 
+alert, quyền truy cập tối thiểu.
+17.2 Thành phần hạ tầng theo nhu cầu
+Thành phần Dùng khi Không nên dùng để
+PostgreSQL Nguồn dữ liệu chính, transaction, 
+relation.
+Lưu file lớn hoặc log vô hạn.
+Object Storage + CDN Tài liệu, ảnh, hóa đơn, avatar. Cho public mọi file nhạy cảm; phải dùng 
+signed URL/quyền.
+Redis Rate limit, cache ngắn, lock nhẹ, 
+session metadata tùy kiến trúc.
+Làm nguồn sự thật lâu dài cho dữ liệu 
+nghiệp vụ.
+Queue/Worker AI, email/push, import, report, cleanup, 
+notification scheduling.
+Đưa mọi request đơn giản vào queue 
+không cần thiết.
+Observability Log/metric/trace/alert. Ghi toàn bộ PII/prompt nhạy cảm.
+Warehouse/Analytics Phân tích product ở quy mô lớn. Query trực tiếp production DB nặng cho 
+dashboard phân tích.
+17.3 SLO ban đầu đề xuất
+Chỉ số Mục tiêu khởi đầu Ghi chú
+Availability web core 99.5%/tháng ở MVP production Nâng khi có nhu cầu và hạ tầng/đội vận 
+hành.
+P95 interaction API < 800ms cho luồng thường Không tính AI generation dài; đo riêng.
+Error rate core < 1% request hợp lệ Phân tách validation 4xx và server 5xx.
+AI plan latency Theo provider; hiển thị progress/status Có timeout và retry/fallback.
+Queue lag Cảnh báo theo loại job Deadline notification cần ngưỡng chặt 
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  69
+Chỉ số Mục tiêu khởi đầu Ghi chú
+hơn report.
+RPO/RTO Xác định theo giai đoạn Phải test restore, không chỉ có backup 
+trên giấy.
+17.4 Runbook tối thiểu
+• Web/API error tăng đột biến.
+• Database hết connection, slow query, migration lỗi.
+• Auth provider outage hoặc session lỗi.
+• Object storage/upload lỗi.
+• AI provider timeout/rate limit/cost spike.
+• Queue lag/job fail/dead-letter.
+• Notification gửi trùng hoặc spam.
+• Security incident: token/secret leak, cross-tenant bug, account compromise.
+• Rollback/forward fix và thông báo người dùng.
+17.5 Chuẩn bị cho 1 triệu user
+ Tư duy đúng🚀
+Giữ tenant scope, index, pagination, idempotency, event boundary và observability ngay từ đầu. 
+Khi tải tăng, dùng số liệu để tối ưu query/cache/worker rồi mới tách module. Đây là “scale-ready”, 
+không phải “build toàn bộ hạ tầng scale ngay”.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  70
+PHỤ LỤC. DANH MỤC THAM CHIẾU NHANH
+Route, model, checklist và mẫu review để dùng hằng ngày khi phát triển.
+A. Route checklist
+☐ Public: /, /login, /register, /forgot-password, /reset-password
+☐ Core: /onboarding, /dashboard, /tasks, /calendar, /notifications, /profile, /settings
+☐ Study: /study, /study/semesters, /study/courses, /study/courses/[id], /study/grades
+☐ Roadmap: /roadmaps, /roadmaps/[id], /skills/[id], /projects/[id]
+☐ Club: /clubs, /clubs/[id], /members, /departments, /tasks, /events, /finance, /documents, /settings
+☐ Living: /living, /living/[id], /expenses, /debts, /payments, /chores, /maintenance, /documents, /settings
+☐ Admin: /admin, /users, /workspaces, /reports, /roadmaps, /ai-usage, /audit-logs, /system
+B. Model checklist theo thứ tự tạo
+Phase Model chính
+4 User, Profile, Workspace, WorkspaceMember, 
+UserPreference, AuditLog, IdempotencyKey.
+6 Semester, Course, CourseSchedule, Assignment, Grade*, 
+Task, CalendarEvent, Notification tối thiểu.
+7 CareerPath, RoadmapTemplate/Version/Node, Skill, Lesson, 
+Resource, Progress, Quiz, Project.
+8 ClubProfile, Department, Position, Invitation, 
+ClubMemberProfile, Event, Registration, Checkin, 
+Announcement.
+9 HouseholdProfile, Expense, ExpenseSplit, Payment, Chore, 
+Maintenance/Document tùy scope.
+10 AiConversation/Message tối thiểu, AiPlan, AiPlanItem, 
+AiUsageEvent, AiFeedback, Outbox/Job nếu cần.
+11 Report/Moderation và read model/aggregation nếu cần.
+C. Checklist review một server action/API
+☐ Có schema validation và normalize input?
+☐ Lấy current user từ session server-side?
+☐ Scope workspace/resource trong query?
+☐ Kiểm tra permission ở server?
+☐ Không nhận field hệ thống như ownerId/role từ client?
+☐ Xử lý not found/forbidden an toàn, không lộ metadata?
+☐ Có transaction/idempotency/concurrency strategy nếu cần?
+☐ Select field tối thiểu; không trả secret/PII thừa?
+☐ Có audit cho thao tác nhạy cảm?
+☐ Có test happy/validation/permission/duplicate/failure?
+☐ UI có pending/success/error/recovery?
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  71
+D. Checklist review một page
+☐ Dữ liệu thật hay mock? Mock có đánh dấu và không vào production?
+☐ Loading/empty/error/not-found/permission state?
+☐ Responsive 375/768/1440?
+☐ Keyboard/focus/label/contrast?
+☐ Query có pagination/index/N+1?
+☐ Link/CTA hoạt động đúng?
+☐ Không lộ dữ liệu tenant khác trong HTML/server payload?
+☐ Refresh/back/forward không làm mất hoặc nhân đôi dữ liệu?
+☐ Timezone/format ngày/số tiền nhất quán?
+E. Checklist trước commit/merge
+□ Scope đúng phase
+□ Không thêm feature ngoài yêu cầu
+□ Không còn debug log/secret/mock không kiểm soát
+□ Prisma format/validate + migration review
+□ lint pass
+□ typecheck pass
+□ unit/integration test pass
+□ E2E critical path pass (nếu có)
+□ production build pass
+□ responsive/visual smoke
+□ docs/changelog cập nhật
+□ commit message rõ
+F. Mẫu báo cáo hoàn thành phase
+1. Mục tiêu phase
+2. Các file/model/route đã tạo hoặc sửa
+3. Luồng đã chạy thật
+4. Route đã bỏ mock / route còn mock
+5. Migration và dữ liệu
+6. Auth/permission đã áp dụng
+7. Test đã thêm và kết quả
+8. Kết quả lint/typecheck/test/build
+9. Lỗi/giới hạn còn lại theo severity
+10. Điều kiện để bắt đầu phase tiếp theo
+G. Mẫu prompt audit cuối mỗi phase
+Bạn là senior full-stack engineer, QA và security reviewer. Hãy audit riêng Phase <N> dựa trên code thực tế; 
+chưa sửa code trước. Kiểm tra scope/route còn mock, schema/FK/index/cascade, auth/RBAC/IDOR, validation, 
+transaction/idempotency/concurrency, data sync/orphan/duplicate, loading/empty/error/not-found, 
+responsive/accessibility, query/N+1, test và build. Với mỗi finding ghi file, nguyên nhân, cách tái hiện, ảnh 
+hưởng, severity và cách sửa tối thiểu. Sau audit chỉ sửa Critical/High, không rewrite hoặc thêm feature; chạy 
+typecheck/lint/test/build và báo Medium/Low còn lại.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  72
+H. Tuyên bố kiến trúc cuối cùng
+ CampusOS = một nền tảng, không phải bốn app🏁
+Study và Roadmap tạo giá trị cá nhân; Club và Living tạo giá trị cộng tác. Task, Calendar, 
+Notification, Workspace, File, Audit và AI kết nối chúng. Mỗi phase phải bảo vệ nguyên tắc này 
+đồng thời giữ domain rule riêng, tránh vừa duplicate code vừa tạo generic abstraction khó hiểu.
+CAMPUSOS  |  PRODUCT BLUEPRINT
+CampusOS - Tài liệu mô tả sản phẩm, yêu cầu và lộ trình triển khai  |  73
+KẾT. BẢN TÓM TẮT QUYẾT ĐỊNH
+Những quyết định quan trọng nhất cần được giữ ổn định trong suốt quá trình 
+vibe code.
+1. CampusOS phục vụ bốn trụ cột: Study, Roadmap, Community và Living.
+2. Một tài khoản, một personal workspace và nhiều shared workspace.
+3. Platform role đơn giản; workspace role/permission xử lý quyền theo ngữ cảnh.
+4. Task, Calendar, Notification, File, Audit và AI là nền dùng chung.
+5. Làm theo vertical slice; Study là slice đầu tiên để kiểm chứng toàn bộ nền tảng.
+6. AI chỉ được thêm sau dữ liệu thật, permission rõ và luồng thủ công ổn.
+7. MVP ưu tiên vòng lặp giá trị hoàn chỉnh, không ưu tiên số lượng route.
+8. Security, idempotency, transaction, exception và test phải đi cùng feature, không để cuối dự án.
+9. Bắt đầu bằng modular monolith; scale theo số liệu thật, không theo tưởng tượng.
+10. Mỗi phase có quality gate, audit và commit trước khi chuyển tiếp.
+ Bước tiếp theo thực tế✅
+Vì dự án đang ở mốc Phase 6, ưu tiên hoàn thành và audit trọn luồng Semester → Course → 
+Schedule → Assignment → Task → Calendar → Dashboard. Chỉ khi luồng này dùng database thật, 
+permission đúng, state đầy đủ và test/build pass mới chuyển sang Roadmap.
