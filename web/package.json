@@ -8,8 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "migrate:phase5b": "node scripts/migrate-phase-5b.mjs"
+    "test": "node --experimental-strip-types --test tests/*.test.ts"
   },
   "dependencies": {
     "@radix-ui/react-separator": "^1.1.15",
@@ -24,7 +23,6 @@
     "jose": "^6.2.3",
     "lucide-react": "^1.24.0",
     "msedge-tts": "^2.0.9",
-    "mysql2": "^3.22.6",
     "next": "14.2.5",
     "react": "18.3.1",
     "react-dom": "18.3.1",

@@ -5,6 +5,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'mock-anon-
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+/**
+ * Checks if Supabase Cloud credentials are configured and not pointing to the mock client.
+ */
+export function isSupabaseConfigured(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return Boolean(url && url.trim().length > 0 && !url.includes('mock-supabase'));
+}
+
 export interface Character {
   id: string;
   slug: string;

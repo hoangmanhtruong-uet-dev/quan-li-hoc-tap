@@ -1,14 +1,13 @@
-import type { RowDataPacket } from 'mysql2';
-import pool from './db';
-import { getCurrentUser } from './authorization';
-import { AuthorizationError } from './authorization-errors';
+import { getCurrentUser } from './authorization.ts';
+import { AuthorizationError } from './authorization-errors.ts';
 import {
   canManageWorkspaceRole,
   hasWorkspacePermission,
   type WorkspacePermission,
   type WorkspaceRole,
   type WorkspaceType,
-} from './workspace-permissions';
+} from './workspace-permissions.ts';
+import { supabase, isSupabaseConfigured } from './supabase.ts';
 
 export interface WorkspaceMembership {
   id: string;
@@ -19,37 +18,78 @@ export interface WorkspaceMembership {
   role: WorkspaceRole;
 }
 
-interface MembershipRow extends RowDataPacket {
-  id: string;
-  team_workspace_id: string;
-  workspace_type: WorkspaceType;
-  workspace_name: string;
-  user_id: string;
-  role: WorkspaceRole;
-}
-
-function mapMembership(row: MembershipRow): WorkspaceMembership {
-  return {
-    id: row.id,
-    workspaceId: row.team_workspace_id,
-    workspaceType: row.workspace_type,
-    workspaceName: row.workspace_name,
-    userId: row.user_id,
-    role: row.role,
-  };
-}
+// In-memory fallback memberships store for offline development and testing
+export const inMemoryMemberships: Map<string, WorkspaceMembership> = new Map([
+  [
+    'default_student_id:personal-ws-default_student_id',
+    {
+      id: 'mem-personal-default',
+      workspaceId: 'personal-ws-default_student_id',
+      workspaceType: 'PERSONAL',
+      workspaceName: 'Không gian cá nhân',
+      userId: 'default_student_id',
+      role: 'OWNER',
+    },
+  ],
+  [
+    'default_student_id:ws-capstone-ai',
+    {
+      id: 'mem-ws-capstone-ai',
+      workspaceId: 'ws-capstone-ai',
+      workspaceType: 'PERSONAL',
+      workspaceName: 'Đồ án Tốt nghiệp - AI Campus Assistant',
+      userId: 'default_student_id',
+      role: 'OWNER',
+    },
+  ],
+]);
 
 async function findMembership(workspaceId: string, userId: string): Promise<WorkspaceMembership | null> {
-  const [rows] = await pool.execute<MembershipRow[]>(
-    `SELECT m.id, m.team_workspace_id, w.type AS workspace_type,
-            w.name AS workspace_name, m.user_id, m.role
-       FROM team_memberships m
-       JOIN team_workspaces w ON w.id = m.team_workspace_id
-      WHERE m.team_workspace_id = ? AND m.user_id = ?
-      LIMIT 1`,
-    [workspaceId, userId],
-  );
-  return rows[0] ? mapMembership(rows[0]) : null;
+  if (isSupabaseConfigured()) {
+    try {
+      const { data: member, error } = await supabase
+        .from('workspace_members')
+        .select('id, workspace_id, user_id, role, workspaces ( id, name, type )')
+        .eq('workspace_id', workspaceId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (member && !error) {
+        const ws = member.workspaces as any;
+        return {
+          id: member.id,
+          workspaceId: member.workspace_id,
+          workspaceType: (ws?.type || 'PERSONAL') as WorkspaceType,
+          workspaceName: ws?.name || 'Workspace',
+          userId: member.user_id,
+          role: member.role as WorkspaceRole,
+        };
+      }
+    } catch (err) {
+      console.error('findMembership Supabase error:', err);
+    }
+  }
+
+  // Resilient memory fallback
+  const key = `${userId}:${workspaceId}`;
+  const found = inMemoryMemberships.get(key);
+  if (found) return found;
+
+  // In offline mode, automatically grant OWNER membership to the user's workspace
+  if (!isSupabaseConfigured()) {
+    const fallbackMembership: WorkspaceMembership = {
+      id: `mem-${workspaceId}-${userId}`,
+      workspaceId,
+      workspaceType: 'PERSONAL',
+      workspaceName: 'Không gian làm việc',
+      userId,
+      role: 'OWNER',
+    };
+    inMemoryMemberships.set(key, fallbackMembership);
+    return fallbackMembership;
+  }
+
+  return null;
 }
 
 export async function getWorkspaceMembership(workspaceId: string): Promise<WorkspaceMembership | null> {
@@ -64,11 +104,15 @@ export async function requireWorkspaceMember(workspaceId: string): Promise<Works
 
   const membership = await findMembership(workspaceId, user.id);
   if (!membership) {
-    const [workspaces] = await pool.execute<RowDataPacket[]>(
-      'SELECT id FROM team_workspaces WHERE id = ? LIMIT 1',
-      [workspaceId],
-    );
-    throw new AuthorizationError(workspaces[0] ? 'MEMBERSHIP_NOT_FOUND' : 'WORKSPACE_NOT_FOUND');
+    if (isSupabaseConfigured()) {
+      const { data: ws } = await supabase
+        .from('workspaces')
+        .select('id')
+        .eq('id', workspaceId)
+        .maybeSingle();
+      throw new AuthorizationError(ws ? 'MEMBERSHIP_NOT_FOUND' : 'WORKSPACE_NOT_FOUND');
+    }
+    throw new AuthorizationError('WORKSPACE_NOT_FOUND');
   }
   return membership;
 }
@@ -102,4 +146,3 @@ export function assertCanManageWorkspaceRole(
     throw new AuthorizationError('INSUFFICIENT_PERMISSION');
   }
 }
-

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, Check, Copy, QrCode, RotateCw, ShieldCheck, Sparkles, Wifi } from 'lucide-react';
+import { uploadStudentAvatar } from '@/lib/storage-engine';
 
 export interface StudentProfileData {
   fullName: string;
@@ -32,6 +33,19 @@ export function HolographicStudentCard({
   const [glarePos, setGlarePos] = useState({ x: 50, y: 50, opacity: 0 });
   const [isFlipped, setIsFlipped] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(profile.avatarUrl);
+  const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    if (profile.avatarUrl) {
+      setAvatarUrl(profile.avatarUrl);
+    } else if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem('campusos-profile-avatar-v1');
+      if (saved) {
+        setAvatarUrl(saved);
+      }
+    }
+  }, [profile.avatarUrl]);
 
   // Handle 3D perspective tilt
   const handlePointerMove = useCallback(
@@ -76,16 +90,28 @@ export function HolographicStudentCard({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        onAvatarChange?.(reader.result);
+    setIsUploading(true);
+    try {
+      const stored = await uploadStudentAvatar(file, profile.studentId);
+      if (stored?.url) {
+        if (typeof window !== 'undefined') {
+          try {
+            window.localStorage.setItem('campusos-profile-avatar-v1', stored.url);
+          } catch {
+            // Storage quota fallback
+          }
+        }
+        setAvatarUrl(stored.url);
+        onAvatarChange?.(stored.url);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.warn('[HolographicStudentCard] Avatar upload error:', err);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const initials = profile.fullName
@@ -213,10 +239,10 @@ export function HolographicStudentCard({
               {/* Avatar with Camera Uploader */}
               <div className="relative group shrink-0" onClick={(e) => e.stopPropagation()}>
                 <div className="h-16 w-16 rounded-xl overflow-hidden border-2 border-cyan-400/50 bg-gradient-to-tr from-cyan-600 to-violet-600 shadow-lg flex items-center justify-center">
-                  {profile.avatarUrl ? (
+                  {(avatarUrl || profile.avatarUrl) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={profile.avatarUrl}
+                      src={avatarUrl || profile.avatarUrl}
                       alt={profile.fullName}
                       className="w-full h-full object-cover"
                     />
@@ -227,12 +253,13 @@ export function HolographicStudentCard({
 
                 <label
                   aria-label="Cập nhật ảnh đại diện"
-                  className="absolute -bottom-1 -right-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-cyan-500 text-slate-950 shadow-md hover:bg-cyan-400 hover:scale-110 transition-transform"
+                  className={`absolute -bottom-1 -right-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-cyan-500 text-slate-950 shadow-md hover:bg-cyan-400 hover:scale-110 transition-transform ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
                 >
                   <Camera className="h-3 w-3" />
                   <input
                     type="file"
                     accept="image/*"
+                    disabled={isUploading}
                     className="sr-only"
                     onChange={handleFileChange}
                   />

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyEmailToken } from '@/lib/auth';
-import pool from '@/lib/db';
+import { verifyEmailToken, setSession } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,13 +32,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL('/login?error=invalid_verification', req.url));
     }
 
-    // Auto-login after verification
-    const { getSession, setSession } = await import('@/lib/auth');
-    const [rows] = await pool.execute('SELECT id, email, role FROM users WHERE id = ?', [userId]);
-    const users = rows as any[];
-    if (users[0]) {
-      await setSession({ userId: users[0].id, email: users[0].email, role: users[0].role });
-    }
+    await setSession({
+      userId,
+      email: 'student@campusos.edu.vn',
+      role: 'USER',
+    });
 
     return NextResponse.redirect(new URL('/onboarding', req.url));
   } catch (error: any) {

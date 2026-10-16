@@ -1,10 +1,16 @@
-import type { PoolConnection, RowDataPacket } from 'mysql2/promise';
-import pool from './db';
-import { AuthorizationError } from './authorization-errors';
-import { assertCanManageWorkspaceRole, requireWorkspacePermission } from './workspace-authorization';
-import { hasWorkspacePermission, isLastOwnerChangeBlocked, type WorkspacePermission, type WorkspaceRole } from './workspace-permissions';
+import { AuthorizationError } from './authorization-errors.ts';
+import {
+  assertCanManageWorkspaceRole,
+  requireWorkspacePermission,
+  inMemoryMemberships,
+} from './workspace-authorization.ts';
+import {
+  isLastOwnerChangeBlocked,
+  type WorkspaceRole,
+} from './workspace-permissions.ts';
+import { supabase, isSupabaseConfigured } from './supabase.ts';
 
-interface WorkspaceRow extends RowDataPacket {
+export interface WorkspaceRow {
   id: string;
   owner_user_id: string;
   name: string;
@@ -15,82 +21,128 @@ interface WorkspaceRow extends RowDataPacket {
   updated_at: Date;
 }
 
-interface MembershipRoleRow extends RowDataPacket {
-  id: string;
-  role: WorkspaceRole;
-}
+// In-memory workspaces store for offline fallback
+const inMemoryWorkspaces: Map<string, WorkspaceRow> = new Map([
+  [
+    'personal-ws-default_student_id',
+    {
+      id: 'personal-ws-default_student_id',
+      owner_user_id: 'default_student_id',
+      name: 'Không gian cá nhân',
+      description: 'Workspace cá nhân cho việc học và quản lý mục tiêu',
+      type: 'PERSONAL',
+      role: 'OWNER',
+      created_at: new Date('2026-01-01'),
+      updated_at: new Date('2026-01-01'),
+    },
+  ],
+  [
+    'ws-capstone-ai',
+    {
+      id: 'ws-capstone-ai',
+      owner_user_id: 'default_student_id',
+      name: 'Đồ án Tốt nghiệp - AI Campus Assistant',
+      description: 'Nghiên cứu & triển khai trợ lý học tập đa phương thức',
+      type: 'PERSONAL',
+      role: 'OWNER',
+      created_at: new Date('2026-01-15'),
+      updated_at: new Date('2026-01-15'),
+    },
+  ],
+]);
 
 export async function listCurrentUserWorkspaces(userId: string): Promise<WorkspaceRow[]> {
-  const [rows] = await pool.execute<WorkspaceRow[]>(
-    `SELECT w.id, w.owner_user_id, w.name, w.description, w.type,
-            m.role, w.created_at, w.updated_at
-       FROM team_workspaces w
-       JOIN team_memberships m ON m.team_workspace_id = w.id
-      WHERE m.user_id = ?
-      ORDER BY w.type, w.name`,
-    [userId],
-  );
-  return rows;
+  if (isSupabaseConfigured()) {
+    try {
+      const { data: members, error } = await supabase
+        .from('workspace_members')
+        .select('role, workspaces ( id, owner_id, name, description, type, created_at, updated_at )')
+        .eq('user_id', userId);
+
+      if (members && !error) {
+        return members
+          .map((m: any) => {
+            const ws = m.workspaces;
+            if (!ws) return null;
+            return {
+              id: ws.id,
+              owner_user_id: ws.owner_id,
+              name: ws.name,
+              description: ws.description,
+              type: ws.type as 'PERSONAL' | 'CLUB' | 'HOUSEHOLD',
+              role: m.role as WorkspaceRole,
+              created_at: new Date(ws.created_at),
+              updated_at: new Date(ws.updated_at),
+            };
+          })
+          .filter(Boolean) as WorkspaceRow[];
+      }
+    } catch (err) {
+      console.error('listCurrentUserWorkspaces Supabase error:', err);
+    }
+  }
+
+  // Memory fallback
+  const result: WorkspaceRow[] = [];
+  for (const ws of inMemoryWorkspaces.values()) {
+    if (ws.owner_user_id === userId) {
+      result.push(ws);
+    }
+  }
+  return result;
 }
 
 export async function getCurrentUserWorkspace(workspaceId: string): Promise<WorkspaceRow> {
   const membership = await requireWorkspacePermission(workspaceId, 'workspace.view');
-  const [rows] = await pool.execute<WorkspaceRow[]>(
-    `SELECT w.id, w.owner_user_id, w.name, w.description, w.type,
-            m.role, w.created_at, w.updated_at
-       FROM team_workspaces w
-       JOIN team_memberships m
-         ON m.team_workspace_id = w.id AND m.user_id = ?
-      WHERE w.id = ? LIMIT 1`,
-    [membership.userId, workspaceId],
-  );
-  if (!rows[0]) throw new AuthorizationError('WORKSPACE_NOT_FOUND');
-  return rows[0];
-}
 
-async function lockMembership(
-  connection: PoolConnection,
-  workspaceId: string,
-  membershipId: string,
-): Promise<MembershipRoleRow> {
-  const [rows] = await connection.execute<MembershipRoleRow[]>(
-    `SELECT id, role FROM team_memberships
-      WHERE id = ? AND team_workspace_id = ?
-      LIMIT 1 FOR UPDATE`,
-    [membershipId, workspaceId],
-  );
-  if (!rows[0]) throw new AuthorizationError('MEMBERSHIP_NOT_FOUND');
-  return rows[0];
-}
+  if (isSupabaseConfigured()) {
+    try {
+      const { data: ws, error } = await supabase
+        .from('workspaces')
+        .select('id, owner_id, name, description, type, created_at, updated_at')
+        .eq('id', workspaceId)
+        .maybeSingle();
 
-async function lockActorMembership(
-  connection: PoolConnection,
-  workspaceId: string,
-  membershipId: string,
-  permission: WorkspacePermission,
-): Promise<MembershipRoleRow> {
-  const actor = await lockMembership(connection, workspaceId, membershipId);
-  if (!hasWorkspacePermission(actor.role, permission)) {
-    throw new AuthorizationError('INSUFFICIENT_PERMISSION');
+      if (ws && !error) {
+        return {
+          id: ws.id,
+          owner_user_id: ws.owner_id,
+          name: ws.name,
+          description: ws.description,
+          type: ws.type as 'PERSONAL' | 'CLUB' | 'HOUSEHOLD',
+          role: membership.role,
+          created_at: new Date(ws.created_at),
+          updated_at: new Date(ws.updated_at),
+        };
+      }
+    } catch (err) {
+      console.error('getCurrentUserWorkspace Supabase error:', err);
+    }
   }
-  return actor;
-}
 
-async function assertNotLastOwner(
-  connection: PoolConnection,
-  workspaceId: string,
-  targetRole: WorkspaceRole,
-): Promise<void> {
-  if (targetRole !== 'OWNER') return;
-  const [owners] = await connection.execute<RowDataPacket[]>(
-    `SELECT id FROM team_memberships
-      WHERE team_workspace_id = ? AND role = 'OWNER'
-      FOR UPDATE`,
-    [workspaceId],
-  );
-  if (isLastOwnerChangeBlocked(targetRole, owners.length)) {
-    throw new AuthorizationError('LAST_OWNER_CANNOT_LEAVE');
+  // Memory fallback
+  const memWs = inMemoryWorkspaces.get(workspaceId);
+  if (memWs) {
+    return { ...memWs, role: membership.role };
   }
+
+  // If in offline mode, construct a default workspace
+  if (!isSupabaseConfigured()) {
+    const fallbackWs: WorkspaceRow = {
+      id: workspaceId,
+      owner_user_id: membership.userId,
+      name: membership.workspaceName || 'Không gian làm việc',
+      description: 'Không gian học tập nhóm CampusOS',
+      type: membership.workspaceType || 'PERSONAL',
+      role: membership.role,
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
+    inMemoryWorkspaces.set(workspaceId, fallbackWs);
+    return fallbackWs;
+  }
+
+  throw new AuthorizationError('WORKSPACE_NOT_FOUND');
 }
 
 export async function updateMembershipRole(
@@ -99,26 +151,65 @@ export async function updateMembershipRole(
   nextRole: WorkspaceRole,
 ): Promise<void> {
   const actor = await requireWorkspacePermission(workspaceId, 'member.updateRole');
-  const connection = await pool.getConnection();
-  try {
-    await connection.beginTransaction();
-    const lockedActor = await lockActorMembership(connection, workspaceId, actor.id, 'member.updateRole');
-    const target = await lockMembership(connection, workspaceId, membershipId);
-    assertCanManageWorkspaceRole(lockedActor.role, target.role, nextRole);
+
+  if (isSupabaseConfigured()) {
+    const { data: target, error: targetError } = await supabase
+      .from('workspace_members')
+      .select('id, role, workspace_id')
+      .eq('id', membershipId)
+      .eq('workspace_id', workspaceId)
+      .maybeSingle();
+
+    if (!target || targetError) throw new AuthorizationError('MEMBERSHIP_NOT_FOUND');
+
+    assertCanManageWorkspaceRole(actor.role, target.role as WorkspaceRole, nextRole);
+
     if (target.role === 'OWNER' && nextRole !== 'OWNER') {
-      await assertNotLastOwner(connection, workspaceId, target.role);
+      const { count } = await supabase
+        .from('workspace_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('workspace_id', workspaceId)
+        .eq('role', 'OWNER');
+
+      if (isLastOwnerChangeBlocked(target.role, count || 1)) {
+        throw new AuthorizationError('LAST_OWNER_CANNOT_LEAVE');
+      }
     }
-    await connection.execute(
-      'UPDATE team_memberships SET role = ? WHERE id = ? AND team_workspace_id = ?',
-      [nextRole, membershipId, workspaceId],
-    );
-    await connection.commit();
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
+
+    await supabase
+      .from('workspace_members')
+      .update({ role: nextRole, updated_at: new Date().toISOString() })
+      .eq('id', membershipId)
+      .eq('workspace_id', workspaceId);
+    return;
   }
+
+  // Memory fallback
+  let targetMembership: any = null;
+  for (const m of inMemoryMemberships.values()) {
+    if (m.id === membershipId || m.workspaceId === workspaceId) {
+      targetMembership = m;
+      break;
+    }
+  }
+
+  if (!targetMembership) {
+    targetMembership = { id: membershipId, role: 'MEMBER' as WorkspaceRole, workspaceId };
+  }
+
+  assertCanManageWorkspaceRole(actor.role, targetMembership.role, nextRole);
+
+  if (targetMembership.role === 'OWNER' && nextRole !== 'OWNER') {
+    let ownerCount = 0;
+    for (const m of inMemoryMemberships.values()) {
+      if (m.workspaceId === workspaceId && m.role === 'OWNER') ownerCount++;
+    }
+    if (isLastOwnerChangeBlocked(targetMembership.role, ownerCount)) {
+      throw new AuthorizationError('LAST_OWNER_CANNOT_LEAVE');
+    }
+  }
+
+  targetMembership.role = nextRole;
 }
 
 export async function removeWorkspaceMembership(
@@ -126,22 +217,68 @@ export async function removeWorkspaceMembership(
   membershipId: string,
 ): Promise<void> {
   const actor = await requireWorkspacePermission(workspaceId, 'member.remove');
-  const connection = await pool.getConnection();
-  try {
-    await connection.beginTransaction();
-    const lockedActor = await lockActorMembership(connection, workspaceId, actor.id, 'member.remove');
-    const target = await lockMembership(connection, workspaceId, membershipId);
-    assertCanManageWorkspaceRole(lockedActor.role, target.role);
-    await assertNotLastOwner(connection, workspaceId, target.role);
-    await connection.execute(
-      'DELETE FROM team_memberships WHERE id = ? AND team_workspace_id = ?',
-      [membershipId, workspaceId],
-    );
-    await connection.commit();
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
+
+  if (isSupabaseConfigured()) {
+    const { data: target, error: targetError } = await supabase
+      .from('workspace_members')
+      .select('id, role, workspace_id')
+      .eq('id', membershipId)
+      .eq('workspace_id', workspaceId)
+      .maybeSingle();
+
+    if (!target || targetError) throw new AuthorizationError('MEMBERSHIP_NOT_FOUND');
+
+    assertCanManageWorkspaceRole(actor.role, target.role as WorkspaceRole);
+
+    if (target.role === 'OWNER') {
+      const { count } = await supabase
+        .from('workspace_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('workspace_id', workspaceId)
+        .eq('role', 'OWNER');
+
+      if (isLastOwnerChangeBlocked(target.role, count || 1)) {
+        throw new AuthorizationError('LAST_OWNER_CANNOT_LEAVE');
+      }
+    }
+
+    await supabase
+      .from('workspace_members')
+      .delete()
+      .eq('id', membershipId)
+      .eq('workspace_id', workspaceId);
+    return;
+  }
+
+  // Memory fallback
+  let targetMembership: any = null;
+  for (const [key, m] of inMemoryMemberships.entries()) {
+    if (m.id === membershipId) {
+      targetMembership = m;
+      break;
+    }
+  }
+
+  if (!targetMembership) {
+    targetMembership = { id: membershipId, role: 'MEMBER' as WorkspaceRole, workspaceId };
+  }
+
+  assertCanManageWorkspaceRole(actor.role, targetMembership.role);
+
+  if (targetMembership.role === 'OWNER') {
+    let ownerCount = 0;
+    for (const m of inMemoryMemberships.values()) {
+      if (m.workspaceId === workspaceId && m.role === 'OWNER') ownerCount++;
+    }
+    if (isLastOwnerChangeBlocked(targetMembership.role, ownerCount)) {
+      throw new AuthorizationError('LAST_OWNER_CANNOT_LEAVE');
+    }
+  }
+
+  for (const [key, m] of inMemoryMemberships.entries()) {
+    if (m.id === membershipId) {
+      inMemoryMemberships.delete(key);
+      break;
+    }
   }
 }

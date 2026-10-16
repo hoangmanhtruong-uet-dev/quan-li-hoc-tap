@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
-import { createPasswordReset } from '@/lib/auth';
-import { sendPasswordResetEmail } from '@/lib/email';
+import { resetPassword } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,13 +8,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    // Always return success to prevent email enumeration
-    const [rows] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
-    const users = rows as any[];
-    if (users[0]) {
-      const token = await createPasswordReset(users[0].id);
-      await sendPasswordResetEmail(email, token);
-    }
+    await resetPassword(email);
 
     return NextResponse.json({ message: 'If the email exists, a reset link has been sent.' });
   } catch (error: any) {
