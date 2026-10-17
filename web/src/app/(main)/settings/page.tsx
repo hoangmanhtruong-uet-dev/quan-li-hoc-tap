@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
+  AlertTriangle,
   Bell,
   Calendar,
   Cat,
@@ -59,6 +60,7 @@ const defaultPreferences: UserSettingsPreferences = {
 
 const settingsSections = [
   { id: 'appearance', label: 'Giao diện & Chủ đề', icon: Palette },
+  { id: 'ai-engine', label: 'AI Study Engine & Keys', icon: Sparkles },
   { id: 'giam-sat', label: 'Giám sát Cực Đoan', icon: Cat },
   { id: 'calendar-sync', label: 'Lịch Google & .ics', icon: Calendar },
   { id: 'notifications', label: 'Thông báo', icon: Bell },
@@ -78,6 +80,23 @@ export default function SettingsPage() {
   // Modals state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [is2faModalOpen, setIs2faModalOpen] = useState(false);
+
+  // AI Study Engine settings state
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [aiProvider, setAiProvider] = useState<'gemini' | 'openai'>('gemini');
+  const [aiTestStatus, setAiTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [aiTestMsg, setAiTestMsg] = useState('');
+
+  // Hydrate AI settings
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const savedKey = window.localStorage.getItem('campusos_gemini_api_key') || '';
+      const savedProv = (window.localStorage.getItem('campusos_ai_provider') as 'gemini' | 'openai') || 'gemini';
+      setGeminiApiKey(savedKey);
+      setAiProvider(savedProv);
+    } catch {}
+  }, []);
 
   // Read URL Hash on mount
   useEffect(() => {
@@ -150,10 +169,42 @@ export default function SettingsPage() {
   function handleSaveAll() {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('campusos-settings-v2', JSON.stringify(prefs));
+      window.localStorage.setItem('campusos_gemini_api_key', geminiApiKey.trim());
+      window.localStorage.setItem('campusos_ai_provider', aiProvider);
     }
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2500);
   }
+
+  const handleTestAiConnection = async () => {
+    setAiTestStatus('testing');
+    setAiTestMsg('');
+    try {
+      const res = await fetch('/api/study/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId: 'test-ping',
+          courseName: 'Test Connectivity',
+          chapterId: 'test-ping',
+          chapterTitle: 'Ping Test',
+          query: 'Kiểm tra kết nối',
+          customApiKey: geminiApiKey.trim() || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error(`Mã phản hồi HTTP: ${res.status}`);
+      const data = await res.json();
+      if (data.success) {
+        setAiTestStatus('success');
+        setAiTestMsg('Kết nối AI Engine thành công! Mô hình sẵn sàng phục vụ.');
+      } else {
+        throw new Error(data.error || 'Kiểm tra thất bại');
+      }
+    } catch (err: any) {
+      setAiTestStatus('error');
+      setAiTestMsg(err?.message || 'Không thể kết nối đến máy chủ AI');
+    }
+  };
 
   const handleRequestPushPermission = async () => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -375,6 +426,117 @@ export default function SettingsPage() {
                 checked={prefs.reducedMotion}
                 onChange={(val) => handleUpdatePreference('reducedMotion', val)}
               />
+            </div>
+          </div>
+
+          {/* ================= AI STUDY ENGINE & API KEYS ================= */}
+          <div
+            id="ai-engine"
+            className="scroll-mt-24 rounded-2xl border border-white/10 bg-card/40 backdrop-blur-2xl p-5 sm:p-6 shadow-lg space-y-5"
+          >
+            <div className="flex items-center gap-2 pb-3 border-b border-white/10">
+              <Sparkles className="h-5 w-5 text-purple-400" />
+              <div>
+                <h3 className="text-base font-bold text-white tracking-tight">
+                  AI Study Hub & Trợ lý Phân tích Slide
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Cấu hình mô hình ngôn ngữ lớn (LLM), API Key cá nhân và công cụ phân tích PDF 1M tokens
+                </p>
+              </div>
+            </div>
+
+            {/* Provider selection */}
+            <div className="space-y-3">
+              <label className="block text-xs font-bold text-slate-300">
+                Mô hình AI chủ đạo
+              </label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setAiProvider('gemini')}
+                  className={`p-3.5 rounded-2xl border text-left transition-all ${
+                    aiProvider === 'gemini'
+                      ? 'border-cyan-400/50 bg-cyan-500/10 shadow-[0_0_15px_rgba(61,232,255,0.15)] ring-1 ring-cyan-400/30'
+                      : 'border-white/10 bg-slate-900/30 hover:bg-white/5'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold text-white flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8]" />
+                      Google Gemini 1.5 Flash (Khuyên dùng)
+                    </span>
+                    {aiProvider === 'gemini' && <Check className="h-4 w-4 text-cyan-400" />}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Cửa sổ ngữ cảnh 1.000.000 tokens, đọc trực tiếp PDF slide, phân tích tiếng Việt chuẩn xác và độ trễ thấp.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAiProvider('openai')}
+                  className={`p-3.5 rounded-2xl border text-left transition-all ${
+                    aiProvider === 'openai'
+                      ? 'border-purple-400/50 bg-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.15)] ring-1 ring-purple-400/30'
+                      : 'border-white/10 bg-slate-900/30 hover:bg-white/5'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold text-white flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-purple-400" />
+                      OpenAI GPT-4o Mini
+                    </span>
+                    {aiProvider === 'openai' && <Check className="h-4 w-4 text-purple-400" />}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Mô hình đa phương thức nhanh nhẹn cho suy luận logic và giải bài tập thuật toán.
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            {/* Custom API Key input */}
+            <div className="space-y-3 pt-2">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Google Gemini API Key (Tùy chọn)
+                </label>
+                <p className="text-[11px] text-muted-foreground mb-2">
+                  CampusOS có sẵn chế độ phân tích mặc định. Điền API Key của bạn để có hạn mức cao hơn và tốc độ phản hồi tối đa.
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    value={geminiApiKey}
+                    onChange={(e) => setGeminiApiKey(e.target.value)}
+                    placeholder="AIzaSy..."
+                    className="flex-1 h-10 px-3.5 rounded-xl bg-slate-900/60 border border-white/10 text-xs text-white placeholder:text-muted-foreground focus:outline-none focus:border-cyan-400 font-mono transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleTestAiConnection}
+                    disabled={aiTestStatus === 'testing'}
+                    className="h-10 px-4 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 hover:bg-cyan-500/25 text-xs font-bold transition-all disabled:opacity-40 shrink-0"
+                  >
+                    {aiTestStatus === 'testing' ? 'Đang kiểm tra...' : 'Test kết nối'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Test feedback */}
+              {aiTestStatus === 'success' && (
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{aiTestMsg}</span>
+                </div>
+              )}
+              {aiTestStatus === 'error' && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-400/30 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{aiTestMsg}</span>
+                </div>
+              )}
             </div>
           </div>
 

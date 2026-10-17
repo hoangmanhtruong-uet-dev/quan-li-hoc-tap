@@ -40,6 +40,8 @@ import {
 import { mockCourses, mockTasks } from '@/data/mock';
 import { StoredFile, uploadAcademicFile, formatBytes } from '@/lib/storage-engine';
 import { PdfPreviewModal, PdfPreviewItem } from '@/components/common/pdf-preview-modal';
+import { AiStudyHubModal } from '@/components/study/ai-study-hub-modal';
+import { useCampusStore, calculateLevelAndRank } from '@/lib/campus-store';
 
 export interface SyllabusChapter {
   id: string;
@@ -178,6 +180,11 @@ export default function CourseDetailPage() {
   const [activeTab, setActiveTab] = useState<'grades' | 'syllabus' | 'assignments'>('grades');
   const [previewFile, setPreviewFile] = useState<PdfPreviewItem | null>(null);
   const [uploadingWeekId, setUploadingWeekId] = useState<string | null>(null);
+  const [aiHubTarget, setAiHubTarget] = useState<{
+    chapter: SyllabusChapter;
+    file?: StoredFile;
+  } | null>(null);
+  const { update: updateCampusStore } = useCampusStore();
 
   // Restore saved syllabus with materials if present
   useEffect(() => {
@@ -685,6 +692,14 @@ export default function CourseDetailPage() {
                             <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                               <button
                                 type="button"
+                                onClick={() => setAiHubTarget({ chapter: item, file })}
+                                className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-400/40 text-purple-300 hover:text-white hover:border-purple-300 hover:shadow-[0_0_12px_rgba(168,85,247,0.3)] transition-all flex items-center gap-1.5 font-bold text-xs"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+                                <span>AI Phân tích</span>
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => setPreviewFile(file)}
                                 className="px-3 py-1.5 rounded-lg bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 hover:bg-cyan-500/25 transition-all flex items-center gap-1.5 font-bold text-xs shadow-[0_0_10px_rgba(61,232,255,0.15)]"
                               >
@@ -833,6 +848,26 @@ export default function CourseDetailPage() {
         onClose={() => setPreviewFile(null)}
         file={previewFile}
       />
+
+      {/* Cyber-Glass AI Study Hub Modal (Bộ Tứ Toàn Năng) */}
+      {aiHubTarget && course && (
+        <AiStudyHubModal
+          isOpen={Boolean(aiHubTarget)}
+          onClose={() => setAiHubTarget(null)}
+          courseId={course.id}
+          courseName={course.name}
+          chapterId={aiHubTarget.chapter.id}
+          chapterTitle={`Tuần ${aiHubTarget.chapter.week}: ${aiHubTarget.chapter.title}`}
+          pdfUrl={aiHubTarget.file?.url}
+          onAddXp={(amount, reason) => {
+            updateCampusStore((prev) => {
+              const newXp = prev.xp + amount;
+              const { level, rankTitle } = calculateLevelAndRank(newXp);
+              return { ...prev, xp: newXp, level, rankTitle };
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

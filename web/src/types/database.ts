@@ -1310,6 +1310,184 @@ export interface Database {
         };
         Relationships: [];
       };
+
+      ai_syllabus_summaries: {
+        Row: {
+          id: string;
+          user_id: string;
+          course_id: string;
+          chapter_id: string;
+          source_file_url: string;
+          file_name: string;
+          summary_markdown: string;
+          key_formulas: Json;
+          core_concepts: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          course_id: string;
+          chapter_id: string;
+          source_file_url: string;
+          file_name: string;
+          summary_markdown: string;
+          key_formulas?: Json;
+          core_concepts?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          course_id?: string;
+          chapter_id?: string;
+          source_file_url?: string;
+          file_name?: string;
+          summary_markdown?: string;
+          key_formulas?: Json;
+          core_concepts?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      ai_generated_quizzes: {
+        Row: {
+          id: string;
+          user_id: string;
+          course_id: string;
+          chapter_id: string;
+          title: string;
+          source_file_url: string;
+          questions: Json;
+          total_questions: number;
+          max_xp_reward: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          course_id: string;
+          chapter_id: string;
+          title: string;
+          source_file_url: string;
+          questions?: Json;
+          total_questions?: number;
+          max_xp_reward?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          course_id?: string;
+          chapter_id?: string;
+          title?: string;
+          source_file_url?: string;
+          questions?: Json;
+          total_questions?: number;
+          max_xp_reward?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      course_flashcards: {
+        Row: {
+          id: string;
+          user_id: string;
+          course_id: string;
+          chapter_id: string;
+          front_term: string;
+          back_definition: string;
+          category: string | null;
+          example: string | null;
+          difficulty: number;
+          interval_days: number;
+          repetitions: number;
+          ease_factor: number;
+          last_quality: number;
+          next_review_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          course_id: string;
+          chapter_id: string;
+          front_term: string;
+          back_definition: string;
+          category?: string | null;
+          example?: string | null;
+          difficulty?: number;
+          interval_days?: number;
+          repetitions?: number;
+          ease_factor?: number;
+          last_quality?: number;
+          next_review_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          course_id?: string;
+          chapter_id?: string;
+          front_term?: string;
+          back_definition?: string;
+          category?: string | null;
+          example?: string | null;
+          difficulty?: number;
+          interval_days?: number;
+          repetitions?: number;
+          ease_factor?: number;
+          last_quality?: number;
+          next_review_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      pdf_qa_messages: {
+        Row: {
+          id: string;
+          user_id: string;
+          course_id: string;
+          chapter_id: string;
+          source_file_url: string;
+          role: string;
+          content: string;
+          citations: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          course_id: string;
+          chapter_id: string;
+          source_file_url: string;
+          role: string;
+          content: string;
+          citations?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          course_id?: string;
+          chapter_id?: string;
+          source_file_url?: string;
+          role?: string;
+          content?: string;
+          citations?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
