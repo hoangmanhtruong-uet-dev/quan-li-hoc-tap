@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles, Plus, Flame, Clock3, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles, Plus, Flame, Clock3, CalendarDays, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCampusStore } from '@/lib/campus-store';
 
@@ -17,6 +17,7 @@ interface MonthPosterHeaderProps {
   onOpenCreate: () => void;
   onOpenAiScheduler: () => void;
   onOpenIcsDialog: () => void;
+  onOpenScheduleScan?: () => void;
 }
 
 export function MonthPosterHeader({
@@ -29,6 +30,7 @@ export function MonthPosterHeader({
   onOpenCreate,
   onOpenAiScheduler,
   onOpenIcsDialog,
+  onOpenScheduleScan,
 }: MonthPosterHeaderProps) {
   const { state } = useCampusStore();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -247,6 +249,17 @@ export function MonthPosterHeader({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {/* AI Schedule Scanner CTA */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenScheduleScan}
+              className="h-10 rounded-xl border border-cyan-400/40 bg-cyan-500/15 font-bold text-xs text-cyan-300 hover:bg-cyan-500/25 shadow-[2px_2px_0px_#000]"
+            >
+              <Zap className="mr-1.5 h-3.5 w-3.5 text-cyan-400" />
+              ⚡ Quét TKB bằng AI
+            </Button>
+
             {/* AI Auto-Scheduler CTA */}
             <Button
               variant="outline"

@@ -9,6 +9,8 @@ import {
   BookOpen,
   Zap,
   CheckCircle2,
+  Moon,
+  Timer,
 } from 'lucide-react';
 import { useCampusStore, type CalendarEvent, type DailyMood, formatIsoDateOnly } from '@/lib/campus-store';
 
@@ -216,9 +218,9 @@ export function AiMascotCoach({ onStartFocus, className = '' }: AiMascotCoachPro
       ref={mascotCardRef}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
-      className={`w-full min-w-0 rounded-[24px] border-2 bg-[#11111E]/95 p-6 shadow-[6px_6px_0px_#000] backdrop-blur-md transition-all duration-300 hard-border ${className}`}
+      className={`w-full min-w-0 rounded-2xl border bg-card/60 p-6 backdrop-blur-xl transition-all duration-300 shadow-sm ${className}`}
       style={{
-        borderColor: isAccepted ? 'rgba(198, 255, 61, 0.5)' : 'rgba(124, 92, 255, 0.35)',
+        borderColor: isAccepted ? 'rgba(198, 255, 61, 0.4)' : 'rgba(124, 92, 255, 0.25)',
       }}
       aria-label="S4 AI Mascot Coach"
     >
@@ -411,13 +413,17 @@ export function AiMascotCoach({ onStartFocus, className = '' }: AiMascotCoachPro
                   key={opt.id}
                   onClick={() => setSelectedPlanId(opt.id)}
                   disabled={isAccepted}
-                  className={`rounded-xl border px-3 py-1 text-xs font-semibold transition-all ${
+                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-xs font-semibold transition-all ${
                     active
-                      ? 'border-aurora-violet bg-aurora-violet/20 text-white shadow-sm'
-                      : 'border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+                      ? 'border-violet-500 bg-violet-500/20 text-violet-200 shadow-sm'
+                      : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/10 hover:text-white'
                   } disabled:opacity-50`}
                 >
-                  {opt.chipLabel}
+                  {opt.id === 'default' && <BookOpen className="h-3 w-3 text-violet-300" />}
+                  {opt.id === 'evening' && <Moon className="h-3 w-3 text-indigo-300" />}
+                  {opt.id === 'short' && <Timer className="h-3 w-3 text-amber-300" />}
+                  {opt.id === 'flashcard' && <Sparkles className="h-3 w-3 text-cyan-300" />}
+                  <span>{opt.chipLabel}</span>
                 </button>
               );
             })}
@@ -429,7 +435,7 @@ export function AiMascotCoach({ onStartFocus, className = '' }: AiMascotCoachPro
               <>
                 <button
                   onClick={handleAcceptPlan}
-                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-aurora-violet hover:bg-violet-600 text-white px-4 py-2.5 text-sm font-bold shadow-lg shadow-violet-900/30 transition-transform active:scale-95 hard-border"
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white px-4 py-2.5 text-sm font-bold shadow-md shadow-violet-900/30 transition-all active:scale-95"
                 >
                   <CheckCircle2 className="h-4 w-4 text-aurora-lime" />
                   Chấp nhận kế hoạch

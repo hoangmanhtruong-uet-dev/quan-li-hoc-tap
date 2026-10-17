@@ -135,17 +135,17 @@ export function AuthFeatureCarousel() {
     <div
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className="w-full flex flex-col gap-3"
+      className="w-full flex flex-col gap-2 xl:gap-2.5"
       aria-label="CampusOS Superpower Carousel"
     >
       {/* 1. Live Student Statistics Pill Strip */}
-      <div className="grid grid-cols-3 gap-2 py-1">
+      <div className="grid grid-cols-3 gap-1.5 py-0.5">
         {STUDENT_STATS.map((stat, idx) => {
           const Icon = stat.icon;
           return (
             <div
               key={idx}
-              className="flex flex-col items-center justify-center p-2 rounded-xl border border-white/10 bg-slate-900/40 backdrop-blur-md text-center"
+              className="flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl border border-white/10 bg-slate-900/40 backdrop-blur-md text-center"
             >
               <div className="flex items-center gap-1.5">
                 <Icon className={`h-3.5 w-3.5 ${stat.color}`} />
@@ -163,53 +163,53 @@ export function AuthFeatureCarousel() {
 
       {/* 2. Feature Carousel Card */}
       <div
-        className={`relative overflow-hidden rounded-2xl border bg-slate-900/60 backdrop-blur-2xl p-4 sm:p-5 transition-all duration-500 ${activeSlide.borderColor}`}
+        className={`relative overflow-hidden rounded-2xl border bg-slate-900/60 backdrop-blur-2xl p-3.5 sm:p-4 xl:p-5 transition-all duration-500 ${activeSlide.borderColor}`}
       >
         {/* Top Header of Card */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-1.5">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 backdrop-blur-md">
+            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-white/10 backdrop-blur-md">
               {renderIcon(activeSlide.iconType)}
             </div>
-            <span className="font-mono text-[11px] font-bold text-slate-400 tracking-wider">
+            <span className="font-mono text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wider">
               {activeSlide.superpowerTag}
             </span>
           </div>
 
-          <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-300">
+          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-300">
             {activeSlide.badge}
           </span>
         </div>
 
         {/* Title & Subtitle */}
-        <h4 className="text-base sm:text-lg font-black text-white tracking-tight font-display">
+        <h4 className="text-sm sm:text-base xl:text-lg font-black text-white tracking-tight font-display">
           {activeSlide.title}
         </h4>
-        <p className="text-xs font-semibold text-cyan-300/90 mt-0.5">
+        <p className="text-[11px] sm:text-xs font-semibold text-cyan-300/90 mt-0.5">
           {activeSlide.subtitle}
         </p>
 
         {/* Description */}
-        <p className="text-xs text-slate-300 line-clamp-2 mt-2 leading-relaxed">
+        <p className="text-[11px] sm:text-xs text-slate-300 line-clamp-2 mt-1.5 leading-relaxed">
           {activeSlide.description}
         </p>
 
         {/* Bottom Metric & Navigation */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 py-1 text-[11px] font-mono font-semibold text-slate-300">
+        <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-white/10">
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-2 py-0.5 text-[10px] sm:text-[11px] font-mono font-semibold text-slate-300">
             {activeSlide.metricBadge}
           </span>
 
           <div className="flex items-center gap-1.5">
             {/* Indicators */}
-            <div className="flex gap-1 mr-2">
+            <div className="flex gap-1 mr-1.5">
               {SUPERPOWER_SLIDES.map((slide, idx) => (
                 <button
                   key={slide.id}
                   onClick={() => setCurrentIndex(idx)}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     idx === currentIndex
-                      ? 'w-5 bg-cyan-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]'
+                      ? 'w-4 sm:w-5 bg-cyan-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]'
                       : 'w-1.5 bg-slate-600 hover:bg-slate-500'
                   }`}
                   aria-label={`Go to slide ${idx + 1}`}
@@ -221,24 +221,24 @@ export function AuthFeatureCarousel() {
             <button
               onClick={prevSlide}
               aria-label="Previous superpower"
-              className="h-7 w-7 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+              className="h-6 w-6 sm:h-7 sm:w-7 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={nextSlide}
               aria-label="Next superpower"
-              className="h-7 w-7 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+              className="h-6 w-6 sm:h-7 sm:w-7 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
       </div>
 
       {/* 3. Inspiring Student Quotes Box */}
-      <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-slate-950/40 px-3.5 py-2 text-[11px] text-slate-400 italic">
-        <Sparkles className="h-3.5 w-3.5 text-cyan-400 shrink-0 not-italic" />
+      <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-slate-950/40 px-3 py-1.5 text-[11px] text-slate-400 italic">
+        <Sparkles className="h-3 w-3 text-cyan-400 shrink-0 not-italic" />
         <span className="line-clamp-1">{activeQuote}</span>
       </div>
     </div>

@@ -27,7 +27,7 @@ interface DeadlineArenaProps {
 }
 
 export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
-  const { state, update, recordSession } = useCampusStore();
+  const { state, update, recordSession, completeTask } = useCampusStore();
   const [mounted, setMounted] = useState(false);
   const [floatingXp, setFloatingXp] = useState<{ id: string; x: number; y: number } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -176,18 +176,21 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
       setFloatingXp({ id: deadlineId, x: clickX, y: clickY });
       setTimeout(() => setFloatingXp(null), 900);
 
-      // Award XP in store
+      // Award XP in store & complete matching task in real time
       recordSession(0, 100);
-      update((prev) => ({
-        xp: prev.xp + 50,
-        deadlines: prev.deadlines.map((d) =>
-          d.id === deadlineId ? { ...d, completed: true } : d
-        ),
-      }));
+      completeTask(deadlineId, 50);
     } else {
       update((prev) => ({
         deadlines: prev.deadlines.map((d) =>
           d.id === deadlineId ? { ...d, completed: false } : d
+        ),
+        tasks: prev.tasks.map((t) =>
+          t.id === deadlineId ||
+          t.id === `task-${deadlineId}` ||
+          (t.id.startsWith('task-') && t.id.slice(5) === deadlineId) ||
+          t.title.trim().toLowerCase() === target.title.trim().toLowerCase()
+            ? { ...t, status: 'todo' as const, completedAt: undefined }
+            : t
         ),
       }));
     }
@@ -229,7 +232,9 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
             Deadline Arena (Khẩn cấp)
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5 font-sans">
-            Bento bất đối xứng · Đồng hồ đếm ngược số khổng lồ · Tick xong nhận +50 XP
+            {activeDeadlines.length > 0
+              ? `${activeDeadlines.length} hạn nộp cần hoàn thành`
+              : 'Đã hoàn thành tất cả deadline!'}
           </p>
         </div>
 
@@ -237,27 +242,30 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
           size="sm"
           variant="outline"
           onClick={() => window.dispatchEvent(new CustomEvent('campusos:quick-create-task'))}
-          className="h-9 gap-1.5 rounded-xl border border-white/15 bg-white/5 text-xs font-bold text-foreground hover:bg-white/10 shadow-[2px_2px_0px_#000]"
+          className="h-9 gap-1.5 rounded-xl border border-white/15 bg-card/60 text-xs font-bold text-foreground hover:bg-card shadow-sm"
         >
           <Plus className="h-3.5 w-3.5" /> Thêm deadline
         </Button>
       </div>
 
       {/* Asymmetric Bento Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+      {deadlines.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2">
         {/* HERO BENTO CELL: Most urgent deadline */}
         {heroDeadline && (
           <div
-            className={`relative md:col-span-2 rounded-[24px] p-6 md:p-8 flex flex-col justify-between transition-all duration-200 hard-border ${
+            className={`relative md:col-span-2 rounded-2xl p-6 md:p-7 flex flex-col justify-between transition-all duration-200 ${
               highlightedId === heroDeadline.id
-                ? 'ring-4 ring-aurora-lime shadow-[0_0_35px_#C6FF3D] animate-pulse '
+                ? 'ring-2 ring-aurora-lime shadow-[0_0_30px_rgba(198,255,61,0.25)]'
                 : ''
-            }${
-              colorTier === 'red'
-                ? 'border-2 border-rose-500 bg-rose-950/20 shadow-[6px_6px_0px_0px_#FF3D6E]'
+            } ${
+              heroDeadline.completed
+                ? 'border border-emerald-500/30 bg-emerald-950/10'
+                : colorTier === 'red'
+                ? 'border border-rose-500/50 bg-rose-950/20 shadow-md shadow-rose-950/40'
                 : colorTier === 'orange'
-                ? 'border-2 border-orange-400/80 bg-orange-950/20 shadow-[6px_6px_0px_0px_#FF8A3D]'
-                : 'border-2 border-aurora-lime/70 bg-lime-950/20 shadow-[6px_6px_0px_0px_#C6FF3D]'
+                ? 'border border-orange-500/40 bg-orange-950/15 shadow-sm'
+                : 'border border-aurora-lime/40 bg-lime-950/15 shadow-sm'
             } ${
               heroRemaining.isPanic && !heroDeadline.completed && !state.reducedMotion
                 ? 'animate-panic-shake'
@@ -266,12 +274,16 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
           >
             {/* Top Bar: Course & Panic Mode Indicator */}
             <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {heroDeadline.course || 'CS301 - Mạng máy tính'}
               </span>
 
-              {heroRemaining.isPanic && !heroDeadline.completed ? (
-                <Badge className="bg-rose-500/20 text-rose-300 border-rose-500 font-bold animate-pulse">
+              {heroDeadline.completed ? (
+                <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 font-semibold">
+                  ✓ Đã hoàn thành
+                </Badge>
+              ) : heroRemaining.isPanic ? (
+                <Badge className="bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold animate-pulse">
                   <AlertTriangle className="mr-1 h-3.5 w-3.5 text-rose-400" />
                   BÁO ĐỘNG ĐỎ &lt; 3H!
                 </Badge>
@@ -279,8 +291,8 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
                 <Badge
                   className={
                     colorTier === 'orange'
-                      ? 'bg-orange-500/20 text-orange-300 border-orange-400'
-                      : 'bg-aurora-lime/20 text-aurora-lime border-aurora-lime'
+                      ? 'bg-orange-500/15 text-orange-300 border-orange-500/30'
+                      : 'bg-aurora-lime/15 text-aurora-lime border-aurora-lime/30'
                   }
                 >
                   {heroDeadline.displayDate || 'Hôm nay · 23:59'}
@@ -289,10 +301,10 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
             </div>
 
             {/* Middle: Title & Giant Live Countdown */}
-            <div className="my-6 space-y-3">
+            <div className="my-5 space-y-3">
               <h3
-                className={`font-heading text-2xl md:text-3xl font-extrabold text-foreground ${
-                  heroDeadline.completed ? 'line-through text-muted-foreground' : ''
+                className={`font-heading text-xl md:text-2xl font-bold text-foreground ${
+                  heroDeadline.completed ? 'line-through text-muted-foreground/60' : ''
                 }`}
               >
                 {heroDeadline.title}
@@ -300,7 +312,7 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
 
               {/* Giant Live HH:MM:SS Countdown */}
               {!heroDeadline.completed ? (
-                <div className="flex items-baseline gap-2 font-mono tabular-nums font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight">
+                <div className="flex items-baseline gap-2 font-mono tabular-nums font-black text-4xl sm:text-5xl tracking-tight">
                   <span
                     suppressHydrationWarning
                     className={
@@ -318,8 +330,8 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
                   </span>
                 </div>
               ) : (
-                <div className="font-heading text-2xl font-bold text-emerald-400 flex items-center gap-2">
-                  <Check className="h-6 w-6" /> Đã hoàn thành xuất sắc!
+                <div className="font-heading text-lg font-bold text-emerald-400 flex items-center gap-2">
+                  <Check className="h-5 w-5" /> Đã hoàn thành xuất sắc!
                 </div>
               )}
             </div>
@@ -330,18 +342,18 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
                 <button
                   onClick={(e) => handleToggleDeadline(heroDeadline.id, e)}
                   type="button"
-                  className={`flex items-center gap-3 rounded-xl px-4 py-2.5 font-bold transition-all shadow-[2px_2px_0px_#000] ${
+                  className={`flex items-center gap-2.5 rounded-xl px-4 py-2 font-bold text-xs transition-all shadow-sm ${
                     heroDeadline.completed
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                      : 'bg-foreground text-background hover:scale-105 active:scale-95'
+                      ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                      : 'bg-foreground text-background hover:bg-foreground/90'
                   }`}
                 >
                   <div
-                    className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
+                    className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
                       heroDeadline.completed ? 'border-emerald-400 bg-emerald-400 text-black' : 'border-background'
                     }`}
                   >
-                    {heroDeadline.completed && <Check className="h-4 w-4" />}
+                    {heroDeadline.completed && <Check className="h-3 w-3 stroke-[3]" />}
                   </div>
                   <span>{heroDeadline.completed ? 'Đã xong (+50 XP)' : 'Tick hoàn thành'}</span>
                 </button>
@@ -351,7 +363,7 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
                     size="sm"
                     variant="outline"
                     onClick={() => onStartFocus(45)}
-                    className="h-10 border-white/20 bg-white/5 font-semibold text-xs hover:border-aurora-lime"
+                    className="h-9 border-white/15 bg-white/5 font-semibold text-xs hover:border-aurora-lime hover:bg-white/10"
                   >
                     Chiến ngay (45p)
                   </Button>
@@ -365,25 +377,27 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
           </div>
         )}
 
-        {/* SECONDARY BENTO CELLS: Remaining deadlines */}
-        {secondaryDeadlines.map((item, index) => {
+        {/* SECONDARY BENTO CELLS: Remaining deadlines (max 2 cards) */}
+        {secondaryDeadlines.slice(0, 2).map((item) => {
           const itemRemaining = getRemainingTime(item.dueDate);
           const isDone = item.completed;
 
           return (
             <div
               key={item.id}
-              className={`rounded-[20px] border-2 border-white/15 bg-[#121222] p-5 shadow-[4px_4px_0px_#000] flex flex-col justify-between transition-all hard-border ${
+              className={`rounded-2xl border p-5 flex flex-col justify-between transition-all ${
                 highlightedId === item.id
-                  ? 'ring-4 ring-aurora-lime shadow-[0_0_25px_#C6FF3D] animate-pulse '
+                  ? 'ring-2 ring-aurora-lime shadow-[0_0_20px_rgba(198,255,61,0.2)]'
                   : ''
-              }${
-                isDone ? 'opacity-60 bg-[#0E0E18]' : 'hover:translate-x-0.5 hover:-translate-y-0.5'
+              } ${
+                isDone
+                  ? 'border-white/5 bg-card/30 opacity-60'
+                  : 'border-white/10 bg-card/70 hover:border-white/20 shadow-sm'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-mono text-muted-foreground truncate max-w-[120px]">
+                  <span className="text-[11px] font-mono text-muted-foreground truncate max-w-[140px]">
                     {item.course || 'Môn học'}
                   </span>
                   <Badge variant={item.urgent ? 'destructive' : 'secondary'} className="text-[10px]">
@@ -392,7 +406,7 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
                 </div>
 
                 <h4
-                  className={`font-heading text-base font-bold text-foreground leading-snug line-clamp-2 ${
+                  className={`font-heading text-sm font-bold text-foreground leading-snug line-clamp-2 ${
                     isDone ? 'line-through text-muted-foreground' : ''
                   }`}
                 >
@@ -406,55 +420,60 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
                 )}
               </div>
 
-              {/* Action: SVG Checkmark Draw Circle & Reorder Controls */}
-              <div className="mt-4 border-t border-white/10 pt-3 flex items-center justify-between">
+              {/* Action: Checkmark Toggle */}
+              <div className="mt-4 border-t border-white/5 pt-3 flex items-center justify-between">
                 <button
                   onClick={(e) => handleToggleDeadline(item.id, e)}
                   type="button"
                   aria-label={`Hoàn thành ${item.title}`}
-                  className={`flex h-7 w-7 items-center justify-center rounded-full border-2 transition-transform active:scale-90 ${
+                  className={`flex h-7 w-7 items-center justify-center rounded-full border-2 transition-all active:scale-90 ${
                     isDone
                       ? 'border-emerald-400 bg-emerald-400 text-black'
-                      : 'border-muted-foreground/40 hover:border-aurora-lime'
+                      : 'border-white/20 hover:border-aurora-lime bg-transparent text-transparent hover:text-aurora-lime/50'
                   }`}
                 >
-                  <svg viewBox="0 0 24 24" className="h-4 w-4">
-                    <path
-                      d="M5 13l4 4L19 7"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeDasharray="24"
-                      strokeDashoffset={isDone ? 0 : 24}
-                      className="transition-all duration-300 ease-out"
-                    />
-                  </svg>
+                  <Check className="h-4 w-4" />
                 </button>
 
-                {/* Reorder Up/Down */}
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => moveDeadline(index + 1, index)}
-                    title="Đẩy lên trước"
-                    className="p-1 text-muted-foreground hover:text-foreground text-xs"
-                  >
-                    ▲
-                  </button>
-                  <button
-                    onClick={() => moveDeadline(index + 1, index + 2)}
-                    title="Đẩy xuống sau"
-                    className="p-1 text-muted-foreground hover:text-foreground text-xs"
-                  >
-                    ▼
-                  </button>
-                </div>
+                <span className="text-[11px] font-mono text-muted-foreground">
+                  +50 XP
+                </span>
               </div>
             </div>
           );
         })}
-      </div>
+
+        {/* Link to view all deadlines in /tasks */}
+        <div className="md:col-span-2 flex items-center justify-between pt-1 px-1">
+          <span className="text-xs text-muted-foreground">
+            Tổng cộng: {deadlines.length} hạn nộp
+          </span>
+          <a
+            href="/tasks"
+            className="text-xs font-semibold text-aurora-lime hover:underline inline-flex items-center gap-1 font-heading"
+          >
+            Xem tất cả deadline trong Task Board →
+          </a>
+        </div>
+        </div>
+      ) : (
+        <div className="flex w-full flex-col items-center justify-center rounded-[24px] border-2 border-dashed border-white/15 bg-[#121222]/60 p-8 text-center hard-border">
+          <Clock className="h-8 w-8 text-rose-400/70 mb-2" />
+          <p className="font-heading text-base font-bold text-foreground">
+            Chưa có deadline nào cần xử lý
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+            Tuyệt vời! Bạn đang không bị deadline dí. Hãy tạo deadline mới để hệ thống theo dõi và nhắc nhở bạn.
+          </p>
+          <Button
+            size="sm"
+            onClick={() => window.dispatchEvent(new CustomEvent('campusos:quick-create-task'))}
+            className="mt-4 gap-1.5 bg-rose-500 hover:bg-rose-600 font-bold text-xs"
+          >
+            <Plus className="h-3.5 w-3.5" /> Tạo Deadline Mới
+          </Button>
+        </div>
+      )}
     </section>
   );
 }

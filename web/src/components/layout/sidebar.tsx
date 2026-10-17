@@ -21,6 +21,7 @@ import {
   User,
   Settings,
   Sparkles,
+  FlaskConical,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -40,6 +41,7 @@ const iconMap: Record<string, LucideIcon> = {
   user: User,
   settings: Settings,
   sparkles: Sparkles,
+  'flask-conical': FlaskConical,
 };
 
 export function Sidebar() {
@@ -51,7 +53,10 @@ export function Sidebar() {
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 text-sm font-black text-white shadow-lg shadow-blue-500/20">
           C
         </div>
-        <div><span className="block text-base font-bold tracking-tight text-sidebar-foreground">CampusOS</span><span className="block text-[10px] font-medium uppercase tracking-[.18em] text-sidebar-muted">Student companion</span></div>
+        <div>
+          <span className="block text-base font-bold tracking-tight text-sidebar-foreground">CampusOS</span>
+          <span className="block text-[10px] font-medium uppercase tracking-[.18em] text-sidebar-muted">Student companion</span>
+        </div>
       </div>
       <ScrollArea className="flex-1 px-3 py-4">
         <nav className="flex flex-col gap-5" aria-label="Sidebar navigation">
@@ -64,17 +69,19 @@ export function Sidebar() {
                 {section.items.map((item) => {
                   const Icon = iconMap[item.icon];
                   const isActive =
-                    item.segment === 'study'
-                      ? pathname.startsWith('/study')
-                      : item.segment === 'clubs'
-                        ? pathname.startsWith('/clubs')
-                        : item.segment === 'roadmaps'
-                          ? pathname.startsWith('/roadmaps')
-                          : item.segment === 'skills'
-                            ? pathname.startsWith('/skills')
-                            : item.segment === 'living'
-                              ? pathname.startsWith('/living')
-                              : pathname === item.href;
+                    item.segment === 'lab'
+                      ? pathname.startsWith('/lab')
+                      : item.segment === 'study'
+                        ? pathname.startsWith('/study')
+                        : item.segment === 'clubs'
+                          ? pathname.startsWith('/clubs')
+                          : item.segment === 'roadmaps'
+                            ? pathname.startsWith('/roadmaps')
+                            : item.segment === 'skills'
+                              ? pathname.startsWith('/skills')
+                              : item.segment === 'living'
+                                ? pathname.startsWith('/living')
+                                : pathname === item.href;
 
                   return (
                     <li key={item.label}>
@@ -90,7 +97,14 @@ export function Sidebar() {
                         {Icon && <Icon className={cn('h-[18px] w-[18px]', isActive && 'drop-shadow-[0_0_8px_rgba(59,130,246,.55)]')} />}
                         <span>{item.label}</span>
                         {item.badge && (
-                          <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                          <span
+                            className={cn(
+                              'ml-auto flex items-center justify-center font-bold',
+                              typeof item.badge === 'string'
+                                ? 'rounded-md px-1.5 py-0.5 text-[10px] font-mono tracking-wider bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/40 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
+                                : 'h-5 w-5 rounded-full bg-primary text-[10px] text-primary-foreground'
+                            )}
+                          >
                             {item.badge}
                           </span>
                         )}

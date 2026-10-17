@@ -29,6 +29,7 @@ import {
   Video,
   X,
   Zap,
+  Plus,
 } from 'lucide-react';
 import { StudySessionModal } from '@/components/shared/study-session-modal';
 import { StrictPomodoroModal } from '@/features/pomodoro/strict-pomodoro-modal';
@@ -161,6 +162,7 @@ const WEEKLY_STUDY_DATA = [
 ];
 
 export default function StudyPage() {
+  const [courses, setCourses] = useState<CourseItem[]>([]);
   const [focusOpen, setFocusOpen] = useState(false);
   const [strictFocusOpen, setStrictFocusOpen] = useState(false);
   const [courseFilter, setCourseFilter] = useState<'all' | 'attention' | 'ongoing'>('all');
@@ -185,6 +187,17 @@ export default function StudyPage() {
         window.localStorage.removeItem('campusos-academic-hub-v2');
       }
     }
+
+    try {
+      const savedCourses = window.localStorage.getItem('campusos-courses-v2');
+      if (savedCourses) {
+        const parsed = JSON.parse(savedCourses);
+        if (parsed.customCourses && Array.isArray(parsed.customCourses)) {
+          setCourses(parsed.customCourses);
+        }
+      }
+    } catch {}
+
     setHydrated(true);
   }, []);
 
@@ -199,20 +212,20 @@ export default function StudyPage() {
 
   // Calculations via academic-engine
   const ongoingSemester = SEED_SEMESTERS.find((s) => s.status === 'ongoing') || SEED_SEMESTERS[0]!;
-  const semesterGpaStats = calculateSemesterGpa(SEED_COURSES);
-  const warningStatus = getAcademicWarningStatus(3.7, 0);
+  const semesterGpaStats = calculateSemesterGpa(courses);
+  const warningStatus = getAcademicWarningStatus(semesterGpaStats.gpa4 || 0, 0);
 
-  const totalCredits = SEED_COURSES.reduce((sum, c) => sum + c.credits, 0);
+  const totalCredits = courses.reduce((sum, c) => sum + c.credits, 0);
   const totalLessonsAll = Object.values(lessonsMap).flat().length;
   const completedLessonsAll = Object.values(lessonsMap).flat().filter((l) => l.completed).length;
   const overallProgressPercent = Math.round((completedLessonsAll / Math.max(1, totalLessonsAll)) * 100);
 
   const visibleCourses = useMemo(() => {
     if (courseFilter === 'attention') {
-      return SEED_COURSES.filter((c) => c.status === 'warning');
+      return courses.filter((c) => c.status === 'warning');
     }
-    return SEED_COURSES;
-  }, [courseFilter]);
+    return courses;
+  }, [courses, courseFilter]);
 
   const toggleLesson = (courseId: string, lessonId: string) => {
     setLessonsMap((prev) => {
@@ -304,7 +317,7 @@ export default function StudyPage() {
               <BookOpen className="w-4 h-4 text-cyan-400" />
             </div>
             <p className="mt-2 text-2xl sm:text-3xl font-black font-mono text-cyan-400">
-              {SEED_COURSES.length} Môn
+              {courses.length} Môn
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">{totalCredits} Tín chỉ đăng ký</p>
           </div>
@@ -328,7 +341,8 @@ export default function StudyPage() {
               <BarChart3 className="w-4 h-4 text-emerald-400" />
             </div>
             <p className="mt-2 text-2xl sm:text-3xl font-black font-mono text-emerald-400">
-              3.68 <span className="text-xs text-muted-foreground font-normal">/ 4.0</span>
+              {courses.length > 0 && semesterGpaStats.gpa4 > 0 ? semesterGpaStats.gpa4.toFixed(2) : '—'}{' '}
+              <span className="text-xs text-muted-foreground font-normal">/ 4.0</span>
             </p>
             <p className="text-[11px] text-emerald-300 font-medium mt-0.5">Xếp loại Giỏi (Dean&apos;s List)</p>
           </div>
@@ -397,7 +411,7 @@ export default function StudyPage() {
               <div>
                 <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-cyan-400" />
-                  Môn học học kỳ này ({SEED_COURSES.length} Môn)
+                  Môn học học kỳ này ({courses.length} Môn)
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   Đánh dấu trực tiếp tiến độ bài giảng hoặc bấm vào môn để xem chi tiết.
@@ -413,7 +427,7 @@ export default function StudyPage() {
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  Tất cả ({SEED_COURSES.length})
+                  Tất cả ({courses.length})
                 </button>
                 <button
                   onClick={() => setCourseFilter('attention')}
@@ -423,12 +437,13 @@ export default function StudyPage() {
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  Cần chú ý ({SEED_COURSES.filter((c) => c.status === 'warning').length})
+                  Cần chú ý ({courses.filter((c) => c.status === 'warning').length})
                 </button>
               </div>
             </div>
 
-            <div className="grid gap-5 md:grid-cols-2">
+            {visibleCourses.length > 0 ? (
+              <div className="grid gap-5 md:grid-cols-2">
               {visibleCourses.map((course) => {
                 const lessons = lessonsMap[course.id] || [];
                 const completedCount = lessons.filter((l) => l.completed).length;
@@ -561,7 +576,30 @@ export default function StudyPage() {
                   </div>
                 );
               })}
-            </div>
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-dashed border-white/10 p-12 text-center backdrop-blur-xl">
+                <BookOpen className="mx-auto h-8 w-8 text-cyan-400/80 mb-2" />
+                <p className="font-heading text-lg font-bold">Chưa có môn học nào</p>
+                <p className="mt-1 text-xs text-muted-foreground max-w-md mx-auto">
+                  Bắt đầu bằng cách thêm môn học thủ công hoặc quét ảnh thời khóa biểu từ cổng trường đại học bằng AI.
+                </p>
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                  <Link
+                    href="/study/courses"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-600 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-500 transition-colors"
+                  >
+                    <Plus className="h-4 w-4" /> Thêm Môn Học
+                  </Link>
+                  <Link
+                    href="/calendar"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-cyan-300 hover:bg-white/10 transition-colors"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" /> Quét TKB bằng AI →
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -12,6 +12,7 @@ export const sidebarSections: SidebarSection[] = [
   {
     label: 'Học tập',
     items: [
+      { label: 'Campus LAB', href: '/lab', icon: 'flask-conical', segment: 'lab', badge: 'VIP' },
       { label: 'Academic Hub', href: '/study', icon: 'book-open', segment: 'study' },
       { label: 'AI Study Coach', href: '/coach', icon: 'sparkles', segment: 'coach' },
       { label: 'Học kỳ', href: '/study/semesters', icon: 'layers', segment: 'semesters' },

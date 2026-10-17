@@ -6,12 +6,18 @@
 
 import { useSyncExternalStore, useCallback } from 'react';
 import type { TaskItem } from '../types/tasks.ts';
+import type { LabTier } from './monetization-matrix.ts';
 import {
   pullFromSupabaseCloud,
   pushToSupabaseCloudDebounced,
   logFocusSessionToSupabase,
   recordFocusViolationToSupabase,
+  pushTaskMutation,
+  pushCalendarEventMutation,
+  pushProfileMutation,
 } from './supabase-sync.ts';
+import { getSeededDataForUser, buildSeedPayload } from './auto-seed-engine.ts';
+import { generateRecurringDates, type ExtractedScheduleCourse } from './period-time-mapper.ts';
 export type EventType = 'class' | 'study' | 'exam' | 'club' | 'personal';
 
 export interface CalendarEvent {
@@ -177,6 +183,16 @@ export interface CampusOSSharedState {
   kanbanTasks: KanbanTask[];
   events: CalendarEvent[];
   aiCoachAccepted: boolean;
+
+  // Monetization & Campus LAB VIP
+  isLabVip?: boolean;
+  tier?: LabTier;
+  byokKeys?: {
+    gemini?: string;
+    anthropic?: string;
+    perplexity?: string;
+    [key: string]: string | undefined;
+  };
 }
 
 export const CAMPUS_STORAGE_KEY = 'campusos-shared-v2';
@@ -673,6 +689,10 @@ export function createDefaultSharedState(referenceDate: Date = new Date()): Camp
     kanbanTasks,
     events,
     aiCoachAccepted: false,
+
+    isLabVip: false,
+    tier: 'free',
+    byokKeys: {},
   };
 }
 
@@ -709,7 +729,10 @@ export function getSharedState(): CampusOSSharedState {
       memoryState = {
         ...def,
         ...parsed,
-        tasks: Array.isArray(parsed.tasks) && parsed.tasks.length > 0 ? parsed.tasks : def.tasks,
+        tasks: Array.isArray(parsed.tasks) ? parsed.tasks : def.tasks,
+        events: Array.isArray(parsed.events) ? parsed.events : def.events,
+        deadlines: Array.isArray(parsed.deadlines) ? parsed.deadlines : def.deadlines,
+        kanbanTasks: Array.isArray(parsed.kanbanTasks) ? parsed.kanbanTasks : def.kanbanTasks,
       };
       return memoryState!;
     }
@@ -831,6 +854,128 @@ export function penalizeViolation(
   };
 }
 
+export interface AwardXpResult {
+  amount: number;
+  nextXp: number;
+  level: number;
+  rankTitle: string;
+  reason?: string;
+}
+
+/**
+ * Awards standard gamification XP, recalculates level and rank title via calculateLevelAndRank,
+ * updates shared store state, dispatches campusos:xp-awarded CustomEvent, and persists profile mutation to Supabase.
+ */
+export function awardXp(amount: number, reason?: string): AwardXpResult {
+  const prev = getSharedState();
+  const safeAmount = Math.max(0, Math.floor(amount || 0));
+  const nextXp = prev.xp + safeAmount;
+  const { level, rankTitle } = calculateLevelAndRank(nextXp);
+
+  updateSharedState(() => ({
+    xp: nextXp,
+    level,
+    rankTitle,
+  }));
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('campusos:xp-awarded', {
+        detail: {
+          amount: safeAmount,
+          nextXp,
+          level,
+          rankTitle,
+          reason,
+        },
+      })
+    );
+  }
+
+  void pushProfileMutation({ xp: nextXp, level, rankTitle });
+
+  return {
+    amount: safeAmount,
+    nextXp,
+    level,
+    rankTitle,
+    reason,
+  };
+}
+
+export interface UpgradeLabTierResult {
+  isLabVip: boolean;
+  tier: LabTier;
+  badgeAwarded?: string;
+  previousTier: LabTier;
+}
+
+export function upgradeLabTier(
+  targetTier: LabTier,
+  byokKeys?: Record<string, string>
+): UpgradeLabTierResult {
+  const prev = getSharedState();
+  const previousTier = prev.tier || 'free';
+  const isLabVip = targetTier !== 'free';
+
+  let badgeAwarded: string | undefined;
+  if (targetTier === 'plus') badgeAwarded = 'vip-neo';
+  else if (targetTier === 'pro') badgeAwarded = 'pro-researcher';
+  else if (targetTier === 'ultra') badgeAwarded = 'ultra-scholar';
+
+  const currentBadges = Array.isArray(prev.badges) ? [...prev.badges] : [];
+  if (badgeAwarded && !currentBadges.includes(badgeAwarded)) {
+    currentBadges.push(badgeAwarded);
+  }
+
+  const nextByokKeys = byokKeys ? { ...(prev.byokKeys || {}), ...byokKeys } : (prev.byokKeys || {});
+
+  setSharedState((current) => ({
+    ...current,
+    isLabVip,
+    tier: targetTier,
+    badges: currentBadges,
+    byokKeys: nextByokKeys,
+  }));
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('campusos:lab-tier-upgraded', {
+        detail: {
+          previousTier,
+          tier: targetTier,
+          isLabVip,
+          badgeAwarded,
+        },
+      })
+    );
+  }
+
+  void pushProfileMutation({
+    isLabVip,
+    tier: targetTier,
+    byokKeys: nextByokKeys,
+  });
+
+  return {
+    isLabVip,
+    tier: targetTier,
+    badgeAwarded,
+    previousTier,
+  };
+}
+
+export function setByokKeys(keys: Record<string, string>): void {
+  const prev = getSharedState();
+  const nextKeys = { ...(prev.byokKeys || {}), ...keys };
+  updateSharedState(() => ({
+    byokKeys: nextKeys,
+  }));
+  void pushProfileMutation({
+    byokKeys: nextKeys,
+  });
+}
+
 /**
  * Reset shared state to default.
  */
@@ -852,6 +997,121 @@ export function resetSharedState(referenceDate: Date = new Date()): CampusOSShar
 }
 
 let cloudHydrationAttempted = false;
+
+const LEGACY_MOCK_TASK_IDS = new Set([
+  'task-overdue-report',
+  'task-network-project',
+  'task-today-philosophy',
+  'task-philosophy-slides',
+  'task-prob-exam',
+  'task-dsa-final',
+  'task-done-setup',
+]);
+
+const LEGACY_MOCK_EVENT_IDS = new Set([
+  'e-past-1', 'e-past-2', 'e-past-3', 'e-past-4',
+  'e-today-1', 'e-today-2', 'e-today-3', 'e-today-4',
+  'e-next-1', 'e-next-2', 'e-next-3', 'e-next-4',
+  'e-next-5', 'e-next-6', 'e-next-7', 'e-next-8', 'e-next-9',
+]);
+
+function isUuidString(id: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+
+/**
+ * Synchronize loaded store state with the seeded data so Dashboard, Tasks,
+ * and Calendar immediately show the seeded data without needing a manual refresh.
+ *
+ * Cleanly purges uncustomized legacy mock items while strictly preserving
+ * genuine custom user-created items.
+ */
+export function syncStoreWithSeededData(userId?: string): void {
+  const targetId = userId || 'default_student_id';
+  const seeded = getSeededDataForUser(targetId) || buildSeedPayload(targetId);
+
+  updateSharedState((prev) => {
+    const seededTaskTitles = new Set(seeded.storeTasks.map((t) => t.title.trim().toLowerCase()));
+    const seededEventTitles = new Set(seeded.storeEvents.map((e) => e.title.trim().toLowerCase()));
+
+    // 1. Filter out legacy mock tasks, preserving genuine custom user tasks
+    const nonLegacyTasks = prev.tasks.filter((t) => {
+      if (LEGACY_MOCK_TASK_IDS.has(t.id)) return false;
+      // Also filter out any non-UUID task whose title duplicates a seeded task
+      if (!isUuidString(t.id) && seededTaskTitles.has(t.title.trim().toLowerCase())) {
+        return false;
+      }
+      return true;
+    });
+
+    // Merge tasks: ensure all 7 seeded tasks exist
+    const existingTaskIds = new Set(nonLegacyTasks.map((t) => t.id));
+    const mergedTasks = [...nonLegacyTasks];
+    for (const sTask of seeded.storeTasks) {
+      if (!existingTaskIds.has(sTask.id)) {
+        mergedTasks.push(sTask);
+        existingTaskIds.add(sTask.id);
+      }
+    }
+
+    // 2. Filter out legacy mock events, preserving genuine custom user events
+    const nonLegacyEvents = prev.events.filter((e) => {
+      if (LEGACY_MOCK_EVENT_IDS.has(e.id)) return false;
+      if (/^e-(past|today|next)-\d+$/i.test(e.id)) return false;
+      // Also filter out any non-UUID event whose title duplicates a seeded event
+      if (!isUuidString(e.id) && seededEventTitles.has(e.title.trim().toLowerCase())) {
+        return false;
+      }
+      return true;
+    });
+
+    // Merge events: ensure all 10 seeded events exist
+    const existingEventIds = new Set(nonLegacyEvents.map((e) => e.id));
+    const mergedEvents = [...nonLegacyEvents];
+    for (const sEvent of seeded.storeEvents) {
+      if (!existingEventIds.has(sEvent.id)) {
+        mergedEvents.push(sEvent);
+        existingEventIds.add(sEvent.id);
+      }
+    }
+
+    // 3. Synchronize deadlines without duplicate titles & align completion status
+    const completedTaskTitles = new Set(
+      mergedTasks
+        .filter((t) => t.status === 'done')
+        .map((t) => t.title.trim().toLowerCase())
+    );
+
+    const seenDeadlineTitles = new Set<string>();
+    const seenDeadlineIds = new Set<string>();
+    const mergedDeadlines: DeadlineItem[] = [];
+
+    for (const dl of prev.deadlines) {
+      const normTitle = (dl.title || '').trim().toLowerCase();
+      if (!seenDeadlineIds.has(dl.id) && (!normTitle || !seenDeadlineTitles.has(normTitle))) {
+        seenDeadlineIds.add(dl.id);
+        if (normTitle) {
+          seenDeadlineTitles.add(normTitle);
+        }
+        mergedDeadlines.push({
+          ...dl,
+          completed: dl.completed || (normTitle ? completedTaskTitles.has(normTitle) : false),
+        });
+      }
+    }
+
+    return {
+      ...prev,
+      tasks: mergedTasks,
+      events: mergedEvents,
+      deadlines: mergedDeadlines,
+      xp: Math.max(prev.xp, seeded.profile.xp ?? 2840),
+      level: Math.max(prev.level, seeded.profile.level ?? 7),
+      streak: Math.max(prev.streak, seeded.profile.streak ?? 12),
+      rankTitle: prev.rankTitle || seeded.profile.rank_title || 'Sinh viên cày thuê',
+    };
+  });
+}
 
 export function hydrateFromCloudIfAvailable(): void {
   if (typeof window === 'undefined' || cloudHydrationAttempted) return;
@@ -909,7 +1169,10 @@ if (typeof window !== 'undefined') {
         memoryState = {
           ...def,
           ...parsed,
-          tasks: Array.isArray(parsed.tasks) && parsed.tasks.length > 0 ? parsed.tasks : def.tasks,
+          tasks: Array.isArray(parsed.tasks) ? parsed.tasks : def.tasks,
+          events: Array.isArray(parsed.events) ? parsed.events : def.events,
+          deadlines: Array.isArray(parsed.deadlines) ? parsed.deadlines : def.deadlines,
+          kanbanTasks: Array.isArray(parsed.kanbanTasks) ? parsed.kanbanTasks : def.kanbanTasks,
         };
         notifySubscribers();
         window.dispatchEvent(new CustomEvent(CAMPUS_UPDATE_EVENT, { detail: memoryState }));
@@ -1053,6 +1316,10 @@ export function addTask(
     };
   });
 
+  if (createdTask) {
+    void pushTaskMutation(createdTask, 'UPSERT');
+  }
+
   return createdTask!;
 }
 
@@ -1145,6 +1412,10 @@ export function addQuickTask(
     );
   }
 
+  if (createdTask!) {
+    void pushTaskMutation(createdTask!, 'UPSERT');
+  }
+
   let isUndone = false;
   const undo = () => {
     if (isUndone) return;
@@ -1161,6 +1432,8 @@ export function addQuickTask(
         rankTitle,
       };
     });
+
+    void pushTaskMutation(createdTask!, 'DELETE');
   };
 
   return {
@@ -1184,9 +1457,46 @@ export function completeTask(
   let clearBoardBonus = false;
 
   updateSharedState((prev) => {
-    const existingIndex = prev.tasks.findIndex((t) => t.id === id);
+    const targetDeadline = prev.deadlines.find((d) => d.id === id);
+    let existingIndex = prev.tasks.findIndex((t) =>
+      t.id === id ||
+      t.id === `task-${id}` ||
+      (t.id.startsWith('task-') && t.id.slice(5) === id) ||
+      (id.startsWith('dl-') && (t.id === id.slice(3) || `task-${t.id}` === id.slice(3)))
+    );
+
+    if (existingIndex === -1 && targetDeadline) {
+      existingIndex = prev.tasks.findIndex(
+        (t) => t.title.trim().toLowerCase() === targetDeadline.title.trim().toLowerCase()
+      );
+    }
+
+    const todayStr = formatIsoDateOnly(new Date(), 0);
+    const nowIso = new Date().toISOString();
+
     if (existingIndex === -1) {
-      return {};
+      if (!targetDeadline || targetDeadline.completed) {
+        return {};
+      }
+      xpGained = xpAward;
+      const nextXp = prev.xp + xpGained;
+      const { level, rankTitle } = calculateLevelAndRank(nextXp);
+      const streakResult = calculateStreakOnCheckIn(
+        { streak: prev.streak, lastStudyDate: prev.lastStudyDate, streakFreezes: prev.streakFreezes },
+        todayStr
+      );
+
+      const nextDeadlines = prev.deadlines.map((d) => (d.id === id ? { ...d, completed: true } : d));
+      void pushProfileMutation({ xp: nextXp, level, rankTitle, streak: streakResult.streak });
+      return {
+        deadlines: nextDeadlines,
+        xp: nextXp,
+        level,
+        rankTitle,
+        streak: streakResult.streak,
+        streakFreezes: streakResult.streakFreezes,
+        lastStudyDate: todayStr,
+      };
     }
 
     const task = prev.tasks[existingIndex]!;
@@ -1195,13 +1505,10 @@ export function completeTask(
       return {};
     }
 
-    const todayStr = formatIsoDateOnly(new Date(), 0);
-    const nowIso = new Date().toISOString();
-
     // Check Clear the Board bonus:
     // Are all tasks for today completed with this one?
     const todayTasks = prev.tasks.filter((t) => t.dueAt && t.dueAt.slice(0, 10) === todayStr);
-    const otherIncompleteTodayTasks = todayTasks.filter((t) => t.id !== id && t.status !== 'done');
+    const otherIncompleteTodayTasks = todayTasks.filter((t) => t.id !== task.id && t.status !== 'done');
     const isTodayTask = Boolean(task.dueAt && task.dueAt.slice(0, 10) === todayStr);
 
     if (isTodayTask && otherIncompleteTodayTasks.length === 0 && todayTasks.length > 0) {
@@ -1258,6 +1565,7 @@ export function completeTask(
     const nextDeadlines = prev.deadlines.map((d) => {
       if (
         d.id === id ||
+        d.id === task.id ||
         d.id === task.id.replace(/^task-/, '') ||
         d.title.toLowerCase() === task.title.toLowerCase()
       ) {
@@ -1265,6 +1573,9 @@ export function completeTask(
       }
       return d;
     });
+
+    void pushTaskMutation(updatedTask, 'UPSERT');
+    void pushProfileMutation({ xp: nextXp, level, rankTitle, streak: streakResult.streak });
 
     return {
       tasks: nextTasks,
@@ -1336,6 +1647,10 @@ export function updateTask(id: string, patch: Partial<TaskItem>): TaskItem | nul
     return { tasks: nextTasks, deadlines: nextDeadlines };
   });
 
+  if (updatedTask) {
+    void pushTaskMutation(updatedTask, 'UPSERT');
+  }
+
   return updatedTask;
 }
 
@@ -1355,7 +1670,147 @@ export function deleteTask(id: string): TaskItem | null {
     };
   });
 
+  if (deleted) {
+    void pushTaskMutation(deleted, 'DELETE');
+  }
+
   return deleted;
+}
+
+/**
+ * Add a calendar event with optimistic cloud persistence to public.calendar_events.
+ */
+export function addCalendarEvent(
+  eventData: Omit<CalendarEvent, 'id'> & { id?: string }
+): CalendarEvent {
+  let createdEvent: CalendarEvent | null = null;
+
+  updateSharedState((prev) => {
+    const id = eventData.id || `event-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    createdEvent = {
+      ...eventData,
+      id,
+    };
+
+    return {
+      events: [createdEvent, ...prev.events],
+    };
+  });
+
+  if (createdEvent) {
+    void pushCalendarEventMutation(createdEvent, 'UPSERT');
+  }
+
+  return createdEvent!;
+}
+
+/**
+ * Update a calendar event with optimistic cloud persistence to public.calendar_events.
+ */
+export function updateCalendarEvent(
+  id: string,
+  patch: Partial<CalendarEvent>
+): CalendarEvent | null {
+  let updatedEvent: CalendarEvent | null = null;
+
+  updateSharedState((prev) => {
+    const idx = prev.events.findIndex((e) => e.id === id);
+    if (idx === -1) return {};
+
+    updatedEvent = {
+      ...prev.events[idx]!,
+      ...patch,
+    };
+
+    const nextEvents = [...prev.events];
+    nextEvents[idx] = updatedEvent;
+    return { events: nextEvents };
+  });
+
+  if (updatedEvent) {
+    void pushCalendarEventMutation(updatedEvent, 'UPSERT');
+  }
+
+  return updatedEvent;
+}
+
+/**
+ * Delete a calendar event with optimistic cloud persistence to public.calendar_events.
+ */
+export function deleteCalendarEvent(id: string): CalendarEvent | null {
+  let deleted: CalendarEvent | null = null;
+
+  updateSharedState((prev) => {
+    const existing = prev.events.find((e) => e.id === id);
+    if (!existing) return {};
+    deleted = existing;
+
+    return {
+      events: prev.events.filter((e) => e.id !== id),
+    };
+  });
+
+  if (deleted) {
+    void pushCalendarEventMutation(deleted, 'DELETE');
+  }
+
+  return deleted;
+}
+
+/**
+ * Converts approved OCR extracted courses into 15 weekly recurring CalendarEvent instances.
+ */
+export function convertCoursesToRecurringEvents(
+  courses: ExtractedScheduleCourse[],
+  totalWeeks = 15,
+  refDate: Date = new Date()
+): CalendarEvent[] {
+  const events: CalendarEvent[] = [];
+  for (const course of courses) {
+    const dates = generateRecurringDates(course.dayOfWeek, totalWeeks, refDate);
+    const title = course.courseCode
+      ? `${course.courseCode} - ${course.courseName}`
+      : course.courseName;
+
+    for (const d of dates) {
+      events.push({
+        id: `scan-${course.id}-${d}`,
+        title,
+        date: d,
+        start: course.startTime || '07:00',
+        end: course.endTime || '09:25',
+        type: 'class',
+        location: course.room || 'Phòng học',
+        description: course.instructor ? `Giảng viên: ${course.instructor}` : undefined,
+        color: course.color || '#3DE8FF',
+        done: false,
+      });
+    }
+  }
+  return events;
+}
+
+/**
+ * Batch adds calendar events to the store with optimistic cloud persistence to public.calendar_events.
+ */
+export function batchAddCalendarEvents(
+  newEvents: CalendarEvent[]
+): CalendarEvent[] {
+  if (!newEvents || newEvents.length === 0) return [];
+
+  updateSharedState((prev) => {
+    const existingIds = new Set(prev.events.map((e) => e.id));
+    const toAdd = newEvents.filter((e) => !existingIds.has(e.id));
+    return {
+      events: [...toAdd, ...prev.events],
+    };
+  });
+
+  for (const ev of newEvents) {
+    void pushCalendarEventMutation(ev, 'UPSERT');
+  }
+
+  return newEvents;
 }
 
 /**
@@ -1464,6 +1919,14 @@ export function useCampusStore(): {
   bulkUpdateTasks: (ids: string[], patch: Partial<TaskItem>) => void;
   toggleTaskStep: (taskId: string, stepId: string) => void;
   reorderTasks: (taskId: string, targetQuadrantOrGroup?: string, newOrder?: number) => void;
+  addCalendarEvent: (event: Omit<CalendarEvent, 'id'> & { id?: string }) => CalendarEvent;
+  updateCalendarEvent: (id: string, patch: Partial<CalendarEvent>) => CalendarEvent | null;
+  deleteCalendarEvent: (id: string) => CalendarEvent | null;
+  awardXp: (amount: number, reason?: string) => AwardXpResult;
+  batchAddCalendarEvents: (events: CalendarEvent[]) => CalendarEvent[];
+  convertCoursesToRecurringEvents: (courses: ExtractedScheduleCourse[], totalWeeks?: number, refDate?: Date) => CalendarEvent[];
+  upgradeLabTier: (targetTier: LabTier, keys?: Record<string, string>) => UpgradeLabTierResult;
+  setByokKeys: (keys: Record<string, string>) => void;
 } {
   const state = useSyncExternalStore(
     subscribe,
@@ -1530,6 +1993,47 @@ export function useCampusStore(): {
     []
   );
 
+  const handleAddCalendarEvent = useCallback(
+    (eventData: Omit<CalendarEvent, 'id'> & { id?: string }) => addCalendarEvent(eventData),
+    []
+  );
+
+  const handleUpdateCalendarEvent = useCallback(
+    (id: string, patch: Partial<CalendarEvent>) => updateCalendarEvent(id, patch),
+    []
+  );
+
+  const handleDeleteCalendarEvent = useCallback(
+    (id: string) => deleteCalendarEvent(id),
+    []
+  );
+
+  const handleAwardXp = useCallback(
+    (amount: number, reason?: string) => awardXp(amount, reason),
+    []
+  );
+
+  const handleBatchAddCalendarEvents = useCallback(
+    (events: CalendarEvent[]) => batchAddCalendarEvents(events),
+    []
+  );
+
+  const handleConvertCoursesToRecurringEvents = useCallback(
+    (courses: ExtractedScheduleCourse[], totalWeeks = 15, refDate = new Date()) =>
+      convertCoursesToRecurringEvents(courses, totalWeeks, refDate),
+    []
+  );
+
+  const handleUpgradeLabTier = useCallback(
+    (targetTier: LabTier, keys?: Record<string, string>) => upgradeLabTier(targetTier, keys),
+    []
+  );
+
+  const handleSetByokKeys = useCallback(
+    (keys: Record<string, string>) => setByokKeys(keys),
+    []
+  );
+
   return {
     state,
     update,
@@ -1543,5 +2047,13 @@ export function useCampusStore(): {
     bulkUpdateTasks: handleBulkUpdateTasks,
     toggleTaskStep: handleToggleTaskStep,
     reorderTasks: handleReorderTasks,
+    addCalendarEvent: handleAddCalendarEvent,
+    updateCalendarEvent: handleUpdateCalendarEvent,
+    deleteCalendarEvent: handleDeleteCalendarEvent,
+    awardXp: handleAwardXp,
+    batchAddCalendarEvents: handleBatchAddCalendarEvents,
+    convertCoursesToRecurringEvents: handleConvertCoursesToRecurringEvents,
+    upgradeLabTier: handleUpgradeLabTier,
+    setByokKeys: handleSetByokKeys,
   };
 }

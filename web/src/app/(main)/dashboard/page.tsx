@@ -2,8 +2,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { useCampusStore } from '@/lib/campus-store';
+import {
+  useCampusStore,
+  awardXp,
+  convertCoursesToRecurringEvents,
+  batchAddCalendarEvents,
+} from '@/lib/campus-store';
 import { useGlobalShortcuts } from '@/components/common/use-global-shortcuts';
+import type { ExtractedScheduleCourse } from '@/lib/period-time-mapper';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -12,6 +18,14 @@ const StrictPomodoroModal = dynamic(
   () =>
     import('@/features/pomodoro/strict-pomodoro-modal').then(
       (mod) => mod.StrictPomodoroModal
+    ),
+  { ssr: false }
+);
+
+const ScheduleScanModal = dynamic(
+  () =>
+    import('@/components/calendar/schedule-scan-modal').then(
+      (mod) => mod.ScheduleScanModal
     ),
   { ssr: false }
 );
@@ -59,11 +73,29 @@ export default function DashboardPage() {
   const [focusInitialMinutes, setFocusInitialMinutes] = useState(25);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
+  const [scheduleScanOpen, setScheduleScanOpen] = useState(false);
   const [toastNotification, setToastNotification] = useState<string | null>(null);
 
   // Inline Quick-Create Task Modal (replaces window.prompt — no blocking native dialogs)
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [quickCreateTitle, setQuickCreateTitle] = useState('');
+
+  // ---------------------------------------------------------------------------
+  // AI Smart OCR Schedule Importer Commit Handler
+  // ---------------------------------------------------------------------------
+  const handleCommitScannedSchedule = useCallback(
+    (courses: ExtractedScheduleCourse[]) => {
+      if (!courses || courses.length === 0) return;
+      const newEvents = convertCoursesToRecurringEvents(courses, 15);
+      batchAddCalendarEvents(newEvents);
+      awardXp(100, 'Quét TKB bằng AI');
+      setToastNotification(
+        `🎉 Đã đồng bộ thành công ${courses.length} môn học vào Lịch trình! (+100 XP)`
+      );
+      setTimeout(() => setToastNotification(null), 5000);
+    },
+    []
+  );
 
   // ---------------------------------------------------------------------------
   // Focus Mode Trigger & Completion Handler
@@ -107,6 +139,7 @@ export default function DashboardPage() {
       setCommandPaletteOpen(false);
       setShortcutsModalOpen(false);
       setQuickCreateOpen(false);
+      setScheduleScanOpen(false);
     },
   });
 
@@ -124,17 +157,20 @@ export default function DashboardPage() {
     };
     const onTogglePaletteEvt = () => setCommandPaletteOpen((prev) => !prev);
     const onOpenShortcutsEvt = () => setShortcutsModalOpen(true);
+    const onOpenScannerEvt = () => setScheduleScanOpen(true);
 
     window.addEventListener('campusos:trigger-focus', onFocusEvt);
     window.addEventListener('campusos:quick-create-task', onQuickTaskEvt);
     window.addEventListener('campusos:toggle-command-palette', onTogglePaletteEvt);
     window.addEventListener('campusos:open-shortcuts-modal', onOpenShortcutsEvt);
+    window.addEventListener('campusos:open-schedule-scanner', onOpenScannerEvt);
 
     return () => {
       window.removeEventListener('campusos:trigger-focus', onFocusEvt);
       window.removeEventListener('campusos:quick-create-task', onQuickTaskEvt);
       window.removeEventListener('campusos:toggle-command-palette', onTogglePaletteEvt);
       window.removeEventListener('campusos:open-shortcuts-modal', onOpenShortcutsEvt);
+      window.removeEventListener('campusos:open-schedule-scanner', onOpenScannerEvt);
     };
   }, [handleLaunchFocus, handleQuickCreateTask]);
 
@@ -167,7 +203,7 @@ export default function DashboardPage() {
 
       {/* Floating System Toast */}
       {toastNotification && (
-        <div className="fixed top-6 right-6 z-50 p-4 bg-[#121220]/95 border-2 border-aurora-lime text-foreground rounded-2xl shadow-[6px_6px_0px_#000] font-sans text-xs max-w-sm animate-fade-in hard-border">
+        <div className="fixed top-6 right-6 z-50 p-4 bg-card/95 border border-aurora-lime/50 text-foreground rounded-2xl shadow-xl backdrop-blur-xl font-sans text-xs max-w-sm animate-fade-in">
           {toastNotification}
         </div>
       )}
@@ -195,6 +231,7 @@ export default function DashboardPage() {
         {/* S2: "HÔM NAY" HORIZONTAL INTERACTIVE TIMELINE */}
         <TodayTimeline
           onStartFocus={handleLaunchFocus}
+          onOpenScanner={() => setScheduleScanOpen(true)}
         />
 
         {/* S3 & S4: ASYMMETRIC GRID (DEADLINE ARENA & AI MASCOT COACH) */}
@@ -241,6 +278,13 @@ export default function DashboardPage() {
       <KeyboardShortcutsModal
         isOpen={shortcutsModalOpen}
         onClose={() => setShortcutsModalOpen(false)}
+      />
+
+      {/* AI Smart OCR Schedule Importer Modal */}
+      <ScheduleScanModal
+        isOpen={scheduleScanOpen}
+        onClose={() => setScheduleScanOpen(false)}
+        onCommitSchedule={handleCommitScannedSchedule}
       />
     </div>
   );

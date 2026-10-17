@@ -14,6 +14,7 @@ import {
   Play,
   X,
   Check,
+  Zap,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -21,9 +22,10 @@ import { Button } from '@/components/ui/button';
 
 interface TodayTimelineProps {
   onStartFocus?: (minutes?: number) => void;
+  onOpenScanner?: () => void;
 }
 
-export function TodayTimeline({ onStartFocus }: TodayTimelineProps = {}) {
+export function TodayTimeline({ onStartFocus, onOpenScanner }: TodayTimelineProps = {}) {
   const { state } = useCampusStore();
   const [nowTime, setNowTime] = useState({ hours: 10, minutes: 15, seconds: 0 });
   const [mounted, setMounted] = useState(false);
@@ -68,39 +70,7 @@ export function TodayTimeline({ onStartFocus }: TodayTimelineProps = {}) {
     const fromStore = state.events.filter(
       (e) => e.date === todayIso && (e.type === 'class' || e.type === 'study')
     );
-    if (fromStore.length > 0) {
-      return [...fromStore].sort((a, b) => a.start.localeCompare(b.start));
-    }
-    // High-fidelity fallback defaults matching syllabus
-    return [
-      {
-        id: 'c-1',
-        title: 'Kỹ thuật lập trình',
-        date: todayIso,
-        start: '08:00',
-        end: '09:30',
-        type: 'class' as const,
-        location: 'Phòng D201',
-      },
-      {
-        id: 'c-2',
-        title: 'Triết học Mác - Lênin',
-        date: todayIso,
-        start: '10:00',
-        end: '11:30',
-        type: 'class' as const,
-        location: 'Giảng đường A',
-      },
-      {
-        id: 'c-3',
-        title: 'Thực hành Mạng máy tính',
-        date: todayIso,
-        start: '14:00',
-        end: '16:30',
-        type: 'class' as const,
-        location: 'Lab 304',
-      },
-    ];
+    return [...fromStore].sort((a, b) => a.start.localeCompare(b.start));
   }, [state.events, todayIso]);
 
   // 3. Mouse Drag-to-Scroll handlers
@@ -152,7 +122,9 @@ export function TodayTimeline({ onStartFocus }: TodayTimelineProps = {}) {
             Lịch trình hôm nay
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5 font-sans">
-            Timeline trực quan kéo thả · Cập nhật tiến độ theo thời gian thực
+            {todayClasses.length > 0
+              ? `${todayClasses.length} tiết học được lên lịch hôm nay`
+              : 'Không có lịch học nào hôm nay'}
           </p>
         </div>
 
@@ -165,6 +137,17 @@ export function TodayTimeline({ onStartFocus }: TodayTimelineProps = {}) {
               {String(nowTime.seconds).padStart(2, '0')}
             </span>
           </div>
+
+          {/* AI Schedule Scanner Quick Action */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenScanner}
+            className="h-9 rounded-xl border border-cyan-400/30 bg-cyan-500/10 font-bold text-xs text-cyan-300 hover:bg-cyan-500/20 shadow-sm transition-all"
+          >
+            <Zap className="mr-1.5 h-3.5 w-3.5 text-cyan-400" />
+            Quét TKB bằng AI
+          </Button>
 
           <button
             onClick={() => scrollStep('left')}
@@ -191,53 +174,82 @@ export function TodayTimeline({ onStartFocus }: TodayTimelineProps = {}) {
       </div>
 
       {/* Horizontal Draggable Timeline Container */}
-      <div
-        ref={containerRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUpOrLeave}
-        onMouseLeave={handleMouseUpOrLeave}
-        className={`relative flex gap-5 overflow-x-auto pb-4 pt-2 select-none scrollbar-thin ${
-          isDragging ? 'cursor-grabbing' : 'cursor-grab'
-        }`}
-      >
-        {todayClasses.map((item, index) => {
-          const startMin = parseTimeToMin(item.start);
-          const endMin = parseTimeToMin(item.end);
-          const isActive = currentMinutesTotal >= startMin && currentMinutesTotal <= endMin;
-          const isPast = currentMinutesTotal > endMin;
-          const isUpcoming = currentMinutesTotal < startMin;
+      {todayClasses.length > 0 ? (
+        <div
+          ref={containerRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUpOrLeave}
+          onMouseLeave={handleMouseUpOrLeave}
+          className={`relative flex gap-5 overflow-x-auto pb-4 pt-2 select-none scrollbar-thin ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab'
+          }`}
+        >
+          {todayClasses.map((item, index) => {
+            const startMin = parseTimeToMin(item.start);
+            const endMin = parseTimeToMin(item.end);
+            const isActive = currentMinutesTotal >= startMin && currentMinutesTotal <= endMin;
+            const isPast = currentMinutesTotal > endMin;
+            const isUpcoming = currentMinutesTotal < startMin;
 
-          // Progress calculation for active class
-          const progressPercent = isActive
-            ? Math.min(100, Math.max(0, Math.round(((currentMinutesTotal - startMin) / (endMin - startMin)) * 100)))
-            : isPast
-            ? 100
-            : 0;
+            // Progress calculation for active class
+            const progressPercent = isActive
+              ? Math.min(100, Math.max(0, Math.round(((currentMinutesTotal - startMin) / (endMin - startMin)) * 100)))
+              : isPast
+              ? 100
+              : 0;
 
-          // Countdown calculation for upcoming class
-          const minutesToStart = isUpcoming ? startMin - currentMinutesTotal : 0;
-          const countdownText =
-            minutesToStart > 60
-              ? `Bắt đầu sau ${Math.floor(minutesToStart / 60)}h ${minutesToStart % 60}p`
-              : `Bắt đầu sau ${minutesToStart} phút`;
+            // Countdown calculation for upcoming class
+            const minutesToStart = isUpcoming ? startMin - currentMinutesTotal : 0;
+            const countdownText =
+              minutesToStart > 60
+                ? `Bắt đầu sau ${Math.floor(minutesToStart / 60)}h ${minutesToStart % 60}p`
+                : `Bắt đầu sau ${minutesToStart} phút`;
 
-          return (
-            <TimelineCard
-              key={item.id || index}
-              item={item}
-              isActive={isActive}
-              isPast={isPast}
-              isUpcoming={isUpcoming}
-              progressPercent={progressPercent}
-              countdownText={countdownText}
-              reducedMotion={state.reducedMotion}
-              onOpenAction={(type) => setActiveModal({ type, item })}
-              onStartFocus={onStartFocus}
-            />
-          );
-        })}
-      </div>
+            return (
+              <TimelineCard
+                key={item.id || index}
+                item={item}
+                isActive={isActive}
+                isPast={isPast}
+                isUpcoming={isUpcoming}
+                progressPercent={progressPercent}
+                countdownText={countdownText}
+                reducedMotion={state.reducedMotion}
+                onOpenAction={(type) => setActiveModal({ type, item })}
+                onStartFocus={onStartFocus}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex w-full flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center">
+          <CalendarDays className="h-8 w-8 text-cyan-400/70 mb-2" />
+          <p className="font-heading text-sm font-bold text-foreground">
+            Hôm nay bạn không có lịch học nào
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+            Thêm lịch học hoặc quét ảnh thời khóa biểu bằng AI để tự động xếp lịch học theo tuần.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            {onOpenScanner && (
+              <Button
+                onClick={onOpenScanner}
+                size="sm"
+                className="gap-1.5 bg-gradient-to-r from-cyan-500 to-blue-600 font-bold text-xs"
+              >
+                <Zap className="h-3.5 w-3.5" /> Quét TKB bằng AI
+              </Button>
+            )}
+            <Link
+              href="/calendar"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-white/10"
+            >
+              Mở Lịch trình →
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Quick Action Interactive Modals */}
       {activeModal && (
@@ -248,7 +260,7 @@ export function TodayTimeline({ onStartFocus }: TodayTimelineProps = {}) {
           aria-modal="true"
         >
           <div
-            className="w-full max-w-md bg-[#121222] border-2 border-white/20 rounded-[24px] shadow-[8px_8px_0px_#000] p-6 space-y-4 hard-border"
+            className="w-full max-w-md bg-card border border-white/20 rounded-2xl shadow-2xl p-6 space-y-4 backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -399,12 +411,12 @@ function TimelineCard({
       ref={cardRef}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
-      className={`relative min-w-[290px] max-w-[320px] shrink-0 rounded-2xl border-2 p-5 transition-all duration-150 flex flex-col justify-between ${
+      className={`relative min-w-[290px] max-w-[320px] shrink-0 rounded-2xl border p-5 transition-all duration-150 flex flex-col justify-between ${
         isActive
-          ? 'border-aurora-lime bg-[#141426] shadow-[6px_6px_0px_#C6FF3D] animate-pulse-neon'
+          ? 'border-aurora-lime/60 bg-card shadow-[0_0_24px_rgba(198,255,61,0.15)] ring-1 ring-aurora-lime/40'
           : isPast
-          ? 'border-white/10 bg-[#0E0E18]/60 opacity-60 shadow-[3px_3px_0px_#000]'
-          : 'border-white/15 bg-[#121222] shadow-[5px_5px_0px_#000]'
+          ? 'border-white/5 bg-card/30 opacity-60'
+          : 'border-white/10 bg-card/70 hover:border-white/25 shadow-sm'
       }`}
     >
       <div>

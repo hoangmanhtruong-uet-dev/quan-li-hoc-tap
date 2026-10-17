@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser, ensureDefaultProfile } from '@/lib/authorization';
 
+
 export const dynamic = 'force-dynamic';
 
 export async function GET() {

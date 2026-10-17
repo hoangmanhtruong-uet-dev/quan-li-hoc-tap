@@ -87,6 +87,14 @@ export function GameHudStats({ className = '', onOpenStudyModal }: GameHudStatsP
     }
     return cells;
   }, []);
+  const todayDayName = useMemo(() => {
+    const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    return dayNames[new Date().getDay()];
+  }, []);
+
+  const completedTasksCount = useMemo(() => {
+    return state.tasks.filter((t) => t.status === 'done').length;
+  }, [state.tasks]);
 
   const [hoveredCell, setHoveredCell] = useState<{ dayIndex: number; hours: number } | null>(null);
 
@@ -114,7 +122,7 @@ export function GameHudStats({ className = '', onOpenStudyModal }: GameHudStatsP
       {/* Top HUD Row: Goal Ring & XP Bar */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] w-full min-w-0">
         {/* Module A: Weekly Study Goal Ring */}
-        <div className="rounded-[24px] border-2 border-white/20 bg-[#11111E]/95 p-6 shadow-[6px_6px_0px_#000] backdrop-blur-md hard-border">
+        <div className="rounded-2xl border border-white/10 bg-card/60 p-6 shadow-sm backdrop-blur-xl">
           <div className="flex items-center justify-between pb-3">
             <h3 className="flex items-center gap-2 font-bold text-base text-foreground font-heading">
               <Target className="h-5 w-5 text-aurora-lime" />
@@ -186,12 +194,12 @@ export function GameHudStats({ className = '', onOpenStudyModal }: GameHudStatsP
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-xl border border-white/10 bg-white/5 p-2.5">
-                  <span className="text-[10px] text-muted-foreground block">Đã học hôm nay</span>
-                  <span className="font-mono font-bold text-violet-300">3.5 giờ</span>
+                  <span className="text-[10px] text-muted-foreground block">Đã học tuần này</span>
+                  <span className="font-mono font-bold text-violet-300">{currentHours.toFixed(1)} giờ</span>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 p-2.5">
                   <span className="text-[10px] text-muted-foreground block">Nhiệm vụ xong</span>
-                  <span className="font-mono font-bold text-aurora-lime">14 tasks</span>
+                  <span className="font-mono font-bold text-aurora-lime">{completedTasksCount} tasks</span>
                 </div>
               </div>
             </div>
@@ -199,7 +207,7 @@ export function GameHudStats({ className = '', onOpenStudyModal }: GameHudStatsP
         </div>
 
         {/* Module B: XP Bar & Level Progression HUD */}
-        <div className="rounded-[24px] border-2 border-white/20 bg-[#11111E]/95 p-6 shadow-[6px_6px_0px_#000] backdrop-blur-md flex flex-col justify-between hard-border">
+        <div className="rounded-2xl border border-white/10 bg-card/60 p-6 shadow-sm backdrop-blur-xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-2">
               <div className="flex items-center gap-2">
@@ -265,10 +273,10 @@ export function GameHudStats({ className = '', onOpenStudyModal }: GameHudStatsP
         </div>
       </div>
 
-      {/* Bottom HUD Row: 12-Week Streak Heatmap & Warning Sticker */}
+      {/* Bottom HUD Row: 12-Week Streak Heatmap & Warning Card */}
       <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
         {/* Module C: 12-Week GitHub-style Study Streak Heatmap */}
-        <div className="rounded-[24px] border-2 border-white/20 bg-[#11111E]/95 p-6 shadow-[6px_6px_0px_#000] backdrop-blur-md hard-border font-sans">
+        <div className="rounded-2xl border border-white/10 bg-card/60 p-6 shadow-sm backdrop-blur-xl font-sans">
           <div className="flex flex-wrap items-center justify-between gap-2 pb-3">
             <div>
               <h3 className="flex items-center gap-2 font-bold text-base text-foreground font-heading">
@@ -319,7 +327,7 @@ export function GameHudStats({ className = '', onOpenStudyModal }: GameHudStatsP
           {/* Heatmap Legend */}
           <div className="flex items-center justify-between pt-3 text-[11px] text-muted-foreground border-t border-white/10 mt-2 font-mono">
             <span className="flex items-center gap-1.5 font-sans">
-              <span className="h-2 w-2 rounded-full bg-aurora-cyan" /> Hôm nay (Thứ Ba)
+              <span className="h-2 w-2 rounded-full bg-aurora-cyan" /> Hôm nay ({todayDayName})
             </span>
             <div className="flex items-center gap-1.5 font-sans">
               <span>Ít</span>
@@ -333,8 +341,8 @@ export function GameHudStats({ className = '', onOpenStudyModal }: GameHudStatsP
           </div>
         </div>
 
-        {/* Module D: Neo-Brutal Warning Sticker "Môn cần chú ý" */}
-        <div className="sticker-badge-alt relative rounded-[24px] bg-[#1A1216]/95 border-2 border-aurora-orange/60 p-5 backdrop-blur-md shadow-[6px_6px_0px_0px_#000000] hard-border">
+        {/* Module D: Warning Bento Card "Môn cần chú ý" */}
+        <div className="relative rounded-2xl bg-amber-950/15 border border-amber-500/30 p-5 backdrop-blur-xl shadow-sm">
           {/* Header Warning Sticker */}
           <div className="flex items-center justify-between pb-2">
             <span className="sticker-badge bg-aurora-orange text-black border-aurora-orange text-[10px] font-black tracking-wider">
@@ -357,8 +365,8 @@ export function GameHudStats({ className = '', onOpenStudyModal }: GameHudStatsP
 
           {/* Animated SVG Grade Trend Sparkline */}
           <div className="py-3">
-            <div className="relative h-16 w-full">
-              <svg viewBox="0 0 240 70" className="h-full w-full overflow-visible">
+            <div className="relative h-20 w-full">
+              <svg viewBox="0 0 240 85" className="h-full w-full overflow-visible">
                 <defs>
                   <linearGradient id="sparklineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#FFB020" />
@@ -370,14 +378,14 @@ export function GameHudStats({ className = '', onOpenStudyModal }: GameHudStatsP
                 {/* Target B Grade dashed line (7.0) */}
                 <line
                   x1="10"
-                  y1="38"
+                  y1="34"
                   x2="230"
-                  y2="38"
+                  y2="34"
                   stroke="rgba(255,255,255,0.2)"
                   strokeDasharray="4,4"
                   strokeWidth="1.5"
                 />
-                <text x="180" y="34" fill="#94A3B8" fontSize="9" fontFamily="monospace">
+                <text x="165" y="24" fill="#94A3B8" fontSize="9" fontFamily="monospace">
                   Mục tiêu B (7.0)
                 </text>
 

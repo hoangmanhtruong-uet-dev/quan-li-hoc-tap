@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import {
   Award,
   BarChart3,
@@ -14,14 +15,15 @@ import {
   AlertTriangle,
   CheckCircle2,
   BookOpen,
+  Plus,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GpaPrism3D } from '@/components/study/gpa-prism-3d';
 import {
-  SEED_COURSES,
   convertScale10To4,
+  calculateSemesterGpa,
   solveRequiredFinalGrade,
   getAcademicWarningStatus,
   type CourseItem,
@@ -36,18 +38,37 @@ const GPA_HISTORY = [
 ];
 
 export default function GradesPage() {
-  const [courses, setCourses] = useState<CourseItem[]>(SEED_COURSES);
-  const [expandedCourseId, setExpandedCourseId] = useState<string | null>('cs101');
+  const [courses, setCourses] = useState<CourseItem[]>([]);
+  const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
 
   // Grade Target Solver State
-  const [selectedCourseForSolver, setSelectedCourseForSolver] = useState<string>('cs101');
+  const [selectedCourseForSolver, setSelectedCourseForSolver] = useState<string>('');
   const [solverTargetLetter, setSolverTargetLetter] = useState<LetterGrade>('A');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('campusos-courses-v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.customCourses && Array.isArray(parsed.customCourses)) {
+          setCourses(parsed.customCourses);
+          if (parsed.customCourses.length > 0) {
+            setSelectedCourseForSolver(parsed.customCourses[0].id);
+          }
+        }
+      }
+    } catch {}
+  }, []);
 
   // Current calculations
   const totalCredits = useMemo(
     () => courses.reduce((sum, c) => sum + c.credits, 0),
     [courses]
   );
+
+  const completedCourses = useMemo(() => courses.filter((c) => c.finalScore !== null), [courses]);
+  const semesterGpa = useMemo(() => calculateSemesterGpa(courses), [courses]);
+  const currentCpa = completedCourses.length > 0 ? semesterGpa.gpa4 : 0.0;
 
   // Compute solver result
   const solverCourse = courses.find((c) => c.id === selectedCourseForSolver) || courses[0];
@@ -56,8 +77,6 @@ export default function GradesPage() {
     return solveRequiredFinalGrade(solverCourse.components, solverTargetLetter);
   }, [solverCourse, solverTargetLetter]);
 
-  // Overall CPA
-  const currentCpa = 3.72;
   const warningStatus = getAcademicWarningStatus(currentCpa, 0);
 
   return (
@@ -87,17 +106,23 @@ export default function GradesPage() {
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <div className="rounded-2xl border border-white/10 bg-background/50 px-4 py-2.5">
                 <p className="text-[11px] text-muted-foreground">GPA Tích Lũy (Hệ 4)</p>
-                <p className="font-mono text-2xl font-black text-emerald-400">3.72</p>
+                <p className="font-mono text-2xl font-black text-emerald-400">
+                  {currentCpa > 0 ? currentCpa.toFixed(2) : '0.00'}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-background/50 px-4 py-2.5">
                 <p className="text-[11px] text-muted-foreground">Điểm TB Hệ 10</p>
-                <p className="font-mono text-2xl font-black text-cyan-300">8.45</p>
+                <p className="font-mono text-2xl font-black text-cyan-300">
+                  {semesterGpa.gpa10 > 0 ? semesterGpa.gpa10.toFixed(2) : '—'}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-background/50 px-4 py-2.5">
                 <p className="text-[11px] text-muted-foreground">Tín Chỉ Tích Lũy</p>
-                <p className="font-mono text-2xl font-black text-violet-300">45 / 130</p>
+                <p className="font-mono text-2xl font-black text-violet-300">
+                  {semesterGpa.earnedCredits} / 130
+                </p>
               </div>
             </div>
           </div>
@@ -106,7 +131,13 @@ export default function GradesPage() {
           <div className="flex w-full flex-col items-center justify-center lg:w-[320px]">
             <GpaPrism3D gpa={currentCpa} className="h-[220px]" />
             <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 font-mono text-xs font-bold text-emerald-300">
-              💎 Xếp loại: Xuất sắc (Dean&apos;s List)
+              {currentCpa >= 3.6
+                ? "💎 Xếp loại: Xuất sắc (Dean's List)"
+                : currentCpa >= 3.2
+                ? '🌟 Xếp loại: Giỏi'
+                : currentCpa >= 2.5
+                ? '⚡ Xếp loại: Khá'
+                : '🌱 Bắt đầu học kỳ mới'}
             </span>
           </div>
         </div>
@@ -165,102 +196,122 @@ export default function GradesPage() {
               </span>
             </div>
 
-            <div className="space-y-3">
-              {courses.map((course) => {
-                const isExpanded = expandedCourseId === course.id;
+            {courses.length > 0 ? (
+              <div className="space-y-3">
+                {courses.map((course) => {
+                  const isExpanded = expandedCourseId === course.id;
 
-                return (
-                  <div
-                    key={course.id}
-                    className="overflow-hidden rounded-2xl border border-white/10 bg-card/40 backdrop-blur-xl transition-colors hover:border-white/20"
-                  >
-                    {/* Header bar */}
-                    <button
-                      onClick={() => setExpandedCourseId(isExpanded ? null : course.id)}
-                      className="flex w-full items-center gap-3.5 p-4 text-left transition-colors"
+                  return (
+                    <div
+                      key={course.id}
+                      className="overflow-hidden rounded-2xl border border-white/10 bg-card/40 backdrop-blur-xl transition-colors hover:border-white/20"
                     >
-                      <span
-                        className="h-10 w-1 rounded-full"
-                        style={{ backgroundColor: course.color }}
-                      />
+                      {/* Header bar */}
+                      <button
+                        onClick={() => setExpandedCourseId(isExpanded ? null : course.id)}
+                        className="flex w-full items-center gap-3.5 p-4 text-left transition-colors"
+                      >
+                        <span
+                          className="h-10 w-1 rounded-full"
+                          style={{ backgroundColor: course.color }}
+                        />
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-muted-foreground">
-                            {course.code}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground">
-                            · {course.credits} tín chỉ
-                          </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-bold text-muted-foreground">
+                              {course.code}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              · {course.credits} tín chỉ
+                            </span>
+                          </div>
+                          <p className="font-heading text-sm font-bold text-foreground truncate">
+                            {course.name}
+                          </p>
                         </div>
-                        <p className="font-heading text-sm font-bold text-foreground truncate">
-                          {course.name}
-                        </p>
-                      </div>
 
-                      {/* Score Preview */}
-                      <div className="text-right">
-                        <p className="font-mono text-lg font-black text-cyan-300">
-                          {course.finalScore !== null ? course.finalScore : 'Đang học'}
-                        </p>
-                        <p className="text-[10px] font-bold text-muted-foreground">
-                          {course.letterGrade !== '—' ? course.letterGrade : 'Chờ thi'}
-                        </p>
-                      </div>
+                        {/* Score Preview */}
+                        <div className="text-right">
+                          <p className="font-mono text-lg font-black text-cyan-300">
+                            {course.finalScore !== null ? course.finalScore : 'Đang học'}
+                          </p>
+                          <p className="text-[10px] font-bold text-muted-foreground">
+                            {course.letterGrade !== '—' ? course.letterGrade : 'Chờ thi'}
+                          </p>
+                        </div>
 
-                      {isExpanded ? (
-                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </button>
+                        {isExpanded ? (
+                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </button>
 
-                    {/* Expandable Grade Breakdown */}
-                    {isExpanded && (
-                      <div className="border-t border-white/5 bg-background/50 p-4 space-y-3">
-                        <p className="text-xs font-bold text-muted-foreground">
-                          Thành phần điểm chi tiết:
-                        </p>
+                      {/* Expandable Grade Breakdown */}
+                      {isExpanded && (
+                        <div className="border-t border-white/5 bg-background/50 p-4 space-y-3">
+                          <p className="text-xs font-bold text-muted-foreground">
+                            Thành phần điểm chi tiết:
+                          </p>
 
-                        <div className="grid grid-cols-3 gap-2.5">
-                          {course.components.map((comp) => (
-                            <div
-                              key={comp.id}
-                              className="rounded-xl border border-white/5 bg-card/50 p-3 text-center"
+                          <div className="grid grid-cols-3 gap-2.5">
+                            {course.components.map((comp) => (
+                              <div
+                                key={comp.id}
+                                className="rounded-xl border border-white/5 bg-card/50 p-3 text-center"
+                              >
+                                <p className="font-mono text-base font-bold text-foreground">
+                                  {comp.score !== null ? comp.score : '—'}
+                                </p>
+                                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                  {comp.name} ({comp.weightPercent}%)
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Quick Insight */}
+                          <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-2.5 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1.5">
+                              <Info className="h-3.5 w-3.5 text-cyan-400" />
+                              Giảng viên: {course.instructor} · {course.room}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedCourseForSolver(course.id);
+                              }}
+                              className="h-7 text-xs font-bold text-violet-300 hover:text-white"
                             >
-                              <p className="font-mono text-base font-bold text-foreground">
-                                {comp.score !== null ? comp.score : '—'}
-                              </p>
-                              <p className="mt-0.5 text-[10px] text-muted-foreground">
-                                {comp.name} ({comp.weightPercent}%)
-                              </p>
-                            </div>
-                          ))}
+                              Dự báo điểm thi môn này →
+                            </Button>
+                          </div>
                         </div>
-
-                        {/* Quick Insight */}
-                        <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-2.5 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1.5">
-                            <Info className="h-3.5 w-3.5 text-cyan-400" />
-                            Giảng viên: {course.instructor} · {course.room}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setSelectedCourseForSolver(course.id);
-                            }}
-                            className="h-7 text-xs font-bold text-violet-300 hover:text-white"
-                          >
-                            Dự báo điểm thi môn này →
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-dashed border-white/10 p-10 text-center backdrop-blur-xl">
+                <BookOpen className="mx-auto h-8 w-8 text-cyan-400/80 mb-2" />
+                <p className="font-heading text-base font-bold text-foreground">
+                  Chưa có kết quả môn học
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground max-w-sm mx-auto">
+                  Thêm môn học hoặc quét ảnh TKB để quản lý bảng điểm và theo dõi tiến độ thi cử.
+                </p>
+                <div className="mt-4 flex items-center justify-center gap-2">
+                  <Link
+                    href="/study/courses"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-cyan-500"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Thêm môn học
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -283,56 +334,72 @@ export default function GradesPage() {
               Chọn môn và điểm chữ mục tiêu, hệ thống tự động giải phương trình tính điểm thi tối thiểu bạn cần đạt.
             </p>
 
-            {/* Select Course */}
-            <div className="mt-4 space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">Chọn môn học:</label>
-              <select
-                value={selectedCourseForSolver}
-                onChange={(e) => setSelectedCourseForSolver(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-background/80 p-2 font-mono text-xs font-bold text-foreground outline-none focus:border-cyan-400"
-              >
-                {courses.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.code} · {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Select Target Grade */}
-            <div className="mt-3 space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">Mục tiêu điểm tổng kết:</label>
-              <div className="grid grid-cols-4 gap-1.5">
-                {(['A+', 'A', 'B+', 'B'] as LetterGrade[]).map((ltr) => (
-                  <button
-                    key={ltr}
-                    onClick={() => setSolverTargetLetter(ltr)}
-                    className={`rounded-xl border py-1.5 font-mono text-xs font-bold transition-all ${
-                      solverTargetLetter === ltr
-                        ? 'border-cyan-400 bg-cyan-500/20 text-cyan-300 shadow-[0_0_12px_rgba(61,232,255,0.3)]'
-                        : 'border-white/5 text-muted-foreground hover:bg-white/5'
-                    }`}
+            {courses.length > 0 ? (
+              <>
+                {/* Select Course */}
+                <div className="mt-4 space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Chọn môn học:</label>
+                  <select
+                    value={selectedCourseForSolver}
+                    onChange={(e) => setSelectedCourseForSolver(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-background/80 p-2 font-mono text-xs font-bold text-foreground outline-none focus:border-cyan-400"
                   >
-                    {ltr}
-                  </button>
-                ))}
-              </div>
-            </div>
+                    {courses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.code} · {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            {/* Solver Result Display */}
-            {solverResult && (
-              <div className="mt-4 rounded-2xl border border-white/10 bg-background/70 p-4 text-center">
-                <p className="text-[11px] text-muted-foreground">Điểm thi cuối kỳ cần đạt tối thiểu</p>
-                <p
-                  className={`mt-1 font-mono text-3xl font-black ${
-                    solverResult.isAchievable ? 'text-cyan-300' : 'text-rose-400'
-                  }`}
+                {/* Select Target Grade */}
+                <div className="mt-3 space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Mục tiêu điểm tổng kết:</label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {(['A+', 'A', 'B+', 'B'] as LetterGrade[]).map((ltr) => (
+                      <button
+                        key={ltr}
+                        onClick={() => setSolverTargetLetter(ltr)}
+                        className={`rounded-xl border py-1.5 font-mono text-xs font-bold transition-all ${
+                          solverTargetLetter === ltr
+                            ? 'border-cyan-400 bg-cyan-500/20 text-cyan-300 shadow-[0_0_12px_rgba(61,232,255,0.3)]'
+                            : 'border-white/5 text-muted-foreground hover:bg-white/5'
+                        }`}
+                      >
+                        {ltr}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Solver Result Display */}
+                {solverResult && (
+                  <div className="mt-4 rounded-2xl border border-white/10 bg-background/70 p-4 text-center">
+                    <p className="text-[11px] text-muted-foreground">Điểm thi cuối kỳ cần đạt tối thiểu</p>
+                    <p
+                      className={`mt-1 font-mono text-3xl font-black ${
+                        solverResult.isAchievable ? 'text-cyan-300' : 'text-rose-400'
+                      }`}
+                    >
+                      {solverResult.requiredScore} / 10
+                    </p>
+                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                      {solverResult.explanation}
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="mt-4 rounded-2xl border border-white/10 bg-background/50 p-5 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Chưa có môn học nào để dự báo điểm thi. Hãy thêm môn học trước.
+                </p>
+                <Link
+                  href="/study/courses"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20"
                 >
-                  {solverResult.requiredScore} / 10
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                  {solverResult.explanation}
-                </p>
+                  <Plus className="h-3.5 w-3.5" /> Thêm môn học ngay →
+                </Link>
               </div>
             )}
           </div>

@@ -312,7 +312,7 @@ export function Auth3DShowcase({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-[320px] lg:h-[380px] xl:h-[420px] flex items-center justify-center overflow-hidden rounded-3xl ${className}`}
+      className={`relative w-full h-full min-h-[180px] max-h-full flex items-center justify-center overflow-hidden rounded-3xl ${className}`}
     >
       {/* Reduced-Motion & WebGL Fallback Card */}
       {(!hasWebGL || isReducedMotion) && (

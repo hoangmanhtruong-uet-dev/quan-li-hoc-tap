@@ -25,11 +25,11 @@ import { Input } from '@/components/ui/input';
 import { SEED_COURSES, type CourseItem } from '@/lib/academic-engine';
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<CourseItem[]>(SEED_COURSES);
+  const [courses, setCourses] = useState<CourseItem[]>([]);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'ongoing' | 'warning' | 'saved'>('all');
   const [view, setView] = useState<'grid' | 'list'>('grid');
-  const [favorites, setFavorites] = useState<string[]>(['cs101']);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
 
   // Hydrate favorites and custom courses from local storage
@@ -39,7 +39,7 @@ export default function CoursesPage() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.favorites) setFavorites(parsed.favorites);
-        if (parsed.customCourses) setCourses([...SEED_COURSES, ...parsed.customCourses]);
+        if (parsed.customCourses) setCourses(parsed.customCourses);
       }
     } catch {}
   }, []);
@@ -50,7 +50,7 @@ export default function CoursesPage() {
       try {
         localStorage.setItem(
           'campusos-courses-v2',
-          JSON.stringify({ favorites: next, customCourses: courses.slice(SEED_COURSES.length) })
+          JSON.stringify({ favorites: next, customCourses: courses })
         );
       } catch {}
       return next;
@@ -111,7 +111,7 @@ export default function CoursesPage() {
         'campusos-courses-v2',
         JSON.stringify({
           favorites,
-          customCourses: nextCourses.slice(SEED_COURSES.length),
+          customCourses: nextCourses,
         })
       );
     } catch {}
@@ -315,6 +315,28 @@ export default function CoursesPage() {
             );
           })}
         </section>
+      ) : courses.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-white/10 p-12 text-center backdrop-blur-xl">
+          <BookOpen className="mx-auto h-8 w-8 text-cyan-400" />
+          <h3 className="mt-4 font-heading text-lg font-bold">Chưa có môn học nào trong học kỳ này</h3>
+          <p className="mt-1 text-xs text-muted-foreground max-w-md mx-auto">
+            Bắt đầu bằng cách thêm môn học thủ công hoặc quét ảnh thời khóa biểu từ cổng trường đại học bằng AI.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Button
+              onClick={() => setShowAddModal(true)}
+              className="gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 font-bold text-xs"
+            >
+              <Plus className="h-4 w-4" /> Thêm Môn Học
+            </Button>
+            <Link
+              href="/calendar"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-cyan-300 hover:bg-white/10 transition-colors"
+            >
+              <Sparkles className="h-4 w-4" /> Quét TKB bằng AI →
+            </Link>
+          </div>
+        </div>
       ) : (
         <div className="rounded-3xl border border-dashed border-white/10 p-12 text-center backdrop-blur-xl">
           <BookOpen className="mx-auto h-8 w-8 text-muted-foreground" />

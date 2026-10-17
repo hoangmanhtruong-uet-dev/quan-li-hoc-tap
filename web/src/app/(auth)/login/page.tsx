@@ -4,7 +4,6 @@ import { Suspense, useState, useEffect, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Lock, Mail, AlertCircle, Sparkles, ArrowRight } from 'lucide-react';
-import { DEMO_STUDENT_CREDENTIALS } from '@/lib/auth-validation';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 function LoginForm() {
@@ -16,7 +15,6 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [shake, setShake] = useState(false);
@@ -45,13 +43,9 @@ function LoginForm() {
     }, 750);
   }
 
-  async function executeLogin(targetEmail: string, targetPassword: string, isDemo = false) {
+  async function executeLogin(targetEmail: string, targetPassword: string) {
     setError('');
-    if (isDemo) {
-      setDemoLoading(true);
-    } else {
-      setLoading(true);
-    }
+    setLoading(true);
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -68,6 +62,9 @@ function LoginForm() {
           } else {
             localStorage.removeItem('campusos_remember_email');
           }
+          localStorage.removeItem('campusos-shared-v2');
+          localStorage.removeItem('campusos-courses-v2');
+          localStorage.removeItem('campusos-academic-hub-v2');
         } catch {
           // Ignore localStorage errors
         }
@@ -85,7 +82,6 @@ function LoginForm() {
       triggerShake('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
-      setDemoLoading(false);
     }
   }
 
@@ -96,12 +92,6 @@ function LoginForm() {
       return;
     }
     await executeLogin(email.trim(), password);
-  }
-
-  async function handleDemoLogin() {
-    setEmail(DEMO_STUDENT_CREDENTIALS.email);
-    setPassword(DEMO_STUDENT_CREDENTIALS.password);
-    await executeLogin(DEMO_STUDENT_CREDENTIALS.email, DEMO_STUDENT_CREDENTIALS.password, true);
   }
 
   async function handleSocialLogin(provider: 'google' | 'github') {
@@ -147,7 +137,7 @@ function LoginForm() {
 
   return (
     <div
-      className={`w-full max-w-md backdrop-blur-2xl bg-card/60 border border-white/10 shadow-[0_0_50px_rgba(61,232,255,0.15)] rounded-3xl p-6 sm:p-8 transition-all duration-300 relative ${
+      className={`w-full max-w-md backdrop-blur-2xl bg-card/60 border border-white/10 shadow-[0_0_50px_rgba(61,232,255,0.15)] rounded-2xl sm:rounded-3xl p-5 sm:p-7 transition-all duration-300 relative ${
         shake ? 'animate-panic-shake border-rose-500/80 shadow-[0_0_40px_rgba(244,63,94,0.35)]' : ''
       }`}
     >
@@ -156,64 +146,31 @@ function LoginForm() {
       <div className="pointer-events-none absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-violet-600/10 blur-3xl" />
 
       {/* Card Header */}
-      <div className="relative text-center mb-6">
-        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300 mb-3 shadow-[0_0_15px_rgba(61,232,255,0.2)]">
-          <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+      <div className="relative text-center mb-4 sm:mb-5">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-300 mb-2 shadow-[0_0_15px_rgba(61,232,255,0.2)]">
+          <Sparkles className="h-3 w-3 text-cyan-400" />
           <span>Cổng Xác Thực Sinh Viên</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-display">
+        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight font-display">
           Đăng Nhập CampusOS
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1.5">
+        <p className="text-xs text-slate-400 mt-1">
           Tiếp tục hành trình học tập bứt phá cùng AI Companion
         </p>
       </div>
 
-      {/* 1-Click Demo Login Button */}
-      <div className="relative mb-6">
-        <button
-          type="button"
-          onClick={handleDemoLogin}
-          disabled={loading || demoLoading}
-          aria-label="Đăng nhập nhanh Demo 1-Click"
-          className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 p-[1.5px] transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_0_30px_rgba(251,191,36,0.45)] active:scale-[0.99] disabled:opacity-60 disabled:pointer-events-none"
-        >
-          <div className="flex items-center justify-between gap-3 rounded-[15px] bg-slate-950/90 px-4 py-3 transition-colors group-hover:bg-slate-950/75">
-            <div className="flex items-center gap-3 text-left">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-lg font-black text-slate-950 shadow-md shadow-amber-500/30">
-                ⚡
-              </span>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs sm:text-sm font-extrabold text-amber-300">
-                    ⚡ Đăng nhập nhanh Demo 1-Click
-                  </span>
-                  <span className="rounded bg-amber-400/20 px-1.5 py-0.2 text-[10px] font-bold text-amber-200">
-                    VIP
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-400">
-                  {demoLoading ? 'Đang kích hoạt phiên sinh viên mẫu...' : 'minh.nguyen@campus.edu.vn · Không cần gõ'}
-                </p>
-              </div>
-            </div>
-            <ArrowRight className="h-4 w-4 text-amber-400 transition-transform group-hover:translate-x-1" />
-          </div>
-        </button>
-      </div>
-
       {/* Social OAuth Buttons */}
-      <div className="space-y-3 mb-6">
-        <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-2.5 mb-4 sm:mb-5">
+        <div className="grid grid-cols-2 gap-2.5">
           {/* Google Button */}
           <button
             type="button"
             onClick={() => handleSocialLogin('google')}
             disabled={loading || Boolean(socialLoading)}
             aria-label="Đăng nhập bằng Google"
-            className="flex items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-slate-900/60 py-2.5 px-3 text-xs font-semibold text-slate-200 transition-all hover:border-cyan-400/40 hover:bg-slate-800/80 hover:shadow-[0_0_15px_rgba(61,232,255,0.15)] disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-slate-900/60 py-2 px-3 text-xs font-semibold text-slate-200 transition-all hover:border-cyan-400/40 hover:bg-slate-800/80 hover:shadow-[0_0_15px_rgba(61,232,255,0.15)] disabled:opacity-50"
           >
-            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 fill="#4285F4"
                 d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
@@ -240,9 +197,9 @@ function LoginForm() {
             onClick={() => handleSocialLogin('github')}
             disabled={loading || Boolean(socialLoading)}
             aria-label="Đăng nhập bằng GitHub"
-            className="flex items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-slate-900/60 py-2.5 px-3 text-xs font-semibold text-slate-200 transition-all hover:border-cyan-400/40 hover:bg-slate-800/80 hover:shadow-[0_0_15px_rgba(61,232,255,0.15)] disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-slate-900/60 py-2 px-3 text-xs font-semibold text-slate-200 transition-all hover:border-cyan-400/40 hover:bg-slate-800/80 hover:shadow-[0_0_15px_rgba(61,232,255,0.15)] disabled:opacity-50"
           >
-            <svg className="h-4 w-4 shrink-0 fill-current text-white" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="h-3.5 w-3.5 shrink-0 fill-current text-white" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 fillRule="evenodd"
                 clipRule="evenodd"
@@ -254,11 +211,11 @@ function LoginForm() {
         </div>
 
         {/* Divider */}
-        <div className="relative flex items-center justify-center my-4">
+        <div className="relative flex items-center justify-center my-3">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-white/10" />
           </div>
-          <span className="relative bg-[#0d1424] px-3 text-[11px] font-medium uppercase tracking-wider text-slate-500">
+          <span className="relative bg-[#0d1424] px-2.5 text-[10px] font-medium uppercase tracking-wider text-slate-500">
             hoặc qua email
           </span>
         </div>
@@ -268,7 +225,7 @@ function LoginForm() {
       {bannedReason && (
         <div
           role="alert"
-          className="mb-4 flex items-start gap-3 rounded-2xl border border-rose-500/40 bg-rose-950/60 p-3.5 text-xs text-rose-200 shadow-[0_0_20px_rgba(244,63,94,0.25)] animate-slide-up"
+          className="mb-3.5 flex items-start gap-2.5 rounded-xl border border-rose-500/40 bg-rose-950/60 p-3 text-xs text-rose-200 shadow-[0_0_20px_rgba(244,63,94,0.25)] animate-slide-up"
         >
           <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
           <div className="flex-1">
@@ -284,9 +241,9 @@ function LoginForm() {
       {registeredSuccess && (
         <div
           role="status"
-          className="mb-4 flex items-start gap-3 rounded-2xl border border-emerald-500/40 bg-emerald-950/60 p-3.5 text-xs text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.2)] animate-slide-up"
+          className="mb-3.5 flex items-start gap-2.5 rounded-xl border border-emerald-500/40 bg-emerald-950/60 p-3 text-xs text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.2)] animate-slide-up"
         >
-          <div className="h-2 w-2 rounded-full bg-emerald-400 mt-1.5 animate-pulse" />
+          <div className="h-2 w-2 rounded-full bg-emerald-400 mt-1 animate-pulse" />
           <div className="flex-1">
             <p className="font-semibold text-emerald-300">Đăng ký thành công</p>
             <p className="mt-0.5 text-emerald-200/90">
@@ -300,7 +257,7 @@ function LoginForm() {
       {error && (
         <div
           role="alert"
-          className="mb-4 flex items-start gap-3 rounded-2xl border border-rose-500/50 bg-rose-950/70 p-3.5 text-xs text-rose-200 shadow-[0_0_25px_rgba(244,63,94,0.3)] animate-slide-up"
+          className="mb-3.5 flex items-start gap-2.5 rounded-xl border border-rose-500/50 bg-rose-950/70 p-3 text-xs text-rose-200 shadow-[0_0_25px_rgba(244,63,94,0.3)] animate-slide-up"
         >
           <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
           <div className="flex-1">
@@ -311,14 +268,14 @@ function LoginForm() {
       )}
 
       {/* Main Credentials Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5">
         {/* Email Input Field */}
-        <div className="space-y-1.5">
-          <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+        <div className="space-y-1">
+          <label htmlFor="email" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300">
             Email sinh viên (.edu.vn)
           </label>
           <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
               <Mail className="h-4 w-4" />
             </div>
             <input
@@ -330,26 +287,26 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="sinhvien@campus.edu.vn"
-              className="w-full rounded-xl border border-white/10 bg-slate-900/60 pl-10 pr-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(61,232,255,0.25)] transition-all"
+              className="w-full rounded-xl border border-white/10 bg-slate-900/60 pl-9 pr-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(61,232,255,0.25)] transition-all"
             />
           </div>
         </div>
 
         {/* Password Input Field */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+            <label htmlFor="password" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300">
               Mật khẩu
             </label>
             <Link
               href="/forgot-password"
-              className="text-xs font-medium text-cyan-400 hover:text-cyan-300 hover:underline transition-colors"
+              className="text-[11px] font-medium text-cyan-400 hover:text-cyan-300 hover:underline transition-colors"
             >
               Quên mật khẩu?
             </Link>
           </div>
           <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
               <Lock className="h-4 w-4" />
             </div>
             <input
@@ -361,13 +318,13 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
-              className="w-full rounded-xl border border-white/10 bg-slate-900/60 pl-10 pr-11 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(61,232,255,0.25)] transition-all"
+              className="w-full rounded-xl border border-white/10 bg-slate-900/60 pl-9 pr-10 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(61,232,255,0.25)] transition-all"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-cyan-400 transition-colors"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-cyan-400 transition-colors"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -375,13 +332,13 @@ function LoginForm() {
         </div>
 
         {/* Remember Me Checkbox */}
-        <div className="flex items-center pt-1">
-          <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-300 hover:text-white transition-colors">
+        <div className="flex items-center pt-0.5">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-[11px] sm:text-xs text-slate-300 hover:text-white transition-colors">
             <input
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 rounded border-white/20 bg-slate-900 text-cyan-500 focus:ring-cyan-400 focus:ring-offset-0 focus:ring-offset-slate-950 transition-all cursor-pointer accent-cyan-400"
+              className="h-3.5 w-3.5 rounded border-white/20 bg-slate-900 text-cyan-500 focus:ring-cyan-400 focus:ring-offset-0 focus:ring-offset-slate-950 transition-all cursor-pointer accent-cyan-400"
             />
             <span>Ghi nhớ đăng nhập</span>
           </label>
@@ -390,8 +347,8 @@ function LoginForm() {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={loading || demoLoading}
-          className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-violet-600 py-3 px-4 font-bold text-white shadow-[0_0_25px_rgba(6,182,212,0.35)] transition-all duration-300 hover:shadow-[0_0_35px_rgba(6,182,212,0.55)] hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:pointer-events-none"
+          disabled={loading}
+          className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-violet-600 py-2.5 sm:py-3 px-4 font-bold text-white shadow-[0_0_25px_rgba(6,182,212,0.35)] transition-all duration-300 hover:shadow-[0_0_35px_rgba(6,182,212,0.55)] hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:pointer-events-none mt-1"
         >
           <span className="relative z-10 flex items-center justify-center gap-2 text-sm">
             {loading ? (
@@ -410,7 +367,7 @@ function LoginForm() {
       </form>
 
       {/* Card Footer: Navigation Link to /register */}
-      <div className="mt-6 border-t border-white/10 pt-4 text-center text-xs text-slate-400">
+      <div className="mt-4 sm:mt-5 border-t border-white/10 pt-3 text-center text-xs text-slate-400">
         <span>Chưa có tài khoản sinh viên? </span>
         <Link
           href="/register"

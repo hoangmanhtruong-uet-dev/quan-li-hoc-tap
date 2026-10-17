@@ -29,7 +29,7 @@ const QUOTES_ROW_1 = [
 
 const QUOTES_ROW_2 = [
   'TRƯỢT MÔN KHÔNG ĐAU BẰNG ĐÓI KÉM 💸',
-  'NGỦ 4 TIẾNG MỖI NGÀY ĐỂ GIÀU TRƯỚC TUỔI 30 ⏰',
+  'HỌC TẬP ĐỀU ĐẶN · GIỮ VỮNG KỶ LUẬT 📚',
   'STREAK 12 NGÀY ĐỪNG ĐỂ CHẾT UỔNG 🔥',
   'CHẠY DEADLINE LÀ BẢN NĂNG, VƯỢT DEADLINE LÀ BẢN LĨNH ⚡',
   'HỌC KHÔNG CHƠI ĐÁNH RƠI TUỔI TRẺ · CHƠI KHÔNG HỌC MẤT MẸ TƯƠNG LAI 📚',
@@ -123,9 +123,9 @@ export function MarqueeDailyWrapped() {
       {/* ===================================================================
           "CHỐT NGÀY HÔM NAY" (END-OF-DAY RECAP) CTA BUTTON
           =================================================================== */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-[24px] bg-gradient-to-r from-aurora-violet/20 via-aurora-pink/15 to-aurora-cyan/20 border-2 border-white/20 shadow-[6px_6px_0px_#000] hard-border">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-violet-500/15 via-pink-500/10 to-cyan-500/15 border border-white/10 shadow-sm backdrop-blur-xl">
         <div className="flex items-center gap-3.5">
-          <div className="p-3 rounded-2xl bg-[#0E0E1A] border-2 border-aurora-cyan text-aurora-cyan shadow-[3px_3px_0px_#000]">
+          <div className="p-3 rounded-2xl bg-card border border-cyan-400/30 text-cyan-400 shadow-sm">
             <Moon className="w-5 h-5 fill-current" />
           </div>
           <div>
@@ -143,7 +143,7 @@ export function MarqueeDailyWrapped() {
             setCurrentSlide(0);
             setWrappedOpen(true);
           }}
-          className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-aurora-lime text-black font-heading font-bold text-sm shadow-[4px_4px_0px_#000] hover:bg-aurora-lime/90 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2"
+          className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-aurora-lime text-black font-heading font-bold text-sm shadow-sm hover:bg-aurora-lime/90 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
         >
           <Sparkles className="w-4 h-4 fill-black" />
           <span>Chốt ngày hôm nay</span>
@@ -169,7 +169,7 @@ export function MarqueeDailyWrapped() {
             {[...QUOTES_ROW_1, ...QUOTES_ROW_1].map((quote, idx) => (
               <span
                 key={idx}
-                className="inline-flex items-center gap-4 font-display font-black text-sm sm:text-base tracking-wider uppercase text-foreground/80 px-4 py-2 rounded-xl bg-white/5 border border-white/10 shadow-[2px_2px_0px_#000]"
+                className="inline-flex items-center gap-4 font-display font-bold text-sm sm:text-base tracking-wider uppercase text-foreground/80 px-4 py-2 rounded-xl bg-card/60 border border-white/10 shadow-sm"
               >
                 <span>{quote}</span>
                 <span className="text-aurora-lime font-bold">✦</span>
@@ -190,10 +190,10 @@ export function MarqueeDailyWrapped() {
             {[...QUOTES_ROW_2, ...QUOTES_ROW_2].map((quote, idx) => (
               <span
                 key={idx}
-                className="inline-flex items-center gap-4 font-display font-black text-sm sm:text-base tracking-wider uppercase text-foreground/80 px-4 py-2 rounded-xl bg-black/40 border border-white/10 shadow-[2px_2px_0px_#000]"
+                className="inline-flex items-center gap-4 font-display font-bold text-sm sm:text-base tracking-wider uppercase text-foreground/80 px-4 py-2 rounded-xl bg-card/40 border border-white/10 shadow-sm"
               >
                 <span>{quote}</span>
-                <span className="text-aurora-pink font-bold">★</span>
+                <span className="text-pink-400 font-bold">★</span>
               </span>
             ))}
           </div>

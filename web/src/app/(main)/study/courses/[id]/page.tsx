@@ -126,6 +126,23 @@ export default function CourseDetailPage() {
 
   // Match course by id or code
   const initialCourse = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('campusos-courses-v2');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.customCourses && Array.isArray(parsed.customCourses)) {
+            const customFound = parsed.customCourses.find(
+              (c: CourseItem) =>
+                c.id.toLowerCase() === rawId.toLowerCase() ||
+                c.code.toLowerCase() === rawId.toLowerCase()
+            );
+            if (customFound) return customFound;
+          }
+        }
+      } catch {}
+    }
+
     const found = SEED_COURSES.find(
       (c) => c.id.toLowerCase() === rawId.toLowerCase() || c.code.toLowerCase() === rawId.toLowerCase()
     );

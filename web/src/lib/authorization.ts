@@ -116,7 +116,7 @@ export async function ensureDefaultProfile(user: {
     streak: 1,
     streak_freezes: 1,
     vibe_theme: 'aurora',
-    onboarding_completed: false,
+    onboarding_completed: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

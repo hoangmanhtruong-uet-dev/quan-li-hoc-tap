@@ -46,6 +46,9 @@ export interface Database {
           gpa: number;
           badges: Json;
           violation_count: number;
+          is_lab_vip: boolean;
+          tier: 'free' | 'plus' | 'pro' | 'ultra';
+          byok_keys: Json;
           created_at: string;
           updated_at: string;
         };
@@ -80,6 +83,9 @@ export interface Database {
           gpa?: number;
           badges?: Json;
           violation_count?: number;
+          is_lab_vip?: boolean;
+          tier?: 'free' | 'plus' | 'pro' | 'ultra';
+          byok_keys?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -114,6 +120,9 @@ export interface Database {
           gpa?: number;
           badges?: Json;
           violation_count?: number;
+          is_lab_vip?: boolean;
+          tier?: 'free' | 'plus' | 'pro' | 'ultra';
+          byok_keys?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -1644,6 +1653,156 @@ export interface Database {
           },
         ];
       };
+
+      calendar_events: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          start_time: string;
+          end_time: string;
+          event_type: 'class' | 'study' | 'exam' | 'personal';
+          color: string | null;
+          location: string | null;
+          is_all_day: boolean | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          start_time: string;
+          end_time: string;
+          event_type?: 'class' | 'study' | 'exam' | 'personal';
+          color?: string | null;
+          location?: string | null;
+          is_all_day?: boolean | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          start_time?: string;
+          end_time?: string;
+          event_type?: 'class' | 'study' | 'exam' | 'personal';
+          color?: string | null;
+          location?: string | null;
+          is_all_day?: boolean | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'calendar_events_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      grades: {
+        Row: {
+          id: string;
+          user_id: string;
+          course_id: string | null;
+          component_name: string;
+          score: number;
+          weight: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          course_id?: string | null;
+          component_name: string;
+          score: number;
+          weight: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          course_id?: string | null;
+          component_name?: string;
+          score?: number;
+          weight?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'grades_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'grades_course_id_fkey';
+            columns: ['course_id'];
+            referencedRelation: 'courses';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+
+      lab_transactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          tier: 'free' | 'plus' | 'pro' | 'ultra';
+          amount: number;
+          currency: string;
+          status: 'pending' | 'completed' | 'failed' | 'refunded';
+          payment_method: 'vietqr' | 'dev_simulation' | 'stripe' | 'momo';
+          transaction_code: string | null;
+          metadata: Json;
+          created_at: string;
+          updated_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          tier: 'free' | 'plus' | 'pro' | 'ultra';
+          amount?: number;
+          currency?: string;
+          status?: 'pending' | 'completed' | 'failed' | 'refunded';
+          payment_method?: 'vietqr' | 'dev_simulation' | 'stripe' | 'momo';
+          transaction_code?: string | null;
+          metadata?: Json;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          tier?: 'free' | 'plus' | 'pro' | 'ultra';
+          amount?: number;
+          currency?: string;
+          status?: 'pending' | 'completed' | 'failed' | 'refunded';
+          payment_method?: 'vietqr' | 'dev_simulation' | 'stripe' | 'momo';
+          transaction_code?: string | null;
+          metadata?: Json;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'lab_transactions_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -1788,3 +1947,20 @@ export type RoomReactionUpdate = Database['public']['Tables']['room_reactions'][
 export type StudyRoomType = 'public' | 'private_pin' | 'workspace';
 export type StudyRoomStatus = 'waiting' | 'focusing' | 'break';
 export type StudyRoomMemberStatus = 'focusing' | 'distracted' | 'break';
+
+export type CalendarEventRow = Database['public']['Tables']['calendar_events']['Row'];
+export type CalendarEventInsert = Database['public']['Tables']['calendar_events']['Insert'];
+export type CalendarEventUpdate = Database['public']['Tables']['calendar_events']['Update'];
+
+export type GradeRow = Database['public']['Tables']['grades']['Row'];
+export type GradeInsert = Database['public']['Tables']['grades']['Insert'];
+export type GradeUpdate = Database['public']['Tables']['grades']['Update'];
+
+export type LabTier = 'free' | 'plus' | 'pro' | 'ultra';
+export type LabTransactionStatus = 'pending' | 'completed' | 'failed' | 'refunded';
+export type LabPaymentMethod = 'vietqr' | 'dev_simulation' | 'stripe' | 'momo';
+
+export type LabTransactionRow = Database['public']['Tables']['lab_transactions']['Row'];
+export type LabTransactionInsert = Database['public']['Tables']['lab_transactions']['Insert'];
+export type LabTransactionUpdate = Database['public']['Tables']['lab_transactions']['Update'];
+

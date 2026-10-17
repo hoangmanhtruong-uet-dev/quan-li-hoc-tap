@@ -3,6 +3,9 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, Check, Copy, QrCode, RotateCw, ShieldCheck, Sparkles, Wifi } from 'lucide-react';
 import { uploadStudentAvatar } from '@/lib/storage-engine';
+import { TierBadge } from '@/components/monetization/tier-badge';
+import { type LabTier } from '@/lib/monetization-matrix';
+import { useCampusStore } from '@/lib/campus-store';
 
 export interface StudentProfileData {
   fullName: string;
@@ -14,8 +17,9 @@ export interface StudentProfileData {
   avatarUrl?: string;
 }
 
-interface HolographicStudentCardProps {
+export interface HolographicStudentCardProps {
   profile: StudentProfileData;
+  tier?: LabTier;
   onAvatarChange?: (newAvatarUrl: string) => void;
   reducedMotion?: boolean;
   className?: string;
@@ -23,10 +27,13 @@ interface HolographicStudentCardProps {
 
 export function HolographicStudentCard({
   profile,
+  tier,
   onAvatarChange,
   reducedMotion = false,
   className = '',
 }: HolographicStudentCardProps) {
+  const { state: campusState } = useCampusStore();
+  const effectiveTier = tier || campusState.tier || 'free';
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
@@ -182,6 +189,7 @@ export function HolographicStudentCard({
               </div>
 
               <div className="flex items-center gap-2">
+                <TierBadge tier={effectiveTier} size="xs" />
                 <Wifi className="h-4 w-4 text-cyan-300 rotate-90" />
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-cyan-400/40 bg-cyan-500/10 text-cyan-300">
                   K66
@@ -208,6 +216,8 @@ export function HolographicStudentCard({
                   VERIFIED STUDENT
                 </span>
               </div>
+
+              <TierBadge tier={effectiveTier} size="sm" showIcon />
             </div>
 
             {/* Student Info & Photo Row */}
@@ -282,6 +292,10 @@ export function HolographicStudentCard({
 
             {/* Back Details */}
             <div className="space-y-2 mt-2">
+              <div className="flex items-center justify-between text-[11px] text-slate-400">
+                <span>Gói dịch vụ Campus LAB:</span>
+                <TierBadge tier={effectiveTier} size="xs" />
+              </div>
               <div className="flex items-center justify-between text-[11px] text-slate-400">
                 <span>Khóa đào tạo:</span>
                 <span className="font-mono font-semibold text-slate-200">2023 - 2027</span>

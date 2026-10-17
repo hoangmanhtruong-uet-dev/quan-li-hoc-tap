@@ -1,16 +1,144 @@
 /**
  * CampusOS Supabase Cloud Synchronization Engine (R3 - Offline-First)
  * Provides 0ms local caching, bidirectional TaskItem <-> tasks sync,
+ * CalendarEvent <-> calendar_events sync, profiles sync,
  * persistent offline mutation queue with auto-flush on reconnect,
  * Realtime WebSockets with echo loop protection, and safe unconfigured fallback.
  */
 
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase.ts';
 import type { CampusOSSharedState, CalendarEvent, DeadlineItem } from './campus-store.ts';
 import type { TaskItem, TaskStatus, TaskPriority, EisenhowerQuadrant } from '../types/tasks.ts';
 
 export const DEFAULT_USER_ID = 'default_student';
 export const OFFLINE_QUEUE_KEY = 'campusos_sync_queue_v1';
+
+let currentActiveUserId: string | null = null;
+
+/**
+ * Dynamically configure or update the authenticated user UUID for cloud sync.
+ */
+export function setActiveUserId(userId: string | null): void {
+  currentActiveUserId = userId;
+}
+
+/**
+ * Resolves the currently active student UUID.
+ * Checks in-memory setting, cached auth session, or falls back to DEFAULT_USER_ID.
+ */
+export function getActiveUserId(): string {
+  if (currentActiveUserId) return currentActiveUserId;
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = window.localStorage.getItem('campusos_auth_user');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.id) return String(parsed.id);
+      }
+    } catch {
+      // Safe fallback
+    }
+  }
+  return DEFAULT_USER_ID;
+}
+
+export type CloudSyncStatus = 'synced' | 'syncing' | 'offline' | 'error';
+
+let currentSyncStatus: CloudSyncStatus = 'synced';
+const syncStatusListeners = new Set<(status: CloudSyncStatus) => void>();
+
+/**
+ * Returns the current cloud synchronization status.
+ */
+export function getCloudSyncStatus(): CloudSyncStatus {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return 'offline';
+  }
+  return currentSyncStatus;
+}
+
+/**
+ * Updates cloud synchronization status and notifies subscribers and window events.
+ */
+export function setCloudSyncStatus(status: CloudSyncStatus): void {
+  currentSyncStatus = status;
+  for (const listener of syncStatusListeners) {
+    try {
+      listener(status);
+    } catch (err) {
+      console.warn('[CampusOS Sync] Listener notice:', err);
+    }
+  }
+
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    queueMicrotask(() => {
+      try {
+        window.dispatchEvent(
+          new CustomEvent('campusos:sync-status', {
+            detail: { status, timestamp: Date.now() },
+          })
+        );
+      } catch {
+        // Safe event fallback
+      }
+    });
+  }
+}
+
+/**
+ * Subscribes to sync status changes.
+ */
+export function subscribeToSyncStatus(listener: (status: CloudSyncStatus) => void): () => void {
+  syncStatusListeners.add(listener);
+  try {
+    listener(getCloudSyncStatus());
+  } catch {
+    // Initial call guard
+  }
+  return () => {
+    syncStatusListeners.delete(listener);
+  };
+}
+
+/**
+ * React hook exposing current cloud sync status with automatic online/offline detection.
+ */
+export function useCloudSyncStatus(): { status: CloudSyncStatus; isOnline: boolean } {
+  const status = useSyncExternalStore(
+    subscribeToSyncStatus,
+    () => getCloudSyncStatus(),
+    () => 'synced' as CloudSyncStatus
+  );
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setCloudSyncStatus('syncing');
+      void flushOfflineQueue().then((res) => {
+        setCloudSyncStatus(res.success ? 'synced' : 'error');
+      });
+    };
+
+    const handleOffline = () => {
+      setCloudSyncStatus('offline');
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+    return undefined;
+  }, []);
+
+  return {
+    status,
+    isOnline: status !== 'offline',
+  };
+}
 
 export interface SyncMutation {
   id: string;
@@ -42,9 +170,25 @@ export interface TaskRow {
   actual_min: number;
   pomodoro_planned: number;
   pomodoro_done: number;
+  estimated_pomodoros?: number;
+  completed_pomodoros?: number;
   tags: string[];
   order_index: number;
   completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarEventRow {
+  id: string;
+  user_id: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+  event_type: 'class' | 'study' | 'exam' | 'personal';
+  color: string | null;
+  location: string | null;
+  is_all_day: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -56,8 +200,15 @@ export interface TaskRow {
 /**
  * Maps a TaskItem (or partial task object) to the PostgreSQL `public.tasks` table schema.
  */
-export function taskToRow(task: Partial<TaskItem> & Record<string, any>): TaskRow {
-  const taskId = task.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `task-${Date.now()}`);
+export function taskToRow(
+  task: Partial<TaskItem> & Record<string, any>,
+  customUserId?: string
+): TaskRow {
+  const taskId =
+    task.id ||
+    (typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `task-${Date.now()}`);
   const nowIso = new Date().toISOString();
 
   // Normalize quadrant
@@ -85,9 +236,16 @@ export function taskToRow(task: Partial<TaskItem> & Record<string, any>): TaskRo
     ? task.steps
     : [];
 
+  const plannedPoms =
+    task.pomodoro_planned ?? task.estimated_pomodoros ?? task.pomodoros?.planned ?? 1;
+  const donePoms =
+    task.pomodoro_done ?? task.completed_pomodoros ?? task.pomodoros?.done ?? 0;
+
+  const resolvedUserId = customUserId || task.user_id || getActiveUserId();
+
   return {
     id: taskId,
-    user_id: task.user_id || DEFAULT_USER_ID,
+    user_id: resolvedUserId,
     title: task.title || '',
     description: task.description ?? null,
     status: task.status || 'todo',
@@ -101,11 +259,17 @@ export function taskToRow(task: Partial<TaskItem> & Record<string, any>): TaskRo
     quadrant: normQuadrant,
     subtasks: subtasks,
     attachments: Array.isArray(task.attachments) ? task.attachments : [],
-    activity_log: Array.isArray(task.activity_log) ? task.activity_log : (Array.isArray(task.activityLog) ? task.activityLog : []),
+    activity_log: Array.isArray(task.activity_log)
+      ? task.activity_log
+      : Array.isArray(task.activityLog)
+      ? task.activityLog
+      : [],
     difficulty: typeof task.difficulty === 'number' ? task.difficulty : 1,
     actual_min: task.actual_min ?? task.actualMin ?? 0,
-    pomodoro_planned: task.pomodoro_planned ?? task.pomodoros?.planned ?? 1,
-    pomodoro_done: task.pomodoro_done ?? task.pomodoros?.done ?? 0,
+    pomodoro_planned: plannedPoms,
+    pomodoro_done: donePoms,
+    estimated_pomodoros: plannedPoms,
+    completed_pomodoros: donePoms,
     tags: Array.isArray(task.tags) ? task.tags : [],
     order_index: task.order_index ?? task.order ?? 0,
     completed_at: task.completed_at ?? task.completedAt ?? null,
@@ -136,6 +300,9 @@ export function rowToTask(row: any): TaskItem & {
   const course = row.course_id ?? row.course ?? '';
   const quadrant = (row.quadrant ?? row.eisenhower_quadrant ?? 'schedule') as EisenhowerQuadrant;
 
+  const plannedPoms = row.pomodoro_planned ?? row.estimated_pomodoros ?? 1;
+  const donePoms = row.pomodoro_done ?? row.completed_pomodoros ?? 0;
+
   return {
     id: String(row.id),
     title: row.title || '',
@@ -159,8 +326,8 @@ export function rowToTask(row: any): TaskItem & {
     tags: Array.isArray(row.tags) ? row.tags : [],
     order: row.order_index ?? row.order ?? 0,
     pomodoros: {
-      planned: row.pomodoro_planned ?? 1,
-      done: row.pomodoro_done ?? 0,
+      planned: plannedPoms,
+      done: donePoms,
     },
     createdAt: row.created_at || new Date().toISOString(),
     completedAt: row.completed_at || undefined,
@@ -169,7 +336,103 @@ export function rowToTask(row: any): TaskItem & {
 }
 
 /* ==========================================================================
-   2. Persistent Offline Mutation Queue
+   2. Calendar Events 2-Way Sync Mapping (CalendarEvent <-> public.calendar_events)
+   ========================================================================== */
+
+/**
+ * Maps a CalendarEvent to PostgreSQL `public.calendar_events` table schema.
+ */
+export function eventToRow(
+  event: Partial<CalendarEvent> & Record<string, any>,
+  customUserId?: string
+): CalendarEventRow {
+  const eventId =
+    event.id ||
+    (typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `event-${Date.now()}`);
+  const nowIso = new Date().toISOString();
+  const resolvedUserId = customUserId || event.user_id || getActiveUserId();
+
+  // Normalize event_type to match CHECK (event_type IN ('class', 'study', 'exam', 'personal'))
+  let eventType: 'class' | 'study' | 'exam' | 'personal' = 'class';
+  const rawType = event.event_type || event.type || 'class';
+  if (['class', 'study', 'exam', 'personal'].includes(rawType)) {
+    eventType = rawType as 'class' | 'study' | 'exam' | 'personal';
+  } else if (rawType === 'club') {
+    eventType = 'personal';
+  }
+
+  // Format start_time and end_time as ISO timestamps
+  let startTime = event.start_time;
+  if (!startTime) {
+    if (event.date) {
+      const s = event.start || '08:00';
+      startTime = s.includes('T') ? s : `${event.date}T${s.length === 5 ? `${s}:00` : s}.000Z`;
+    } else {
+      startTime = nowIso;
+    }
+  }
+
+  let endTime = event.end_time;
+  if (!endTime) {
+    if (event.date) {
+      const e = event.end || '09:00';
+      endTime = e.includes('T') ? e : `${event.date}T${e.length === 5 ? `${e}:00` : e}.000Z`;
+    } else {
+      endTime = nowIso;
+    }
+  }
+
+  return {
+    id: eventId,
+    user_id: resolvedUserId,
+    title: event.title || '',
+    start_time: startTime,
+    end_time: endTime,
+    event_type: eventType,
+    color: event.color || (eventType === 'class' ? '#38bdf8' : '#a855f7'),
+    location: event.location || null,
+    is_all_day: Boolean(event.is_all_day ?? event.allDay ?? false),
+    created_at: event.created_at || nowIso,
+    updated_at: event.updated_at || nowIso,
+  };
+}
+
+/**
+ * Maps a PostgreSQL `public.calendar_events` row back to a TypeScript CalendarEvent.
+ */
+export function rowToEvent(row: any): CalendarEvent {
+  const startTime = row.start_time ? String(row.start_time) : '';
+  const endTime = row.end_time ? String(row.end_time) : '';
+
+  const date = startTime ? startTime.slice(0, 10) : '';
+  const start = startTime.includes('T') ? startTime.split('T')[1]!.slice(0, 5) : '08:00';
+  const end = endTime.includes('T') ? endTime.split('T')[1]!.slice(0, 5) : '09:00';
+
+  const rawType = row.event_type || 'class';
+  const eventType = (['class', 'study', 'exam', 'personal'].includes(rawType)
+    ? rawType
+    : 'class') as 'class' | 'study' | 'exam' | 'personal';
+
+  return {
+    id: String(row.id),
+    title: row.title || '',
+    date: date,
+    start: start,
+    end: end,
+    type: eventType,
+    location: row.location || undefined,
+    description: row.description || undefined,
+    allDay: Boolean(row.is_all_day),
+    color: row.color || undefined,
+    done: Boolean(row.done),
+    checklist: Array.isArray(row.checklist) ? row.checklist : [],
+  };
+}
+
+/* ==========================================================================
+   3. Persistent Offline Mutation Queue
    ========================================================================== */
 
 let memoryQueueFallback: SyncMutation[] = [];
@@ -270,14 +533,17 @@ export async function flushOfflineQueue(
 ): Promise<{ flushedCount: number; success: boolean }> {
   // If the browser reports offline, cannot flush to cloud
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    setCloudSyncStatus('offline');
     return { flushedCount: 0, success: false };
   }
 
   const queue = getOfflineQueue();
   if (queue.length === 0) {
+    setCloudSyncStatus('synced');
     return { flushedCount: 0, success: true };
   }
 
+  setCloudSyncStatus('syncing');
   let flushedCount = 0;
   const remainingQueue: SyncMutation[] = [];
 
@@ -300,32 +566,51 @@ export async function flushOfflineQueue(
               .upsert(mutation.payload, { onConflict: 'id' });
             success = !error;
           }
+        } else if (
+          mutation.entity === 'calendar_events' ||
+          mutation.entity === 'events' ||
+          mutation.entity === 'student_calendar_events'
+        ) {
+          if (mutation.action === 'DELETE') {
+            const { error } = await supabase
+              .from('calendar_events')
+              .delete()
+              .eq('id', mutation.payload?.id);
+            success = !error;
+          } else {
+            const { error } = await supabase
+              .from('calendar_events')
+              .upsert(mutation.payload, { onConflict: 'id' });
+            success = !error;
+          }
+        } else if (
+          mutation.entity === 'profiles' ||
+          mutation.entity === 'student_profiles'
+        ) {
+          const { error } = await supabase
+            .from('profiles')
+            .upsert(mutation.payload, { onConflict: 'id' });
+          success = !error;
         } else if (mutation.entity === 'deadlines' || mutation.entity === 'student_deadlines') {
           const { error } = await supabase
             .from('student_deadlines')
             .upsert(mutation.payload, { onConflict: 'id' });
-          success = !error;
-        } else if (mutation.entity === 'events' || mutation.entity === 'student_calendar_events') {
-          const { error } = await supabase
-            .from('student_calendar_events')
-            .upsert(mutation.payload, { onConflict: 'id' });
-          success = !error;
-        } else if (mutation.entity === 'profiles' || mutation.entity === 'student_profiles') {
-          const { error } = await supabase
-            .from('student_profiles')
-            .upsert(mutation.payload, { onConflict: 'user_id' });
           success = !error;
         } else if (mutation.entity === 'student_focus_sessions') {
           const { error } = await supabase
             .from('student_focus_sessions')
             .insert(mutation.payload);
           success = !error;
+        } else if (mutation.entity === 'lab_transactions') {
+          const { error } = await supabase
+            .from('lab_transactions')
+            .upsert(mutation.payload, { onConflict: 'id' });
+          success = !error;
         } else {
           const { error } = await supabase.from(mutation.entity).upsert(mutation.payload);
           success = !error;
         }
       } else {
-        // Supabase is unconfigured and no executor passed
         success = false;
       }
     } catch {
@@ -341,9 +626,12 @@ export async function flushOfflineQueue(
   }
 
   saveOfflineQueue(remainingQueue);
+  const isAllFlushed = remainingQueue.length === 0;
+  setCloudSyncStatus(isAllFlushed ? 'synced' : 'error');
+
   return {
     flushedCount,
-    success: remainingQueue.length === 0,
+    success: isAllFlushed,
   };
 }
 
@@ -361,7 +649,7 @@ export function registerOnlineSyncListener(): void {
 registerOnlineSyncListener();
 
 /* ==========================================================================
-   3. Realtime WebSockets & Echo Loop Guard
+   4. Realtime WebSockets & Echo Loop Guard
    ========================================================================== */
 
 const localMutationTimestamps = new Map<string, number>();
@@ -400,11 +688,12 @@ export function clearTrackedLocalMutations(): void {
 }
 
 /**
- * Initializes Supabase Realtime subscriptions for tasks, notifications, and workspaces.
+ * Initializes Supabase Realtime subscriptions for tasks, calendar_events, notifications, and workspaces.
  * Safely returns a no-op cleanup function if Supabase is unconfigured or in SSR mode.
  */
 export function initCampusOSRealtimeSync(callbacks?: {
   onTaskChange?: (payload: any) => void;
+  onCalendarChange?: (payload: any) => void;
   onNotification?: (payload: any) => void;
   onWorkspaceChange?: (payload: any) => void;
 }): () => void {
@@ -424,6 +713,16 @@ export function initCampusOSRealtimeSync(callbacks?: {
             return;
           }
           callbacks?.onTaskChange?.(payload);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'calendar_events' },
+        (payload: any) => {
+          if (isEchoEvent(payload)) {
+            return;
+          }
+          callbacks?.onCalendarChange?.(payload);
         }
       )
       .on(
@@ -462,48 +761,89 @@ export function initCampusOSRealtimeSync(callbacks?: {
 }
 
 /* ==========================================================================
-   4. Cloud Synchronization (Push & Pull)
+   5. Cloud Synchronization (Push & Pull)
    ========================================================================== */
 
 /**
- * Fetches latest profiles, deadlines, events, and tasks from Supabase Cloud.
+ * Fetches latest profiles, calendar_events, tasks, and deadlines from Supabase Cloud.
  */
-export async function pullFromSupabaseCloud(): Promise<Partial<CampusOSSharedState> | null> {
+export async function pullFromSupabaseCloud(
+  customUserId?: string
+): Promise<Partial<CampusOSSharedState> | null> {
   if (typeof window === 'undefined') return null;
 
-  try {
-    // 1. Fetch Profile
-    const { data: profile, error: profileErr } = await supabase
-      .from('student_profiles')
-      .select('*')
-      .eq('user_id', DEFAULT_USER_ID)
-      .maybeSingle();
+  const targetUserId = customUserId || getActiveUserId();
 
-    if (profileErr && profileErr.code !== 'PGRST116') {
-      console.warn('[Supabase Sync] Profile query notice:', profileErr.message);
-      return null;
+  try {
+    // 1. Fetch Profile from 'profiles' (fallback to 'student_profiles')
+    let profileData: any = null;
+    try {
+      const { data: pData, error: pErr } = await supabase
+        .from('profiles')
+        .select('*')
+        .or(`id.eq.${targetUserId},user_id.eq.${targetUserId}`)
+        .maybeSingle();
+
+      if (!pErr) profileData = pData;
+    } catch {
+      // Fallback check
     }
 
-    // 2. Fetch Deadlines
-    const { data: deadlinesData } = await supabase
-      .from('student_deadlines')
-      .select('*')
-      .eq('user_id', DEFAULT_USER_ID);
+    if (!profileData) {
+      try {
+        const { data: legacyProfile } = await supabase
+          .from('student_profiles')
+          .select('*')
+          .eq('user_id', targetUserId)
+          .maybeSingle();
+        if (legacyProfile) profileData = legacyProfile;
+      } catch {}
+    }
 
-    // 3. Fetch Calendar Events
-    const { data: eventsData } = await supabase
-      .from('student_calendar_events')
-      .select('*')
-      .eq('user_id', DEFAULT_USER_ID);
+    // 2. Fetch Tasks (2-Way Sync) from public.tasks
+    let tasksData: any[] | null = null;
+    try {
+      const { data: tData } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', targetUserId);
+      tasksData = tData;
+    } catch {}
 
-    // 4. Fetch Tasks (2-Way Sync)
-    const { data: tasksData } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('user_id', DEFAULT_USER_ID);
+    // 3. Fetch Calendar Events from public.calendar_events (fallback to student_calendar_events)
+    let eventsData: any[] | null = null;
+    try {
+      const { data: cData } = await supabase
+        .from('calendar_events')
+        .select('*')
+        .eq('user_id', targetUserId);
+      eventsData = cData;
+    } catch {}
+
+    if (!eventsData || eventsData.length === 0) {
+      try {
+        const { data: legacyEvents } = await supabase
+          .from('student_calendar_events')
+          .select('*')
+          .eq('user_id', targetUserId);
+        if (legacyEvents && legacyEvents.length > 0) {
+          eventsData = legacyEvents;
+        }
+      } catch {}
+    }
+
+    // 4. Fetch Deadlines (legacy support)
+    let deadlinesData: any[] | null = null;
+    try {
+      const { data: dData } = await supabase
+        .from('student_deadlines')
+        .select('*')
+        .eq('user_id', targetUserId);
+      deadlinesData = dData;
+    } catch {}
 
     if (
-      !profile &&
+      !profileData &&
       (!deadlinesData || deadlinesData.length === 0) &&
       (!eventsData || eventsData.length === 0) &&
       (!tasksData || tasksData.length === 0)
@@ -513,22 +853,39 @@ export async function pullFromSupabaseCloud(): Promise<Partial<CampusOSSharedSta
 
     const partialState: Partial<CampusOSSharedState> = {};
 
-    if (profile) {
-      partialState.xp = profile.xp;
-      partialState.level = profile.level;
-      partialState.rankTitle = profile.rank_title;
-      partialState.streak = profile.streak;
-      partialState.streakFreezes = profile.streak_freezes;
-      partialState.studyMinutesTotal = profile.study_minutes_total;
-      partialState.weeklyStudyGoalMinutes = profile.weekly_goal_minutes;
-      partialState.weeklyStudyMinutesCurrent = profile.weekly_study_minutes;
-      partialState.lastStudyDate = profile.last_study_date || '';
-      partialState.dailyMood = profile.daily_mood || null;
-      partialState.vibeTheme = profile.vibe_theme || 'aurora';
-      partialState.reducedMotion = profile.reduced_motion || false;
-      if (typeof profile.violation_count === 'number') {
-        partialState.violationCount = profile.violation_count;
+    if (profileData) {
+      partialState.xp = profileData.xp;
+      partialState.level = profileData.level;
+      partialState.rankTitle = profileData.rank_title;
+      partialState.streak = profileData.streak;
+      partialState.streakFreezes = profileData.streak_freezes;
+      partialState.studyMinutesTotal = profileData.study_minutes_total;
+      partialState.weeklyStudyGoalMinutes = profileData.weekly_goal_minutes;
+      partialState.weeklyStudyMinutesCurrent = profileData.weekly_study_minutes;
+      partialState.lastStudyDate = profileData.last_study_date || '';
+      partialState.dailyMood = profileData.daily_mood || null;
+      partialState.vibeTheme = profileData.vibe_theme || 'aurora';
+      partialState.reducedMotion = profileData.reduced_motion || false;
+      if (typeof profileData.violation_count === 'number') {
+        partialState.violationCount = profileData.violation_count;
       }
+      if (typeof (profileData as any).is_lab_vip === 'boolean') {
+        partialState.isLabVip = (profileData as any).is_lab_vip;
+      }
+      if (typeof (profileData as any).tier === 'string') {
+        partialState.tier = (profileData as any).tier;
+      }
+      if ((profileData as any).byok_keys && typeof (profileData as any).byok_keys === 'object') {
+        partialState.byokKeys = (profileData as any).byok_keys;
+      }
+    }
+
+    if (tasksData && tasksData.length > 0) {
+      partialState.tasks = tasksData.map(rowToTask);
+    }
+
+    if (eventsData && eventsData.length > 0) {
+      partialState.events = eventsData.map(rowToEvent);
     }
 
     if (deadlinesData && deadlinesData.length > 0) {
@@ -545,133 +902,159 @@ export async function pullFromSupabaseCloud(): Promise<Partial<CampusOSSharedSta
       }));
     }
 
-    if (eventsData && eventsData.length > 0) {
-      partialState.events = eventsData.map((e) => ({
-        id: e.id,
-        title: e.title,
-        date: e.date,
-        start: e.start_time,
-        end: e.end_time,
-        type: e.type,
-        location: e.location || undefined,
-        description: e.description || undefined,
-        done: e.done,
-        checklist: e.checklist || [],
-      }));
-    }
-
-    if (tasksData && tasksData.length > 0) {
-      partialState.tasks = tasksData.map(rowToTask);
-    }
-
+    setCloudSyncStatus('synced');
     return partialState;
   } catch (err) {
-    console.warn('[Supabase Sync] Pull skipped (offline or table not yet created):', err);
+    console.warn('[CampusOS Sync] Pull skipped (offline or tables not ready):', err);
     return null;
   }
 }
 
 /**
- * Direct push to Supabase Cloud with offline queue fallback.
+ * Direct push to Supabase Cloud with optimistic updates and offline queue fallback.
  */
-export async function pushToSupabaseCloud(state: CampusOSSharedState): Promise<boolean> {
+export async function pushToSupabaseCloud(
+  state: CampusOSSharedState,
+  customUserId?: string
+): Promise<boolean> {
   if (typeof window === 'undefined') return false;
 
-  const isOnline = typeof navigator === 'undefined' || navigator.onLine;
+  const targetUserId = customUserId || getActiveUserId();
+  const isOnline = typeof navigator === 'undefined' || navigator.onLine !== false;
 
   if (!isOnline || !isSupabaseConfigured()) {
+    setCloudSyncStatus('offline');
     if (state.tasks && state.tasks.length > 0) {
       enqueueOfflineMutation({
         entity: 'tasks',
         action: 'UPSERT',
-        payload: state.tasks.map(taskToRow),
+        payload: state.tasks.map((t) => taskToRow(t, targetUserId)),
+      });
+    }
+    if (state.events && state.events.length > 0) {
+      enqueueOfflineMutation({
+        entity: 'calendar_events',
+        action: 'UPSERT',
+        payload: state.events.map((e) => eventToRow(e, targetUserId)),
       });
     }
     return false;
   }
 
+  setCloudSyncStatus('syncing');
+
   try {
-    // 1. Upsert Profile
-    await supabase.from('student_profiles').upsert(
-      {
-        user_id: DEFAULT_USER_ID,
-        xp: state.xp,
-        level: state.level,
-        rank_title: state.rankTitle,
-        streak: state.streak,
-        streak_freezes: state.streakFreezes,
-        study_minutes_total: state.studyMinutesTotal,
-        weekly_goal_minutes: state.weeklyStudyGoalMinutes,
-        weekly_study_minutes: state.weeklyStudyMinutesCurrent,
-        last_study_date: state.lastStudyDate,
-        daily_mood: state.dailyMood,
-        vibe_theme: state.vibeTheme,
-        reduced_motion: state.reducedMotion,
-        violation_count: state.violationCount ?? 0,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id' }
-    );
+    const nowIso = new Date().toISOString();
 
-    // 2. Upsert Deadlines
-    if (state.deadlines && state.deadlines.length > 0) {
-      const payload = state.deadlines.map((d) => ({
-        id: d.id,
-        user_id: DEFAULT_USER_ID,
-        title: d.title,
-        course: d.course || null,
-        due_date: d.dueDate || null,
-        date: d.date || null,
-        display_date: d.displayDate || null,
-        urgent: d.urgent ?? false,
-        completed: d.completed ?? false,
-        is_exam: d.isExam ?? false,
-        updated_at: new Date().toISOString(),
-      }));
-      await supabase.from('student_deadlines').upsert(payload, { onConflict: 'id' });
+    // 1. Upsert Profile to 'public.profiles'
+    const profilePayload = {
+      id: targetUserId,
+      user_id: targetUserId,
+      xp: state.xp,
+      level: state.level,
+      rank_title: state.rankTitle,
+      streak: state.streak,
+      streak_freezes: state.streakFreezes,
+      study_minutes_total: state.studyMinutesTotal,
+      weekly_goal_minutes: state.weeklyStudyGoalMinutes,
+      weekly_study_minutes: state.weeklyStudyMinutesCurrent,
+      last_study_date: state.lastStudyDate,
+      daily_mood: state.dailyMood,
+      vibe_theme: state.vibeTheme,
+      reduced_motion: state.reducedMotion,
+      violation_count: state.violationCount ?? 0,
+      is_lab_vip: state.isLabVip ?? false,
+      tier: state.tier ?? 'free',
+      byok_keys: state.byokKeys ?? {},
+      onboarding_completed: true,
+      updated_at: nowIso,
+    };
+
+    try {
+      await supabase.from('profiles').upsert(profilePayload, { onConflict: 'id' });
+    } catch {
+      // Fallback attempt against student_profiles if migration differs
+      try {
+        await supabase
+          .from('student_profiles')
+          .upsert(profilePayload, { onConflict: 'user_id' });
+      } catch {}
     }
 
-    // 3. Upsert Calendar Events
-    if (state.events && state.events.length > 0) {
-      const payload = state.events.map((e) => ({
-        id: e.id,
-        user_id: DEFAULT_USER_ID,
-        title: e.title,
-        date: e.date,
-        start_time: e.start,
-        end_time: e.end,
-        type: e.type,
-        location: e.location || null,
-        description: e.description || null,
-        done: e.done ?? false,
-        checklist: e.checklist || [],
-        updated_at: new Date().toISOString(),
-      }));
-      await supabase.from('student_calendar_events').upsert(payload, { onConflict: 'id' });
-    }
-
-    // 4. Upsert Tasks
+    // 2. Upsert Tasks to 'public.tasks'
     if (state.tasks && state.tasks.length > 0) {
       const taskRows = state.tasks.map((t) => {
         trackLocalMutation(t.id);
-        return taskToRow(t);
+        return taskToRow(t, targetUserId);
       });
-      const { error: taskErr } = await supabase.from('tasks').upsert(taskRows, { onConflict: 'id' });
+      const { error: taskErr } = await supabase
+        .from('tasks')
+        .upsert(taskRows, { onConflict: 'id' });
       if (taskErr) {
         throw taskErr;
       }
     }
 
+    // 3. Upsert Calendar Events to 'public.calendar_events'
+    if (state.events && state.events.length > 0) {
+      const eventRows = state.events.map((e) => {
+        trackLocalMutation(e.id);
+        return eventToRow(e, targetUserId);
+      });
+      const { error: evErr } = await supabase
+        .from('calendar_events')
+        .upsert(eventRows, { onConflict: 'id' });
+      if (evErr) {
+        // Fallback attempt against student_calendar_events if present
+        try {
+          await supabase
+            .from('student_calendar_events')
+            .upsert(eventRows, { onConflict: 'id' });
+        } catch {
+          throw evErr;
+        }
+      }
+    }
+
+    // 4. Upsert Deadlines (if student_deadlines table is active)
+    if (state.deadlines && state.deadlines.length > 0) {
+      try {
+        const payload = state.deadlines.map((d) => ({
+          id: d.id,
+          user_id: targetUserId,
+          title: d.title,
+          course: d.course || null,
+          due_date: d.dueDate || null,
+          date: d.date || null,
+          display_date: d.displayDate || null,
+          urgent: d.urgent ?? false,
+          completed: d.completed ?? false,
+          is_exam: d.isExam ?? false,
+          updated_at: nowIso,
+        }));
+        await supabase.from('student_deadlines').upsert(payload, { onConflict: 'id' });
+      } catch {}
+    }
+
     // Flush any pending queue items
     await flushOfflineQueue();
+    setCloudSyncStatus('synced');
     return true;
   } catch (err) {
-    console.warn('[Supabase Sync] Push failed, queuing offline mutation:', err);
+    console.warn('[CampusOS Sync] Push failed, queuing offline mutation:', err);
+    setCloudSyncStatus('error');
     if (state.tasks && state.tasks.length > 0) {
       enqueueOfflineMutation({
         entity: 'tasks',
         action: 'UPSERT',
-        payload: state.tasks.map(taskToRow),
+        payload: state.tasks.map((t) => taskToRow(t, targetUserId)),
+      });
+    }
+    if (state.events && state.events.length > 0) {
+      enqueueOfflineMutation({
+        entity: 'calendar_events',
+        action: 'UPSERT',
+        payload: state.events.map((e) => eventToRow(e, targetUserId)),
       });
     }
     return false;
@@ -683,7 +1066,11 @@ let syncTimeout: ReturnType<typeof setTimeout> | null = null;
 /**
  * Debounced background push to Supabase Cloud.
  */
-export function pushToSupabaseCloudDebounced(state: CampusOSSharedState, delayMs = 2000): void {
+export function pushToSupabaseCloudDebounced(
+  state: CampusOSSharedState,
+  delayMs = 2000,
+  customUserId?: string
+): void {
   if (typeof window === 'undefined') return;
 
   if (syncTimeout) {
@@ -691,25 +1078,182 @@ export function pushToSupabaseCloudDebounced(state: CampusOSSharedState, delayMs
   }
 
   syncTimeout = setTimeout(() => {
-    void pushToSupabaseCloud(state);
+    void pushToSupabaseCloud(state, customUserId);
   }, delayMs);
+}
+
+/* ==========================================================================
+   6. Atomic Optimistic Mutation Helpers
+   ========================================================================== */
+
+/**
+ * Atomically pushes a single Task mutation (UPSERT or DELETE) to Supabase Cloud.
+ */
+export async function pushTaskMutation(
+  task: TaskItem,
+  action: 'UPSERT' | 'DELETE',
+  customUserId?: string
+): Promise<boolean> {
+  const targetUserId = customUserId || getActiveUserId();
+  trackLocalMutation(task.id);
+
+  const isOnline = typeof navigator === 'undefined' || navigator.onLine !== false;
+  if (!isOnline || !isSupabaseConfigured()) {
+    enqueueOfflineMutation({
+      entity: 'tasks',
+      action,
+      payload: action === 'DELETE' ? { id: task.id } : taskToRow(task, targetUserId),
+    });
+    setCloudSyncStatus('offline');
+    return false;
+  }
+
+  setCloudSyncStatus('syncing');
+  try {
+    if (action === 'DELETE') {
+      const { error } = await supabase.from('tasks').delete().eq('id', task.id);
+      if (error) throw error;
+    } else {
+      const row = taskToRow(task, targetUserId);
+      const { error } = await supabase.from('tasks').upsert(row, { onConflict: 'id' });
+      if (error) throw error;
+    }
+    setCloudSyncStatus('synced');
+    return true;
+  } catch (err) {
+    console.warn('[CampusOS Sync] pushTaskMutation failed, enqueuing offline:', err);
+    enqueueOfflineMutation({
+      entity: 'tasks',
+      action,
+      payload: action === 'DELETE' ? { id: task.id } : taskToRow(task, targetUserId),
+    });
+    setCloudSyncStatus('error');
+    return false;
+  }
+}
+
+/**
+ * Atomically pushes a single CalendarEvent mutation (UPSERT or DELETE) to Supabase Cloud.
+ */
+export async function pushCalendarEventMutation(
+  event: CalendarEvent,
+  action: 'UPSERT' | 'DELETE',
+  customUserId?: string
+): Promise<boolean> {
+  const targetUserId = customUserId || getActiveUserId();
+  trackLocalMutation(event.id);
+
+  const isOnline = typeof navigator === 'undefined' || navigator.onLine !== false;
+  if (!isOnline || !isSupabaseConfigured()) {
+    enqueueOfflineMutation({
+      entity: 'calendar_events',
+      action,
+      payload: action === 'DELETE' ? { id: event.id } : eventToRow(event, targetUserId),
+    });
+    setCloudSyncStatus('offline');
+    return false;
+  }
+
+  setCloudSyncStatus('syncing');
+  try {
+    if (action === 'DELETE') {
+      const { error } = await supabase.from('calendar_events').delete().eq('id', event.id);
+      if (error) throw error;
+    } else {
+      const row = eventToRow(event, targetUserId);
+      const { error } = await supabase.from('calendar_events').upsert(row, { onConflict: 'id' });
+      if (error) throw error;
+    }
+    setCloudSyncStatus('synced');
+    return true;
+  } catch (err) {
+    console.warn('[CampusOS Sync] pushCalendarEventMutation failed, enqueuing offline:', err);
+    enqueueOfflineMutation({
+      entity: 'calendar_events',
+      action,
+      payload: action === 'DELETE' ? { id: event.id } : eventToRow(event, targetUserId),
+    });
+    setCloudSyncStatus('error');
+    return false;
+  }
+}
+
+/**
+ * Atomically pushes a student profile update to Supabase Cloud profiles table.
+ */
+export async function pushProfileMutation(
+  profilePatch: Partial<CampusOSSharedState>,
+  customUserId?: string
+): Promise<boolean> {
+  const targetUserId = customUserId || getActiveUserId();
+  const isOnline = typeof navigator === 'undefined' || navigator.onLine !== false;
+
+  const payload: Record<string, any> = {
+    id: targetUserId,
+    user_id: targetUserId,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (profilePatch.xp !== undefined) payload.xp = profilePatch.xp;
+  if (profilePatch.level !== undefined) payload.level = profilePatch.level;
+  if (profilePatch.rankTitle !== undefined) payload.rank_title = profilePatch.rankTitle;
+  if (profilePatch.streak !== undefined) payload.streak = profilePatch.streak;
+  if (profilePatch.dailyMood !== undefined) payload.daily_mood = profilePatch.dailyMood;
+  if (profilePatch.vibeTheme !== undefined) payload.vibe_theme = profilePatch.vibeTheme;
+  if (profilePatch.isLabVip !== undefined) payload.is_lab_vip = profilePatch.isLabVip;
+  if ((profilePatch as any).is_lab_vip !== undefined) payload.is_lab_vip = (profilePatch as any).is_lab_vip;
+  if (profilePatch.tier !== undefined) payload.tier = profilePatch.tier;
+  if (profilePatch.byokKeys !== undefined) payload.byok_keys = profilePatch.byokKeys;
+  if ((profilePatch as any).byok_keys !== undefined) payload.byok_keys = (profilePatch as any).byok_keys;
+  payload.onboarding_completed = true;
+
+  if (!isOnline || !isSupabaseConfigured()) {
+    enqueueOfflineMutation({
+      entity: 'profiles',
+      action: 'UPSERT',
+      payload,
+    });
+    setCloudSyncStatus('offline');
+    return false;
+  }
+
+  setCloudSyncStatus('syncing');
+  try {
+    const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
+    if (error) throw error;
+    setCloudSyncStatus('synced');
+    return true;
+  } catch (err) {
+    console.warn('[CampusOS Sync] pushProfileMutation failed, enqueuing offline:', err);
+    enqueueOfflineMutation({
+      entity: 'profiles',
+      action: 'UPSERT',
+      payload,
+    });
+    setCloudSyncStatus('error');
+    return false;
+  }
 }
 
 /**
  * Records a completed Pomodoro/Deep Work focus session into student_focus_sessions.
  */
-export async function logFocusSessionToSupabase(session: {
-  focusMinutes: number;
-  mode: string;
-  disciplineScore: number;
-  shameCount: number;
-  xpGained: number;
-}): Promise<void> {
+export async function logFocusSessionToSupabase(
+  session: {
+    focusMinutes: number;
+    mode: string;
+    disciplineScore: number;
+    shameCount: number;
+    xpGained: number;
+  },
+  customUserId?: string
+): Promise<void> {
   if (typeof window === 'undefined') return;
+  const targetUserId = customUserId || getActiveUserId();
 
   try {
     await supabase.from('student_focus_sessions').insert({
-      user_id: DEFAULT_USER_ID,
+      user_id: targetUserId,
       focus_minutes: session.focusMinutes,
       mode: session.mode,
       discipline_score: session.disciplineScore,
@@ -718,7 +1262,7 @@ export async function logFocusSessionToSupabase(session: {
       completed_at: new Date().toISOString(),
     });
   } catch (err) {
-    console.warn('[Supabase Sync] Log focus session skipped:', err);
+    console.warn('[CampusOS Sync] Log focus session skipped:', err);
   }
 }
 
@@ -726,17 +1270,21 @@ export async function logFocusSessionToSupabase(session: {
  * Records a Chrome Extension focus violation into student_focus_sessions and updates profiles.
  * Supports optimistic sync with fallback to persistent offline mutation queue.
  */
-export async function recordFocusViolationToSupabase(payload: {
-  penaltyXp: number;
-  domain?: string;
-  reason?: string;
-  violationCount?: number;
-}): Promise<boolean> {
+export async function recordFocusViolationToSupabase(
+  payload: {
+    penaltyXp: number;
+    domain?: string;
+    reason?: string;
+    violationCount?: number;
+  },
+  customUserId?: string
+): Promise<boolean> {
+  const targetUserId = customUserId || getActiveUserId();
   const penalty = typeof payload.penaltyXp === 'number' ? Math.max(0, payload.penaltyXp) : 50;
   const nowIso = new Date().toISOString();
 
   const violationRecord = {
-    user_id: DEFAULT_USER_ID,
+    user_id: targetUserId,
     focus_minutes: 0,
     mode: 'extreme_cat',
     discipline_score: Math.max(0, 100 - penalty),
@@ -746,7 +1294,7 @@ export async function recordFocusViolationToSupabase(payload: {
     completed_at: nowIso,
   };
 
-  const isOnline = typeof navigator === 'undefined' || navigator.onLine;
+  const isOnline = typeof navigator === 'undefined' || navigator.onLine !== false;
 
   if (!isOnline || !isSupabaseConfigured()) {
     enqueueOfflineMutation({
@@ -755,18 +1303,20 @@ export async function recordFocusViolationToSupabase(payload: {
       payload: violationRecord,
     });
     enqueueOfflineMutation({
-      entity: 'student_profiles',
-      action: 'INCREMENT_VIOLATION',
+      entity: 'profiles',
+      action: 'UPSERT',
       payload: {
-        user_id: DEFAULT_USER_ID,
-        penaltyXp: penalty,
-        domain: payload.domain,
-        reason: payload.reason,
+        id: targetUserId,
+        user_id: targetUserId,
+        violation_count: payload.violationCount ?? 1,
+        updated_at: nowIso,
       },
     });
+    setCloudSyncStatus('offline');
     return false;
   }
 
+  setCloudSyncStatus('syncing');
   try {
     // 1. Insert violation entry in student_focus_sessions
     const { error: sessionErr } = await supabase
@@ -777,39 +1327,103 @@ export async function recordFocusViolationToSupabase(payload: {
       throw sessionErr;
     }
 
-    // 2. Also attempt updating violation_count on student_profiles if present
+    // 2. Also attempt updating violation_count on profiles
     try {
       const { data: currentProfile } = await supabase
-        .from('student_profiles')
+        .from('profiles')
         .select('violation_count, xp')
-        .eq('user_id', DEFAULT_USER_ID)
+        .or(`id.eq.${targetUserId},user_id.eq.${targetUserId}`)
         .maybeSingle();
 
       if (currentProfile) {
         const nextCount = (currentProfile.violation_count || 0) + 1;
         const nextXp = Math.max(0, (currentProfile.xp || 0) - penalty);
         await supabase
-          .from('student_profiles')
+          .from('profiles')
           .update({
             violation_count: nextCount,
             xp: nextXp,
             updated_at: nowIso,
           })
-          .eq('user_id', DEFAULT_USER_ID);
+          .eq('id', targetUserId);
       }
     } catch {
-      // Non-fatal if student_profiles table or row not yet populated
+      // Non-fatal if profiles table or row not yet populated
     }
 
+    setCloudSyncStatus('synced');
     return true;
   } catch (err) {
-    console.warn('[Supabase Sync] Record focus violation failed, queuing offline:', err);
+    console.warn('[CampusOS Sync] Record focus violation failed, queuing offline:', err);
     enqueueOfflineMutation({
       entity: 'student_focus_sessions',
       action: 'INSERT',
       payload: violationRecord,
     });
+    setCloudSyncStatus('error');
     return false;
+  }
+}
+
+/**
+ * Records a Campus LAB VIP transaction (VietQR or Dev Mode simulation) with offline fallback.
+ */
+export async function recordLabTransactionToSupabase(
+  tx: {
+    id?: string;
+    tier: 'free' | 'plus' | 'pro' | 'ultra';
+    amount: number;
+    currency?: string;
+    status?: 'pending' | 'completed' | 'failed' | 'refunded';
+    payment_method?: 'vietqr' | 'dev_simulation' | 'stripe' | 'momo';
+    transaction_code?: string;
+    metadata?: Record<string, any>;
+  },
+  customUserId?: string
+): Promise<{ success: boolean; data?: any; error?: any }> {
+  const targetUserId = customUserId || getActiveUserId();
+  const isOnline = typeof navigator === 'undefined' || navigator.onLine !== false;
+
+  const payload = {
+    id: tx.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `tx-${Date.now()}`),
+    user_id: targetUserId,
+    tier: tx.tier,
+    amount: tx.amount,
+    currency: tx.currency || 'VND',
+    status: tx.status || 'completed',
+    payment_method: tx.payment_method || 'vietqr',
+    transaction_code: tx.transaction_code || `CAMPUSLAB_${targetUserId.slice(0, 8)}_${Date.now()}`,
+    metadata: tx.metadata || {},
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    completed_at: (tx.status || 'completed') === 'completed' ? new Date().toISOString() : null,
+  };
+
+  if (!isOnline || !isSupabaseConfigured()) {
+    enqueueOfflineMutation({
+      entity: 'lab_transactions',
+      action: 'UPSERT',
+      payload,
+    });
+    return { success: true, data: payload };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('lab_transactions')
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
+    if (error) throw error;
+    return { success: true, data };
+  } catch (err: any) {
+    console.warn('[CampusOS Sync] recordLabTransactionToSupabase fallback offline:', err);
+    enqueueOfflineMutation({
+      entity: 'lab_transactions',
+      action: 'UPSERT',
+      payload,
+    });
+    return { success: true, data: payload, error: err };
   }
 }
 

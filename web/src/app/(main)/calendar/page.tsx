@@ -2,14 +2,30 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { useCampusStore, type CalendarEvent, type EventType } from '@/lib/campus-store';
+import {
+  useCampusStore,
+  awardXp,
+  convertCoursesToRecurringEvents,
+  batchAddCalendarEvents,
+  type CalendarEvent,
+  type EventType,
+} from '@/lib/campus-store';
 import { useGlobalShortcuts } from '@/components/common/use-global-shortcuts';
+import type { ExtractedScheduleCourse } from '@/lib/period-time-mapper';
 
 // Dynamic import for heavy modal overlays to preserve 120FPS initial load
 const StrictPomodoroModal = dynamic(
   () =>
     import('@/features/pomodoro/strict-pomodoro-modal').then(
       (mod) => mod.StrictPomodoroModal
+    ),
+  { ssr: false }
+);
+
+const ScheduleScanModal = dynamic(
+  () =>
+    import('@/components/calendar/schedule-scan-modal').then(
+      (mod) => mod.ScheduleScanModal
     ),
   { ssr: false }
 );
@@ -75,6 +91,7 @@ export default function CalendarPage() {
   const [focusInitialMinutes, setFocusInitialMinutes] = useState(25);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
+  const [scheduleScanOpen, setScheduleScanOpen] = useState(false);
 
   // Undo Toast state for drag & drop rescheduling
   const [undoToast, setUndoToast] = useState<{
@@ -249,6 +266,16 @@ export default function CalendarPage() {
     [update]
   );
 
+  const handleCommitScannedSchedule = useCallback(
+    (courses: ExtractedScheduleCourse[]) => {
+      if (!courses || courses.length === 0) return;
+      const newEvents = convertCoursesToRecurringEvents(courses, 15);
+      batchAddCalendarEvents(newEvents);
+      awardXp(100, 'Quét TKB bằng AI');
+    },
+    []
+  );
+
   // ---------------------------------------------------------------------------
   // Focus Mode Integration
   // ---------------------------------------------------------------------------
@@ -280,8 +307,21 @@ export default function CalendarPage() {
       setFocusModalOpen(false);
       setCommandPaletteOpen(false);
       setShortcutsModalOpen(false);
+      setScheduleScanOpen(false);
     },
   });
+
+  // Listen for global event to open AI Schedule Scanner
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const onOpenScannerEvt = () => setScheduleScanOpen(true);
+    window.addEventListener('campusos:open-schedule-scanner', onOpenScannerEvt);
+
+    return () => {
+      window.removeEventListener('campusos:open-schedule-scanner', onOpenScannerEvt);
+    };
+  }, []);
 
   // Calendar specific key listener (←/→, T, M, W, D, A)
   useEffect(() => {
@@ -362,6 +402,7 @@ export default function CalendarPage() {
           onOpenCreate={() => setCreateModalOpen(true)}
           onOpenAiScheduler={() => setAiSchedulerOpen(true)}
           onOpenIcsDialog={() => setIcsDialogOpen(true)}
+          onOpenScheduleScan={() => setScheduleScanOpen(true)}
         />
 
         {/* S2: Smart Filters */}
@@ -516,6 +557,13 @@ export default function CalendarPage() {
       <KeyboardShortcutsModal
         isOpen={shortcutsModalOpen}
         onClose={() => setShortcutsModalOpen(false)}
+      />
+
+      {/* AI Smart OCR Schedule Importer Modal */}
+      <ScheduleScanModal
+        isOpen={scheduleScanOpen}
+        onClose={() => setScheduleScanOpen(false)}
+        onCommitSchedule={handleCommitScannedSchedule}
       />
     </div>
   );

@@ -100,6 +100,11 @@ function RegisterForm() {
       });
 
       if (res.ok) {
+        try {
+          localStorage.removeItem('campusos-shared-v2');
+          localStorage.removeItem('campusos-courses-v2');
+          localStorage.removeItem('campusos-academic-hub-v2');
+        } catch {}
         router.push('/dashboard');
       } else {
         const data = await res.json();
@@ -114,7 +119,7 @@ function RegisterForm() {
 
   return (
     <div
-      className={`w-full max-w-md backdrop-blur-2xl bg-card/60 border border-white/10 shadow-[0_0_50px_rgba(61,232,255,0.15)] rounded-3xl p-6 sm:p-8 transition-all duration-300 relative ${
+      className={`w-full max-w-md backdrop-blur-2xl bg-card/60 border border-white/10 shadow-[0_0_50px_rgba(61,232,255,0.15)] rounded-2xl sm:rounded-3xl p-5 sm:p-7 transition-all duration-300 relative ${
         shake ? 'animate-panic-shake border-rose-500/80 shadow-[0_0_40px_rgba(244,63,94,0.35)]' : ''
       }`}
     >
@@ -123,15 +128,15 @@ function RegisterForm() {
       <div className="pointer-events-none absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-violet-600/10 blur-3xl" />
 
       {/* Card Header */}
-      <div className="relative text-center mb-6">
-        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300 mb-3 shadow-[0_0_15px_rgba(61,232,255,0.2)]">
-          <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+      <div className="relative text-center mb-4 sm:mb-5">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-300 mb-2 shadow-[0_0_15px_rgba(61,232,255,0.2)]">
+          <Sparkles className="h-3 w-3 text-cyan-400" />
           <span>Khởi Tạo Tài Khoản Sinh Viên</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-display">
+        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight font-display">
           Đăng Ký CampusOS
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1.5">
+        <p className="text-xs text-slate-400 mt-1">
           Gia nhập cộng đồng sinh viên thông minh với không gian số CampusOS
         </p>
       </div>
@@ -140,7 +145,7 @@ function RegisterForm() {
       {error && (
         <div
           role="alert"
-          className="mb-4 flex items-start gap-3 rounded-2xl border border-rose-500/50 bg-rose-950/70 p-3.5 text-xs text-rose-200 shadow-[0_0_25px_rgba(244,63,94,0.3)] animate-slide-up"
+          className="mb-3.5 flex items-start gap-2.5 rounded-xl border border-rose-500/50 bg-rose-950/70 p-3 text-xs text-rose-200 shadow-[0_0_25px_rgba(244,63,94,0.3)] animate-slide-up"
         >
           <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
           <div className="flex-1">
@@ -151,14 +156,14 @@ function RegisterForm() {
       )}
 
       {/* Registration Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5">
         {/* Full Name Input Field */}
-        <div className="space-y-1.5">
-          <label htmlFor="fullName" className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+        <div className="space-y-1">
+          <label htmlFor="fullName" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300">
             Họ và tên sinh viên
           </label>
           <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
               <User className="h-4 w-4" />
             </div>
             <input
@@ -170,15 +175,15 @@ function RegisterForm() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Nguyễn Nhật Minh"
-              className="w-full rounded-xl border border-white/10 bg-slate-900/60 pl-10 pr-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(61,232,255,0.25)] transition-all"
+              className="w-full rounded-xl border border-white/10 bg-slate-900/60 pl-9 pr-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(61,232,255,0.25)] transition-all"
             />
           </div>
         </div>
 
         {/* Student Email Input Field with Real-time .edu.vn Validation Badge */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+            <label htmlFor="email" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300">
               Email sinh viên (.edu.vn)
             </label>
             {emailEntered && (
@@ -204,7 +209,7 @@ function RegisterForm() {
             )}
           </div>
           <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
               <Mail className="h-4 w-4" />
             </div>
             <input
@@ -216,7 +221,7 @@ function RegisterForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="sinhvien@campus.edu.vn"
-              className={`w-full rounded-xl border bg-slate-900/60 pl-10 pr-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all ${
+              className={`w-full rounded-xl border bg-slate-900/60 pl-9 pr-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all ${
                 emailEntered && !isEmailValid
                   ? 'border-amber-500/60 focus:border-amber-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)]'
                   : 'border-white/10 focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(61,232,255,0.25)]'
@@ -226,12 +231,12 @@ function RegisterForm() {
         </div>
 
         {/* Password Input Field */}
-        <div className="space-y-1.5">
-          <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+        <div className="space-y-1">
+          <label htmlFor="password" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300">
             Mật khẩu
           </label>
           <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
               <Lock className="h-4 w-4" />
             </div>
             <input
@@ -243,13 +248,13 @@ function RegisterForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
-              className="w-full rounded-xl border border-white/10 bg-slate-900/60 pl-10 pr-11 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(61,232,255,0.25)] transition-all"
+              className="w-full rounded-xl border border-white/10 bg-slate-900/60 pl-9 pr-10 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(61,232,255,0.25)] transition-all"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-cyan-400 transition-colors"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-cyan-400 transition-colors"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -257,14 +262,14 @@ function RegisterForm() {
         </div>
 
         {/* Password Strength Meter Component */}
-        <div className="pt-1">
+        <div className="pt-0.5">
           <PasswordStrengthMeter password={password} />
         </div>
 
         {/* Confirm Password Field with Real-time Match Indicator */}
-        <div className="space-y-1.5 pt-1">
+        <div className="space-y-1 pt-0.5">
           <div className="flex items-center justify-between">
-            <label htmlFor="confirmPassword" className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+            <label htmlFor="confirmPassword" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-300">
               Xác nhận mật khẩu
             </label>
             {confirmEntered && (
@@ -290,7 +295,7 @@ function RegisterForm() {
             )}
           </div>
           <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
               <ShieldCheck className="h-4 w-4" />
             </div>
             <input
@@ -302,7 +307,7 @@ function RegisterForm() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••••••"
-              className={`w-full rounded-xl border bg-slate-900/60 pl-10 pr-11 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all ${
+              className={`w-full rounded-xl border bg-slate-900/60 pl-9 pr-10 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all ${
                 confirmEntered && !passwordsMatch
                   ? 'border-rose-500/60 focus:border-rose-400 focus:shadow-[0_0_15px_rgba(244,63,94,0.25)]'
                   : 'border-white/10 focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(61,232,255,0.25)]'
@@ -312,7 +317,7 @@ function RegisterForm() {
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               aria-label={showConfirmPassword ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'}
-              className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-cyan-400 transition-colors"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-cyan-400 transition-colors"
             >
               {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -320,8 +325,8 @@ function RegisterForm() {
         </div>
 
         {/* Terms of Service Checkbox */}
-        <div className="pt-2">
-          <label className="flex items-start gap-2.5 cursor-pointer select-none text-xs text-slate-300 hover:text-white transition-colors">
+        <div className="pt-1">
+          <label className="flex items-start gap-2 cursor-pointer select-none text-xs text-slate-300 hover:text-white transition-colors">
             <input
               id="agreeTerms"
               name="agreeTerms"
@@ -329,9 +334,9 @@ function RegisterForm() {
               required
               checked={agreeTerms}
               onChange={(e) => setAgreeTerms(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-white/20 bg-slate-900 text-cyan-500 focus:ring-cyan-400 focus:ring-offset-0 focus:ring-offset-slate-950 transition-all cursor-pointer accent-cyan-400 shrink-0"
+              className="mt-0.5 h-3.5 w-3.5 rounded border-white/20 bg-slate-900 text-cyan-500 focus:ring-cyan-400 focus:ring-offset-0 focus:ring-offset-slate-950 transition-all cursor-pointer accent-cyan-400 shrink-0"
             />
-            <span className="leading-relaxed">
+            <span className="leading-snug text-[11px] sm:text-xs">
               Tôi đồng ý với{' '}
               <span className="text-cyan-400 font-medium">Điều khoản Dịch vụ</span> &amp;{' '}
               <span className="text-cyan-400 font-medium">Quy chuẩn Học thuật CampusOS</span>
@@ -343,7 +348,7 @@ function RegisterForm() {
         <button
           type="submit"
           disabled={loading}
-          className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-violet-600 py-3 px-4 font-bold text-white shadow-[0_0_25px_rgba(6,182,212,0.35)] transition-all duration-300 hover:shadow-[0_0_35px_rgba(6,182,212,0.55)] hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:pointer-events-none mt-2"
+          className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-violet-600 py-2.5 sm:py-3 px-4 font-bold text-white shadow-[0_0_25px_rgba(6,182,212,0.35)] transition-all duration-300 hover:shadow-[0_0_35px_rgba(6,182,212,0.55)] hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:pointer-events-none mt-1"
         >
           <span className="relative z-10 flex items-center justify-center gap-2 text-sm">
             {loading ? (
@@ -362,7 +367,7 @@ function RegisterForm() {
       </form>
 
       {/* Navigation link to /login */}
-      <div className="mt-6 border-t border-white/10 pt-4 text-center text-xs text-slate-400">
+      <div className="mt-4 sm:mt-5 border-t border-white/10 pt-3 text-center text-xs text-slate-400">
         <span>Đã có tài khoản sinh viên? </span>
         <Link
           href="/login"
