@@ -1,157 +1,121 @@
-# CampusOS — Master Implementation Plan: Next-Gen Capabilities
+# CampusOS — Master Implementation Plan: Next-Gen Capabilities (v2.1)
 
-> **Phiên bản:** 2.0.0 — Bản đặc tả kỹ thuật toàn diện cho 3 phân hệ chiến lược  
-> **Trạng thái:** Chờ phê duyệt (Ready for Review)  
+> **Phiên bản:** 2.1.0 — Tích hợp đầy đủ phản hồi phỏng vấn kiến trúc chuyên sâu (/grill-me)  
+> **Trạng thái:** Đã thống nhất & Sẵn sàng triển khai (Approved & Ready for Execution)  
 > **Tác giả:** Antigravity Architect & Pair Programmer  
 
 ---
 
 ## 📑 Mục lục
 1. [Tổng quan Kiến trúc Hệ sinh thái (Ecosystem Architecture)](#1-tổng-quan-kiến-trúc-hệ-sinh-thái)
-2. [Phân hệ 1: Chrome Extension "AI Giám Sát Học Tập Cực Đoan" (Tab Tracking & Lockout)](#2-phân-hệ-1-chrome-extension-ai-giám-sát-học-tập-cực-đoan)
-3. [Phân hệ 2: AI Study Hub & Phân tích Slide Bài Giảng PDF (PDF RAG, Quiz & Flashcard 3D)](#3-phân-hệ-2-ai-study-hub--phân-tích-slide-bài-giảng-pdf)
-4. [Phân hệ 3: Đấu Trường Học Nhóm Realtime (Pomodoro Party & Leaderboard Arena)](#4-phân-hệ-3-đấu-trường-học-nhóm-realtime-pomodoro-party)
-5. [Lộ trình Triển khai Tổng thể & Phụ thuộc Kỹ thuật (Implementation Roadmap)](#5-lộ-trình-triển-khai-tổng-thể)
+2. [Phân hệ 1: Chrome Extension "AI Giám Sát Cực Đoan" (Tab Tracking + AI Webcam Face Tracking)](#2-phân-hệ-1-chrome-extension-ai-giám-sát-cực-đoan)
+3. [Phân hệ 2: AI Study Hub "Bộ Tứ Toàn Năng" (PDF RAG, Quiz, Flashcard 3D, Q&A)](#3-phân-hệ-2-ai-study-hub-bộ-tứ-toàn-năng)
+4. [Phân hệ 3: Đấu Trường Học Nhóm Realtime (Pomodoro Party Silent Focus)](#4-phân-hệ-3-đấu-trường-học-nhóm-realtime-pomodoro-party)
+5. [Lộ trình Triển khai Đề xuất (Execution Roadmap)](#5-lộ-trình-triển-khai-đề-xuất)
 6. [Hệ thống Kiểm định & Cổng Chất lượng (Quality Gates)](#6-hệ-thống-kiểm-định--cổng-chất-lượng)
 
 ---
 
 ## 1. Tổng quan Kiến trúc Hệ sinh thái
 
-Hệ thống CampusOS Next-Gen kết nối 3 phân hệ mới vào nền tảng cốt lõi (Next.js 14 Cyber-Glass + Supabase Cloud):
-
 ```mermaid
 graph TB
-    subgraph ClientLayer ["Lớp Ứng Dụng Client"]
-        Web["CampusOS Web App (Next.js 14 Cyber-Glass)"]
-        Ext["Chrome Extension (Manifest V3 - Strict Supervisor)"]
+    subgraph ClientApp ["Lớp Client & Thiết Bị"]
+        WebApp["CampusOS Web App (Next.js 14 Cyber-Glass)"]
+        Extension["Chrome Extension (Manifest V3 - Strict Supervisor)"]
+        WebcamAI["AI Face Tracking Module (MediaPipe / Web Worker)"]
     end
 
-    subgraph CoreEngine ["Lớp Động Cơ Cốt Lõi"]
-        Sync["Offline-First Sync Engine"]
-        RealtimeBus["Supabase Realtime Channel Bus"]
-        AIRAG["Gemini AI Academic Engine (PDF / Quiz / Flashcard)"]
+    subgraph ServiceLayer ["Lớp Dịch Vụ & Động Cơ"]
+        RealtimeBus["Supabase Realtime Channel (Presence & Broadcast)"]
+        GeminiEngine["Gemini 1.5 Flash AI Engine (PDF RAG / Quiz / Flashcards)"]
+        TTSModule["Multi-tier Resilient Neural TTS (Edge / Google)"]
+        SyncEngine["Offline-First Sync Engine (Local Cache + Auto-flush)"]
     end
 
-    subgraph CloudLayer ["Lớp Đám Mây Supabase Cloud"]
-        DB[(PostgreSQL + RLS)]
-        Storage[(Storage: academic-materials, task-attachments)]
-        Auth[Supabase Auth Engine]
+    subgraph CloudStorage ["Lớp Đám Mây Supabase Cloud"]
+        PostgreSQL[(PostgreSQL + 19 Bảng + RLS)]
+        Storage[(Buckets: academic-materials, task-attachments, student-avatars)]
+        Auth[Supabase Auth (auth.users)]
     end
 
-    Web <-->|BroadcastChannel / PostMessage| Ext
-    Web <--> Sync
-    Sync <--> RealtimeBus
-    RealtimeBus <--> DB
-    Web <--> AIRAG
-    AIRAG <--> Storage
-    Web <--> Auth
+    WebApp <-->|externally_connectable / BroadcastChannel| Extension
+    Extension <--> WebcamAI
+    WebApp <--> SyncEngine
+    SyncEngine <--> RealtimeBus
+    RealtimeBus <--> PostgreSQL
+    WebApp <--> GeminiEngine
+    GeminiEngine <--> Storage
+    Extension --> TTSModule
+    WebApp <--> Auth
 ```
 
 ---
 
-## 2. Phân hệ 1: Chrome Extension "AI Giám Sát Học Tập Cực Đoan"
+## 2. Phân hệ 1: Chrome Extension "AI Giám Sát Cực Đoan"
 
-### 2.1. Mục tiêu & Trải nghiệm Người dùng (UX)
-Khi sinh viên kích hoạt phiên **Pomodoro Cực Đoan** trên Web App, Chrome Extension tự động chuyển sang chế độ **"Iron Cage" (Lồng Sắt)**:
-- Nếu sinh viên mở tab hoặc lướt web trên các tên miền giải trí nằm trong blacklist (`facebook.com`, `tiktok.com`, `youtube.com`, `shopee.vn`, `reddit.com`, `netflix.com`, `bilibili.com`...):
-  1. Toàn bộ trang web bị làm mờ tức thì (`backdrop-filter: blur(25px)` và lớp phủ đen đỏ Cyber-Glass).
-  2. Nhân vật giám sát (Mèo Cam Cutout hoặc Talking Tom 3D) phóng to toàn màn hình, mắng chửi bằng giọng đọc AI Neural TTS theo độ gắt cấu hình (`light`, `medium`, `extreme`).
-  3. Gửi tín hiệu WebSocket/PostMessage về Web App: **Trừ ngay -50 XP**, ghi nhận vi phạm vào `student_focus_sessions`, tăng chỉ số `violation_count`.
-  4. Đếm ngược 5 giây cưỡng chế đóng tab hoặc chuyển hướng về `http://localhost:3000/tasks`.
+### 2.1. Quyết định Kiến trúc & Thiết kế Đã Thống nhất
+- **Cơ chế phát hiện kép (Dual-detection)**:
+  1. **Theo dõi URL Tab trình duyệt**: Nhận diện tức thì (< 200ms) khi sinh viên chuyển sang các trang nằm trong Blacklist (`facebook.com`, `tiktok.com`, `youtube.com`, `shopee.vn`, `reddit.com`, `netflix.com`...).
+  2. **Tùy chọn AI Webcam Face Tracking**: Người dùng có thể bật/tắt camera trong cài đặt Pomodoro; sử dụng mô hình nhẹ (MediaPipe Face Landmark) chạy hoàn toàn cục bộ trên máy để nhận diện khi sinh viên quay mặt đi quá 10 giây hoặc gục xuống bàn ngủ.
+- **Cơ chế cưỡng chế nghiêm khắc có ân hạn**:
+  - Làm mờ đen trang web vi phạm (`pointer-events: none; backdrop-filter: blur(25px)`).
+  - Nhân vật giám sát (Mèo Cam Cutout / Tom 3D) phóng to màn hình, phát âm thanh mắng chửi bằng giọng Neural TTS.
+  - Trừ ngay **-50 XP** đồng bộ về Supabase.
+  - Bắt đầu thanh đếm ngược **5 giây** tự động cưỡng chế đóng tab vi phạm và chuyển tiêu điểm về CampusOS.
+  - **Ân hạn hợp lý**: Cho phép sinh viên bấm nút *"Tôi đang tra tài liệu học"* (tối đa 1 lần / 3 phút mỗi phiên) để tạm ngưng cưỡng chế nếu cần tìm tài liệu nghiên cứu.
 
-### 2.2. Kiến trúc Kỹ thuật Extension (Manifest V3)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Student as Sinh Viên
-    participant Web as Web App (localhost:3000)
-    participant SW as Service Worker (background.js)
-    participant CS as Content Script (content.js)
-    participant Audio as Neural TTS Audio Player
-    participant Cloud as Supabase Postgres
-
-    Student->>Web: Bấm "Bắt đầu Focus Pomodoro" (45 phút)
-    Web->>SW: Gửi message "START_SESSION" (session_id, strict_level, character)
-    SW->>SW: Bật cờ isMonitoring = true, load blacklist rules
-    Student->>CS: Chuyển tab sang facebook.com
-    CS->>SW: Báo cáo tab URL & active tab changed
-    SW->>SW: Kiểm tra domain -> Match Blacklist!
-    SW->>CS: Lệnh "TRIGGER_LOCKOUT" (roast_voice_url, text, penalty_xp: 50)
-    par Phạt âm thanh & Giao diện
-        CS->>Student: Kích hoạt Cyber-Glass Lockdown HUD + Rung màn hình
-        CS->>Audio: Phát âm thanh mắng chửi của Mèo Cam
-    and Phạt dữ liệu
-        SW->>Web: PostMessage "VIOLATION_RECORDED" (-50 XP)
-        Web->>Cloud: Update profiles.xp & focus_sessions.violations
-    end
-    Student->>CS: Bấm "Tôi chịu thua, quay lại học"
-    CS->>SW: Đóng tab vi phạm và active lại tab CampusOS
-```
-
-### 2.3. Cấu trúc File & Triển khai
-- `extension/manifest.json`: Manifest V3, permissions: `tabs`, `declarativeNetRequest`, `storage`, `activeTab`, `scripting`, `notifications`.
-- `extension/background.js`: Service worker quản lý trạng thái phiên học, kết nối hai chiều với Web App qua `chrome.runtime.onMessageExternal` (yêu cầu cấu hình `externally_connectable` trỏ tới `http://localhost:3000/*`).
-- `extension/content.js`: Inject trực tiếp vào mọi tab trình duyệt; dựng Cyber-Glass DOM Modal với hình ảnh Mèo Cam và thanh đếm ngược phạt XP.
-- `extension/popup/`: Giao diện Popup Extension hiển thị nhanh: Trạng thái phiên Pomodoro, Đồng hồ đếm ngược, Nút mở nhanh CampusOS, Toggle bật/tắt danh sách Blacklist tùy biến.
-
-### 2.4. Tiêu chí Nghiệm thu Phân hệ 1
-- [ ] Extension cài đặt trực tiếp qua chế độ Developer Mode của Chrome/Edge mà không phát sinh lỗi Manifest.
-- [ ] Đồng bộ trạng thái tức thì giữa Web App và Extension: Web bắt đầu -> Extension bắt đầu; Web kết thúc -> Extension mở khóa.
-- [ ] Chặn chính xác các trang giải trí khi đổi tab trong vòng dưới 200ms.
-- [ ] Phạt XP chính xác và đồng bộ theo thời gian thực về Supabase Database.
+### 2.2. Chi tiết Triển khai File trong `extension/`
+- `manifest.json`: Manifest V3, cấp quyền `tabs`, `declarativeNetRequest`, `storage`, `activeTab`, `scripting`, và `externally_connectable` trỏ tới `http://localhost:3000/*` và domain production.
+- `background.js`: Service worker lưu trữ trạng thái phiên học, danh sách blacklist, nhận diện `tabs.onActivated` và `tabs.onUpdated`.
+- `content.js`: Inject trực tiếp vào mọi trang web; dựng giao diện Cyber-Glass Lockout HUD, phát file âm thanh giọng nói, và xử lý đếm ngược đóng tab.
+- `camera-tracker.js`: Web worker xử lý luồng video webcam bằng MediaPipe (Head Pose Estimation & Eye Aspect Ratio), tính toán điểm chú ý và gửi cảnh báo `DISTRACTED` hoặc `DROWSY`.
+- `popup/index.html & popup/popup.js`: Giao diện Cyber-Glass nhỏ gọn trên thanh tiện ích, hiển thị đồng hồ Pomodoro đang chạy, nút chuyển nhanh về Web, và danh sách Blacklist tùy biến.
 
 ---
 
-## 3. Phân hệ 2: AI Study Hub & Phân tích Slide Bài Giảng PDF
+## 3. Phân hệ 2: AI Study Hub "Bộ Tứ Toàn Năng"
 
-### 3.1. Mục tiêu & Trải nghiệm Người dùng (UX)
-Sinh viên đã có thể tải file PDF bài giảng lên từng tuần trong môn học (`/study/courses/[id]`). Phân hệ này bổ sung **Trợ lý AI Đọc hiểu Tài liệu**:
-- **Tóm tắt 5 phút (Executive Syllabus Summary)**: Rút trích công thức cốt lõi, định lý, kiến thức trọng tâm của tuần học.
-- **Tạo đề trắc nghiệm thông minh (Practice Quiz Generator)**: Tạo 5-10 câu trắc nghiệm bám sát nội dung slide với giải thích chi tiết đáp án đúng/sai.
-- **Flashcard 3D Studio**: Tự động trích xuất các thuật ngữ (Term - Definition) thành bộ thẻ học 3D, hỗ trợ lật thẻ bằng hiệu ứng Three.js, ghi nhớ theo thuật toán ngắt quãng Spaced Repetition (SM-2).
+### 3.1. Quyết định Kiến trúc & Thiết kế Đã Thống nhất
+Khi sinh viên tải lên một file slide bài giảng PDF môn học (`/study/courses/[id]`), hệ thống kích hoạt **Bộ tứ công cụ học tập thông minh**:
 
-### 3.2. Kiến trúc Trích xuất & Xử lý AI (RAG Pipeline)
+1. **Tóm tắt cốt lõi 5 phút (Executive Syllabus Summary)**:
+   - Rút trích ngắn gọn các khái niệm quan trọng, công thức toán/lý/tin học, định lý và ví dụ mẫu.
+   - Trình bày dạng Markdown Cyber-Glass có các Quantum Badges và bảng so sánh trực quan.
+2. **Đề trắc nghiệm luyện thi thông minh (Practice Quiz Generator)**:
+   - Tự động sinh 5-10 câu trắc nghiệm bám sát nội dung slide PDF.
+   - Có phân loại độ khó (Dễ / Vận dụng / Nâng cao), gợi ý (Hint), giải thích chi tiết vì sao đúng/sai và chỉ ra số trang slide tương ứng để sinh viên xem lại.
+3. **Thư viện Flashcard 3D Studio (Spaced Repetition SM-2)**:
+   - Trích xuất bộ cặp thuật ngữ - định nghĩa (Term - Definition).
+   - Render thẻ bài 3D bóng bẩy phong cách Cyber-Glass (Three.js), xoay lật 180 độ mượt mà khi nhấn phím Space.
+   - Áp dụng thuật toán ghi nhớ ngắt quãng SM-2: Lưu lượt ôn tập, hệ số lặp (Ease Factor), tự động xếp lịch nhắc học vào các ngày tiếp theo.
+4. **Chatbot hỏi đáp trực tiếp trên tài liệu (PDF RAG Q&A)**:
+   - Cho phép sinh viên gõ câu hỏi thắc mắc về bất kỳ phần nào trong slide bài giảng và nhận câu trả lời tức thì từ Coach AI dựa trên đúng ngữ cảnh tài liệu.
+- **Mô hình AI & Nhà cung cấp**:
+  - Mặc định tích hợp sẵn **Google Gemini 1.5 Flash** (xử lý context lên tới 1 triệu tokens, đọc PDF siêu nhanh, tiếng Việt xuất sắc).
+  - Hỗ trợ giao diện trong **Cài đặt (`/settings`)** cho phép sinh viên tự điền API Key riêng của mình (Gemini hoặc OpenAI) nếu muốn tùy chỉnh mô hình nâng cao.
 
-```mermaid
-flowchart LR
-    PDF[File PDF Bài Giảng] -->|Supabase Storage| Extractor[PDF Text & Vector Extractor]
-    Extractor --> TextChunks[Khối văn bản theo Chương/Mục]
-    TextChunks --> PromptTemplate[Prompt Engineering: UET/HUST Curriculum]
-    PromptTemplate --> GeminiAI[Gemini 1.5 Flash / Pro API]
-    
-    GeminiAI --> Output1[Tóm tắt siêu tốc 5 phút]
-    GeminiAI --> Output2[10 Câu Trắc Nghiệm + Giải Thích]
-    GeminiAI --> Output3[Bộ Flashcards Thuật Ngữ 3D]
-    
-    Output1 --> CoursePage["Giao diện /study/courses/[id]"]
-    Output2 --> QuizModal["Component InteractiveQuizCard"]
-    Output3 --> Flashcard3D["Component Flashcard3DDeck (Three.js)"]
-```
-
-### 3.3. Thiết kế CSDL Supabase (Bổ sung vào Schema)
-
+### 3.2. CSDL Bổ sung cho Phân hệ 2
 ```sql
--- Bảng lưu trữ bài tập trắc nghiệm tự động sinh từ PDF
+-- Lưu trữ bài trắc nghiệm sinh từ PDF
 CREATE TABLE IF NOT EXISTS public.ai_generated_quizzes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE,
   chapter_id TEXT NOT NULL,
   title TEXT NOT NULL,
   source_file_url TEXT NOT NULL,
-  questions JSONB NOT NULL DEFAULT '[]'::jsonb, -- [{question, options, correct_index, explanation, hint}]
+  questions JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Bảng Flashcards môn học
+-- Lưu trữ bộ Flashcards môn học kèm thuật toán SM-2
 CREATE TABLE IF NOT EXISTS public.course_flashcards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE,
   chapter_id TEXT NOT NULL,
   front_term TEXT NOT NULL,
   back_definition TEXT NOT NULL,
-  difficulty INT NOT NULL DEFAULT 1, -- 1: Easy, 2: Medium, 3: Hard
+  difficulty INT NOT NULL DEFAULT 1,
   interval_days INT NOT NULL DEFAULT 1,
   repetitions INT NOT NULL DEFAULT 0,
   ease_factor NUMERIC(3,2) NOT NULL DEFAULT 2.50,
@@ -160,52 +124,25 @@ CREATE TABLE IF NOT EXISTS public.course_flashcards (
 );
 ```
 
-### 3.4. Giao diện Người dùng (UI/UX)
-- Bổ sung nút **"✨ AI Phân tích bài giảng"** cạnh mỗi file PDF đã tải lên trong `Course Detail`.
-- Render **Flashcard 3D Deck**: Thẻ bài thủy tinh phát sáng Cyber-Glass, lật xoay 180 độ 3D khi click, phím tắt `Space` để lật, `1` (Khó), `2` (Bình thường), `3` (Dễ) để tính toán lượt ôn tiếp theo.
-
-### 3.5. Tiêu chí Nghiệm thu Phân hệ 2
-- [ ] Phân tích file PDF dung lượng tối đa 20MB (tương thích các định dạng slide bài giảng trường ĐH).
-- [ ] Sinh đề trắc nghiệm có cấu trúc JSON hợp lệ 100%, không lỗi parse.
-- [ ] Bộ Flashcard 3D chuyển động mượt mà 60-120FPS, không giật lag trên card đồ họa tích hợp.
-- [ ] Lưu tiến độ ôn tập Flashcards chính xác vào bảng `course_flashcards`.
-
 ---
 
-## 4. Phân hệ 3: Đấu Trường Học Nhóm Realtime (Pomodoro Party & Leaderboard)
+## 4. Phân hệ 3: Đấu Trường Học Nhóm Realtime (Pomodoro Party)
 
-### 4.1. Mục tiêu & Trải nghiệm Người dùng (UX)
-Học một mình rất dễ bỏ cuộc. Phân hệ này biến việc học thành **Một phòng chơi Game hợp tác (Co-op Study Party)**:
-- Sinh viên có thể tạo phòng học (`/pomodoro/party/[roomId]`) theo môn học hoặc nhóm đồ án.
-- **Đồng hồ đếm ngược đồng bộ hoàn hảo (Sync Clock)**: Trưởng phòng bấm "Bắt đầu Focus 50 phút", tất cả thành viên trong phòng cùng đếm ngược đồng thời.
-- **Sân khấu thành viên (Virtual Study Stage)**:
-  - Avatar Holographic của mỗi thành viên hiển thị hiệu ứng ánh sáng (Xanh lá = Tập trung cao độ, Đỏ = Rời tab/Bị phạt, Vàng = Đạt Streak 5 phiên liên tiếp).
-  - Cột năng lượng nhóm (Squad Energy Bar): Càng nhiều người tập trung, thanh năng lượng càng tăng, mở khóa nhân đôi XP (+100% XP Boost).
-- **Phản ứng tương tác (Cheer Reactions)**: Bắn hiệu ứng vỗ tay, thả tim, "Cố lên!" bay bổng trên màn hình mà không làm gián đoạn việc học.
-- **Bảng vàng vinh danh (Weekly Leaderboard Arena)**: Bục vinh danh 3D top 3 sinh viên có thời lượng học cao nhất tuần.
+### 4.1. Quyết định Kiến trúc & Thiết kế Đã Thống nhất
+- **Đa dạng 3 hình thức phòng học**:
+  1. **Phòng công khai theo Môn học**: Ví dụ: Phòng *"Ôn thi Mạng máy tính"*, *"Luyện code CTDL & GT"* — sinh viên toàn trường có thể tham gia học cùng nhau.
+  2. **Phòng riêng tư theo Mã PIN 6 ký tự**: Dành cho nhóm bạn thân học kín.
+  3. **Phòng học tích hợp sẵn trong từng Nhóm Đồ Án (Workspace)**: Mỗi Workspace đồ án có 1 phòng focus riêng để cả nhóm cùng chạy deadline.
+- **Kỷ luật & Tương tác "Silent Focus"**:
+  - **Trong giờ học (45-50 phút)**: Tắt khung chat văn bản để tránh buôn chuyện phân tâm; chỉ cho phép gửi các **hiệu ứng hạt Reaction** (🔥, 👏, ❤️, "Cố lên! 💪") bay bổng nhẹ nhàng trên màn hình.
+  - **Trong giờ giải lao (5-10 phút)**: Tự động mở chat nhóm, chia sẻ ghi chú và động viên nhau.
+  - **Bêu tên kẻ bỏ cuộc**: Nếu thành viên nào trong phòng cố tình đổi tab lướt web giải trí hoặc thoát giữa chừng, **Avatar của người đó trên sân khấu ảo sẽ đổi sang viền đỏ nhấp nháy**, đồng thời Mèo Cam hiện thông báo cảnh cáo cho cả phòng: *"X đã bỏ cuộc và bị trừ -50 XP!"*.
+- **Đồng hồ đếm ngược đồng bộ hoàn hảo**:
+  - Sử dụng Supabase Realtime Channels (kết hợp NTP Server Timestamp Offset) đảm bảo độ lệch thời gian giữa các thành viên không quá 200ms.
+- **Bục vinh danh 3D hàng tuần (Weekly Leaderboard Arena)**:
+  - Bục 3D (Gold, Silver, Bronze) vinh danh 3 sinh viên có tổng số giờ focus cao nhất tuần, nhận huy hiệu danh dự Holographic.
 
-### 4.2. Kiến trúc Realtime WebSockets (Supabase Presence & Broadcast)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Host as Trưởng Phòng (Host)
-    actor Member as Bạn Học (Member)
-    participant RT as Supabase Realtime Channel
-    participant DB as Supabase PostgreSQL
-
-    Member->>RT: Join Channel "room:study-party-cs101" (Presence: state = "focusing")
-    RT-->>Host: Broadcast "User Joined: Nam UET"
-    Host->>RT: Broadcast Event "START_TIMER" (duration: 3000s, startTime: 1792200000)
-    RT-->>Member: Receive "START_TIMER" -> Đồng bộ Countdown chính xác tới mili-giây
-    Note over Host,Member: Cùng học tập trung...
-    Member->>RT: Gửi Cheer "🔥 Đã xong 1 bài tập!"
-    RT-->>Host: Hiển thị hạt hiệu ứng pháo hoa trên màn hình Host
-    Host->>DB: Kết thúc phiên -> Cộng điểm đồng loạt +150 XP cho tất cả thành viên
-```
-
-### 4.3. Thiết kế CSDL Supabase (Bổ sung vào Schema)
-
+### 4.2. CSDL Bổ sung cho Phân hệ 3
 ```sql
 CREATE TABLE IF NOT EXISTS public.study_rooms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -223,38 +160,33 @@ CREATE TABLE IF NOT EXISTS public.study_room_members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   room_id UUID REFERENCES public.study_rooms(id) ON DELETE CASCADE,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  status VARCHAR(20) NOT NULL DEFAULT 'focusing',
+  status VARCHAR(20) NOT NULL DEFAULT 'focusing', -- 'focusing', 'distracted', 'break'
   joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   total_minutes_contributed INT NOT NULL DEFAULT 0,
   UNIQUE(room_id, user_id)
 );
 ```
 
-### 4.4. Tiêu chí Nghiệm thu Phân hệ 3
-- [ ] Độ lệch đồng hồ đếm ngược giữa các máy tính khác nhau không vượt quá 500ms.
-- [ ] Cập nhật trạng thái thành viên vào/ra (Presence) tức thời không cần tải lại trang.
-- [ ] Âm thanh và hiệu ứng tương tác vui tươi, tạo động lực nhưng không gây phân tâm.
-
 ---
 
-## 5. Lộ trình Triển khai Tổng thể
+## 5. Lộ trình Triển khai Đề xuất
 
 ```mermaid
 gantt
-    title Lộ trình Triển khai CampusOS Next-Gen
+    title Kế hoạch Triển khai CampusOS Next-Gen
     dateFormat  YYYY-MM-DD
-    section Phân hệ 1: Extension Giám Sát
-    Xây dựng Manifest V3 & Service Worker    :2026-10-18, 2d
-    Phát triển Cyber-Glass Lockout HUD       :2026-10-20, 2d
-    Kết nối PostMessage & Sync Trừ XP       :2026-10-22, 1d
-    section Phân hệ 2: AI Study Hub (PDF RAG)
-    PDF Text Extractor & Chunking Engine     :2026-10-23, 2d
-    Tích hợp Gemini Prompt & Sinh Trắc Nghiệm :2026-10-25, 2d
-    Flashcard 3D Studio & SM-2 Spaced Repetition :2026-10-27, 2d
-    section Phân hệ 3: Pomodoro Party Realtime
-    Database Schema Study Rooms & RLS        :2026-10-29, 1d
-    Đồng hồ Sync Clock & Supabase Presence   :2026-10-30, 2d
-    Sân khấu 3D & Bảng Vinh Danh Leaderboard :2026-11-01, 2d
+    section Phân hệ 1: Chrome Extension
+    Manifest V3 & Domain Blacklist Filter    :2026-10-18, 2d
+    Cyber-Glass Lockdown HUD & AI Neural Voice:2026-10-20, 2d
+    Webcam Face Tracking Module (MediaPipe)  :2026-10-22, 2d
+    section Phân hệ 2: AI Study Hub
+    PDF Text & Table Extraction Engine       :2026-10-24, 2d
+    Gemini 1.5 RAG Pipeline (Summary & Quiz) :2026-10-26, 2d
+    Flashcard 3D Studio & SM-2 Algorithm     :2026-10-28, 2d
+    section Phân hệ 3: Pomodoro Party
+    Realtime Room Channels & Sync Clock      :2026-10-30, 2d
+    Silent Focus Mode & Bêu Tên Vi Phạm     :2026-11-01, 2d
+    Sân Khấu Thành Viên & Bục Vinh Danh 3D   :2026-11-03, 2d
 ```
 
 ---
@@ -262,15 +194,7 @@ gantt
 ## 6. Hệ thống Kiểm định & Cổng Chất lượng (Quality Gates)
 
 Mỗi phân hệ khi triển khai bắt buộc phải vượt qua 100% các tiêu chuẩn:
-
-1. **Static Analysis & Type Integrity**:
-   - `npm run typecheck` hoàn thành với **0 lỗi**.
-   - Strict ESLint không chứa unescaped entities hay duplicate keys.
-2. **Unit Test Coverage**:
-   - Đảm bảo toàn bộ **380+ tests hiện có tiếp tục PASS 100%**.
-   - Bổ sung ít nhất 15-20 test cases cho mỗi phân hệ mới (Extension messaging mock, PDF extraction mock, Realtime presence sync mock).
-3. **Production Build & Hydration**:
-   - `npm run build` biên dịch thành công toàn bộ static & dynamic routes.
-   - Không xuất hiện lỗi chớp giao diện (FOUC) hay hydration mismatch giữa server và client.
-4. **Git Versioning**:
-   - Mỗi mốc hoàn thành được commit kèm thông điệp Semantic rõ ràng và push an toàn lên nhánh `main` repository GitHub.
+- **`npm run typecheck`**: **0 lỗi** TypeScript trên toàn bộ codebase.
+- **`npm test`**: Toàn bộ **380+ bài test hiện có PASS 100%** và bổ sung test suite mới cho từng phân hệ.
+- **`npm run build`**: Biên dịch thành công 100% các routes tĩnh & động.
+- **Git Commit**: Commit rõ ràng theo chuẩn Semantic và đẩy an toàn lên nhánh `main` repository GitHub.
