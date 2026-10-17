@@ -9,109 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ==============================================================================
--- 2. RBAC & Membership Helper Functions (SECURITY DEFINER with empty search_path)
--- NOTE: Using SECURITY DEFINER prevents infinite RLS recursion on membership tables
--- and wrapping (SELECT auth.uid()) allows PostgreSQL to evaluate as InitPlan.
--- ==============================================================================
-
-CREATE OR REPLACE FUNCTION public.is_workspace_member(p_workspace_id UUID)
-RETURNS BOOLEAN
-LANGUAGE sql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.workspace_members
-    WHERE workspace_id = p_workspace_id AND user_id = (SELECT auth.uid())
-  );
-$$;
-
-CREATE OR REPLACE FUNCTION public.is_workspace_admin(p_workspace_id UUID)
-RETURNS BOOLEAN
-LANGUAGE sql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.workspace_members
-    WHERE workspace_id = p_workspace_id
-      AND user_id = (SELECT auth.uid())
-      AND role IN ('OWNER', 'ADMIN')
-  );
-$$;
-
-CREATE OR REPLACE FUNCTION public.is_club_member(p_club_id UUID)
-RETURNS BOOLEAN
-LANGUAGE sql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.club_members
-    WHERE club_id = p_club_id AND user_id = (SELECT auth.uid())
-  );
-$$;
-
-CREATE OR REPLACE FUNCTION public.is_club_admin(p_club_id UUID)
-RETURNS BOOLEAN
-LANGUAGE sql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.club_members
-    WHERE club_id = p_club_id
-      AND user_id = (SELECT auth.uid())
-      AND role IN ('OWNER', 'ADMIN', 'MANAGER', 'president', 'officer')
-  );
-$$;
-
-CREATE OR REPLACE FUNCTION public.is_dorm_member(p_space_id UUID)
-RETURNS BOOLEAN
-LANGUAGE sql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.dorm_members
-    WHERE space_id = p_space_id AND user_id = (SELECT auth.uid())
-  );
-$$;
-
-CREATE OR REPLACE FUNCTION public.is_dorm_admin(p_space_id UUID)
-RETURNS BOOLEAN
-LANGUAGE sql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.dorm_members
-    WHERE space_id = p_space_id
-      AND user_id = (SELECT auth.uid())
-      AND role IN ('lead', 'OWNER', 'ADMIN')
-  );
-$$;
-
-REVOKE EXECUTE ON FUNCTION public.is_workspace_member(UUID) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.is_workspace_member(UUID) TO authenticated, anon;
-
-REVOKE EXECUTE ON FUNCTION public.is_workspace_admin(UUID) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.is_workspace_admin(UUID) TO authenticated, anon;
-
-REVOKE EXECUTE ON FUNCTION public.is_club_member(UUID) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.is_club_member(UUID) TO authenticated, anon;
-
-REVOKE EXECUTE ON FUNCTION public.is_club_admin(UUID) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.is_club_admin(UUID) TO authenticated, anon;
-
-REVOKE EXECUTE ON FUNCTION public.is_dorm_member(UUID) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.is_dorm_member(UUID) TO authenticated, anon;
-
-REVOKE EXECUTE ON FUNCTION public.is_dorm_admin(UUID) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.is_dorm_admin(UUID) TO authenticated, anon;
-
--- ==============================================================================
--- 3. Table Definitions
+-- 2. Table Definitions
 -- ==============================================================================
 
 -- 3.1 Student Profiles (Replaces legacy MySQL users & extends gamification)
@@ -494,7 +392,7 @@ CREATE TABLE IF NOT EXISTS public.student_notifications (
 );
 
 -- ==============================================================================
--- 4. Foreign Key & Query Performance Indexes (Supabase Postgres Best Practices)
+-- 3. Foreign Key & Query Performance Indexes (Supabase Postgres Best Practices)
 -- ==============================================================================
 
 -- 4.1 Profiles Indexes
@@ -558,6 +456,108 @@ CREATE INDEX IF NOT EXISTS idx_dorm_expenses_paid_by ON public.dorm_expenses(pai
 -- 4.7 Student Notifications Indexes
 CREATE INDEX IF NOT EXISTS idx_student_notifications_user_unread ON public.student_notifications(user_id, is_read);
 CREATE INDEX IF NOT EXISTS idx_student_notifications_user_created ON public.student_notifications(user_id, created_at DESC);
+
+-- ==============================================================================
+-- 4. RBAC & Membership Helper Functions (SECURITY DEFINER with empty search_path)
+-- NOTE: Using SECURITY DEFINER prevents infinite RLS recursion on membership tables
+-- and wrapping (SELECT auth.uid()) allows PostgreSQL to evaluate as InitPlan.
+-- ==============================================================================
+
+CREATE OR REPLACE FUNCTION public.is_workspace_member(p_workspace_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.workspace_members
+    WHERE workspace_id = p_workspace_id AND user_id = (SELECT auth.uid())
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_workspace_admin(p_workspace_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.workspace_members
+    WHERE workspace_id = p_workspace_id
+      AND user_id = (SELECT auth.uid())
+      AND role IN ('OWNER', 'ADMIN')
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_club_member(p_club_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.club_members
+    WHERE club_id = p_club_id AND user_id = (SELECT auth.uid())
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_club_admin(p_club_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.club_members
+    WHERE club_id = p_club_id
+      AND user_id = (SELECT auth.uid())
+      AND role IN ('OWNER', 'ADMIN', 'MANAGER', 'president', 'officer')
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_dorm_member(p_space_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.dorm_members
+    WHERE space_id = p_space_id AND user_id = (SELECT auth.uid())
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_dorm_admin(p_space_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.dorm_members
+    WHERE space_id = p_space_id
+      AND user_id = (SELECT auth.uid())
+      AND role IN ('lead', 'OWNER', 'ADMIN')
+  );
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.is_workspace_member(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_workspace_member(UUID) TO authenticated, anon;
+
+REVOKE EXECUTE ON FUNCTION public.is_workspace_admin(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_workspace_admin(UUID) TO authenticated, anon;
+
+REVOKE EXECUTE ON FUNCTION public.is_club_member(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_club_member(UUID) TO authenticated, anon;
+
+REVOKE EXECUTE ON FUNCTION public.is_club_admin(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_club_admin(UUID) TO authenticated, anon;
+
+REVOKE EXECUTE ON FUNCTION public.is_dorm_member(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_dorm_member(UUID) TO authenticated, anon;
+
+REVOKE EXECUTE ON FUNCTION public.is_dorm_admin(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_dorm_admin(UUID) TO authenticated, anon;
 
 -- ==============================================================================
 -- 5. Row-Level Security (RLS) Policies
@@ -913,7 +913,7 @@ CREATE POLICY "User manage notifications" ON public.student_notifications FOR AL
   WITH CHECK (user_id = (SELECT auth.uid()));
 
 -- ==============================================================================
--- 6. Storage Buckets & Policies (Requirement R2)
+-- 6. Storage Buckets (Requirement R2)
 -- Buckets: academic-materials, task-attachments, student-avatars
 -- ==============================================================================
 
@@ -924,56 +924,3 @@ VALUES
   ('student-avatars', 'student-avatars', true)
 ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
 
--- Enable RLS on storage.objects if not already enabled
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Public read academic-materials" ON storage.objects;
-CREATE POLICY "Public read academic-materials" ON storage.objects FOR SELECT
-  USING (bucket_id = 'academic-materials');
-
-DROP POLICY IF EXISTS "Authenticated upload academic-materials" ON storage.objects;
-CREATE POLICY "Authenticated upload academic-materials" ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'academic-materials' AND (SELECT auth.uid()) IS NOT NULL);
-
-DROP POLICY IF EXISTS "Authenticated update academic-materials" ON storage.objects;
-CREATE POLICY "Authenticated update academic-materials" ON storage.objects FOR UPDATE
-  USING (bucket_id = 'academic-materials' AND (SELECT auth.uid()) IS NOT NULL)
-  WITH CHECK (bucket_id = 'academic-materials' AND (SELECT auth.uid()) IS NOT NULL);
-
-DROP POLICY IF EXISTS "Authenticated delete academic-materials" ON storage.objects;
-CREATE POLICY "Authenticated delete academic-materials" ON storage.objects FOR DELETE
-  USING (bucket_id = 'academic-materials' AND (SELECT auth.uid()) IS NOT NULL);
-
-DROP POLICY IF EXISTS "Private read task-attachments" ON storage.objects;
-CREATE POLICY "Private read task-attachments" ON storage.objects FOR SELECT
-  USING (bucket_id = 'task-attachments' AND (SELECT auth.uid()) IS NOT NULL);
-
-DROP POLICY IF EXISTS "Authenticated upload task-attachments" ON storage.objects;
-CREATE POLICY "Authenticated upload task-attachments" ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'task-attachments' AND (SELECT auth.uid()) IS NOT NULL);
-
-DROP POLICY IF EXISTS "Authenticated update task-attachments" ON storage.objects;
-CREATE POLICY "Authenticated update task-attachments" ON storage.objects FOR UPDATE
-  USING (bucket_id = 'task-attachments' AND (SELECT auth.uid()) IS NOT NULL)
-  WITH CHECK (bucket_id = 'task-attachments' AND (SELECT auth.uid()) IS NOT NULL);
-
-DROP POLICY IF EXISTS "Authenticated delete task-attachments" ON storage.objects;
-CREATE POLICY "Authenticated delete task-attachments" ON storage.objects FOR DELETE
-  USING (bucket_id = 'task-attachments' AND (SELECT auth.uid()) IS NOT NULL);
-
-DROP POLICY IF EXISTS "Public read student-avatars" ON storage.objects;
-CREATE POLICY "Public read student-avatars" ON storage.objects FOR SELECT
-  USING (bucket_id = 'student-avatars');
-
-DROP POLICY IF EXISTS "Authenticated upload student-avatars" ON storage.objects;
-CREATE POLICY "Authenticated upload student-avatars" ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'student-avatars' AND (SELECT auth.uid()) IS NOT NULL);
-
-DROP POLICY IF EXISTS "Authenticated update student-avatars" ON storage.objects;
-CREATE POLICY "Authenticated update student-avatars" ON storage.objects FOR UPDATE
-  USING (bucket_id = 'student-avatars' AND (SELECT auth.uid()) IS NOT NULL)
-  WITH CHECK (bucket_id = 'student-avatars' AND (SELECT auth.uid()) IS NOT NULL);
-
-DROP POLICY IF EXISTS "Authenticated delete student-avatars" ON storage.objects;
-CREATE POLICY "Authenticated delete student-avatars" ON storage.objects FOR DELETE
-  USING (bucket_id = 'student-avatars' AND (SELECT auth.uid()) IS NOT NULL);
