@@ -1,127 +1,156 @@
-# Project: CampusOS Đấu Trường Học Nhóm Realtime (Pomodoro Party)
+# Project: CampusOS Auth Flow Rebuild (Split-Screen 50/50, 3D Hologram Stage & Cyber-Glass Experience)
 
 ## Architecture
-- **Database & Realtime Layer (`supabase/migrations/006_pomodoro_party.sql`)**:
-  - `public.study_rooms`: Room registry with `code` (unique 16-char), `room_type` ('public', 'private_pin', 'workspace'), `pin_code`, `workspace_id`, `focus_duration_minutes`, `break_duration_minutes`, `current_status` ('waiting', 'focusing', 'break'), `start_time_iso`, `end_time_iso`, `is_active`.
-  - `public.study_room_members`: Online participants tracking with `room_id`, `user_id`, `status` ('focusing', 'distracted', 'break'), `joined_at`, `total_minutes_contributed`, `camera_on`, `last_ping_at`, with `UNIQUE(room_id, user_id)`.
-  - `public.room_reactions`: High-frequency reaction broadcast channel (`room_id`, `user_id`, `emoji`, `created_at`).
-  - Row Level Security: `is_study_room_member(p_room_id)` helper function, `(SELECT auth.uid())` InitPlan wrapping, foreign key indexes, and `REPLICA IDENTITY FULL` + `supabase_realtime` publication.
-  - TypeScript bindings in `web/src/types/database.ts`.
-- **Client & Offline Sync Service (`web/src/lib/study-rooms-service.ts`)**:
-  - Abstraction layer supporting live Supabase queries and seamless mock/offline-first local fallback with sample study rooms.
-- **Lobby & Multi-Modal Routing (`web/src/app/(main)/study/rooms/`)**:
-  - `/study/rooms`: Cyber-Glass lobby with tab filtering (Tất cả, Môn đại cương, Môn chuyên ngành, Đồ án nhóm), quick stats, "Tạo phòng mới" modal with 3 types (Public, 6-digit PIN, Workspace-bound), and "Nhập PIN" modal.
-  - `/study/rooms/[code]`: Realtime room arena route with PIN challenge, server synchronization, and state rendering.
-  - `/workspaces/[workspaceId]`: Embedded 5th tab `study_room` (`WorkspaceStudyRoomPanel`) allowing direct study room launch inside project workspaces.
-- **Realtime Synchronization & Silent Focus (`web/src/hooks/use-study-room-realtime.ts`)**:
-  - SNTP 3-sample ping algorithm via `GET /api/study/rooms/time` calculating server clock offset `< 200ms`.
-  - Supabase Realtime channel `study_room:${code}` with Broadcast (`timer_sync`, `reaction`, `member_violation`) and Presence tracking.
-  - Silent Focus rule: Chat input disabled during focus phase; floating particle reactions (🔥, 👏, ❤️, 💪, ⚡) with GPU-accelerated CSS keyframes.
-  - Break Mode: Chat unlocked, procedural / ambient lo-fi music, document sharing.
-  - Deserter/Shame Penalty: Triggered when user switches tabs or quits early; avatar flashes red border, siren alarm sounds, public banner announces deserter, and -50 XP is penalized via `penalizeViolation(50)`.
-- **3D Three.js Weekly Leaderboard Arena (`web/src/app/(main)/study/rooms/leaderboard/`)**:
-  - Procedural vanilla Three.js scene: 3-tier podium (Gold, Silver, Bronze), rotating spotlight, hovering cyberpunk gold trophy with neon gem, neon particle fireworks, and top 3 student holographic cards.
-  - Strict resource disposal on unmount (geometries, materials, renderer, event listeners, RAF).
-- **Test Infrastructure (`web/tests/pomodoro-party.test.ts`)**:
-  - Native Node test runner (`node --experimental-strip-types --test`) testing DDL schema contracts, TypeScript database types, NTP math, room access/PIN, Silent Focus logic, Leaderboard calculations, and 3D memory safety.
+- **Layout Architecture (`web/src/app/(auth)/layout.tsx`)**:
+  - Desktop ($\ge 1024$px): Symmetrical 50/50 Split-Screen layout bounded to `lg:h-screen lg:overflow-hidden` preventing outer double scrollbars. Left pane (3D stage + carousel) fixed; right pane (auth form) with internal smooth scrolling (`overflow-y-auto scrollbar-thin`).
+  - Mobile & Tablet ($< 1024$px): Auto-collapses to a single fluid center column with lightweight GPU CSS Fluid Ambient Aurora blobs (`#0A0A12` obsidian backdrop), hiding heavy 3D canvas for 120FPS battery/GPU efficiency.
+- **Three.js 3D Hologram Stage (`web/src/components/auth/auth-3d-showcase.tsx`)**:
+  - Vanilla Three.js (`three@0.186.1`) knowledge sphere/crystal hologram.
+  - Geometry: Central faceted Icosahedron core (`IcosahedronGeometry(1.22, 1)` with `flatShading`), outer wireframe cage (`IcosahedronGeometry(1.48, 1)` with Cyan `#38bdf8`), 3 gyroscopic Torus orbital rings (Cyan `#38bdf8`, Violet `#a855f7`, Lime `#c6ff3d`), and 140 quantum stardust point nodes.
+  - Studio Lighting: Dual Spotlights in Cyan (`0x38bdf8`) & Violet (`0xa855f7`) with dynamic targets, and ambient base fill.
+  - Interaction: Pointer-reactive parallax lerp damping with subtle hover tilt and sine-wave levitation.
+  - Memory Safety: 100% strict cleanup array (`geometriesToDispose`, `materialsToDispose`, `renderer.dispose()`, `cancelAnimationFrame`), DPR clamped to $\le 1.5$, `visibilitychange` throttling, and `prefers-reduced-motion` static fallback.
+- **Dynamic Feature Carousel (`web/src/components/auth/auth-feature-carousel.tsx`)**:
+  - Auto-sliding showcase (5s cycle with hover-pause and manual navigation) highlighting the "Bộ Ba Siêu Năng" (Superpower Trio):
+    1. 🐱 *Mèo Cam Giám Sát Cực Đoan* (URL Tab Blacklist & AI Webcam Face Tracking)
+    2. 🎴 *AI Study Hub 1M Tokens & Flashcard 3D SM-2* (Phân tích slide PDF bài giảng)
+    3. 🏆 *Đấu Trường Pomodoro Party & Bục Vinh Danh 3D* (Học nhóm thời gian thực)
+  - Real-time student statistics: "🔥 12,450+ giờ học hôm nay", "👥 4,800+ sinh viên online", "⚡ 99.2% qua môn".
+  - Daily inspiring study quotes for Gen Z students.
+- **Core Validation & Logic Engine (`web/src/lib/auth-validation.ts`)**:
+  - `calculatePasswordStrength(password)`: 4-tier real-time strength evaluation (Yếu/Red, Trung bình/Yellow, Tốt/Cyan, Cực mạnh/Neon Green) checking length $\ge 8$, uppercase, lowercase, numbers, special characters.
+  - `isValidEduVnEmail(email)`: Strict regex validation for `.edu.vn` student emails (case-insensitive, trimmed, spoof-resistant).
+  - `calculateCooldownState(lastSent, duration, now)`: Anti-spam 60s cooldown timer calculation for email verification and password reset.
+  - `DEMO_STUDENT_CREDENTIALS`: Canonical demo student (`minh.nguyen@campus.edu.vn` / `Demo@123456`).
+- **Cyber-Glass Form Ecosystem (`web/src/app/(auth)/`)**:
+  - `login/page.tsx`: Cyber-Glass card (`backdrop-blur-2xl bg-card/60 border-white/10 shadow-[0_0_50px_rgba(61,232,255,0.15)]`), "⚡ Đăng nhập nhanh Demo 1-Click" button, Google & GitHub Supabase OAuth buttons, cyberpunk neon-focused inputs, password visibility eye toggle, Remember Me checkbox, `animate-panic-shake` micro-interaction with neon red alert on invalid credentials.
+  - `register/page.tsx`: Student registration form (Full name, .edu.vn email, password, confirm password), real-time 4-level `PasswordStrengthMeter` component, and Terms of Service & Academic Code of Conduct checkbox.
+  - `forgot-password/page.tsx`: Email input, recovery link submission with 60-second countdown timer.
+  - `reset-password/page.tsx`: New password & confirmation form with real-time `PasswordStrengthMeter` and token verification.
+  - `verify-email/page.tsx`: Student activation notification with Glowing Holographic Mail visual icon, 6-character code input, and 60-second cooldown resend button.
+- **Test Infrastructure (`web/tests/auth-redesign.test.ts`)**:
+  - Node 22 native runner (`node --experimental-strip-types --test tests/*.test.ts`) with 6 test suites (~40 tests) verifying password strength math, demo credentials, `.edu.vn` rules, cooldown timers, Three.js lifecycle contracts, and Cyber-Glass component structures.
 
 ## Code Layout
-- `supabase/migrations/006_pomodoro_party.sql` — PostgreSQL DDL, indexes, RLS, Realtime publication
-- `web/src/types/database.ts` — TypeScript type definitions for study rooms, members, reactions
-- `web/src/lib/study-rooms-service.ts` — Service layer for study room operations with mock/Supabase fallback
-- `web/src/app/api/study/rooms/time/route.ts` — SNTP server time endpoint for <200ms clock offset sync
-- `web/src/hooks/use-study-room-realtime.ts` — Realtime Broadcast, Presence, and NTP clock sync hook
-- `web/src/components/study/create-room-modal.tsx` — Create Room modal (Public, 6-digit PIN, Workspace)
-- `web/src/components/study/pin-entry-modal.tsx` — 6-digit numeric PIN entry modal
-- `web/src/components/study/workspace-study-room-panel.tsx` — Embedded study room tab panel for workspaces
-- `web/src/components/study/floating-reactions.tsx` — GPU-accelerated floating emoji reactions overlay
-- `web/src/components/study/deserter-shame-banner.tsx` — Public callout banner & sound trigger for deserters
-- `web/src/components/study/break-room-chat.tsx` — Break mode chat and lo-fi audio player
-- `web/src/components/study/member-holo-grid.tsx` — Holographic member avatar grid with neon status lights
-- `web/src/components/study/leaderboard-3d-arena.tsx` — Vanilla Three.js 3D podium, trophy, spotlight & fireworks
-- `web/src/app/(main)/study/rooms/page.tsx` — Lobby page with filter tabs and room list
-- `web/src/app/(main)/study/rooms/[code]/page.tsx` — Realtime study room main stage page
-- `web/src/app/(main)/study/rooms/leaderboard/page.tsx` — Weekly Leaderboard Arena page
-- `web/src/app/(main)/workspaces/[workspaceId]/page.tsx` — Updated workspace detail page with 5th tab `study_room`
-- `web/tests/pomodoro-party.test.ts` — Comprehensive test suite for Pomodoro Party
+- `web/src/lib/auth-validation.ts` — Pure TypeScript validation utilities (Password strength, .edu.vn regex, 60s cooldown math, demo credentials)
+- `web/src/components/auth/auth-3d-showcase.tsx` — Vanilla Three.js 3D Hologram stage with dual spotlights & WebGL cleanup
+- `web/src/components/auth/auth-feature-carousel.tsx` — "Bộ Ba Siêu Năng" carousel with live stats & inspiring quotes
+- `web/src/components/auth/password-strength-meter.tsx` — 4-tier real-time neon password strength gauge with checklist badges
+- `web/src/app/(auth)/layout.tsx` — 50/50 Split-Screen desktop & fluid mobile responsive layout
+- `web/src/app/(auth)/login/page.tsx` — Cyber-Glass login page with 1-Click Demo, social OAuth, cyberpunk inputs & shake animation
+- `web/src/app/(auth)/register/page.tsx` — Registration page with .edu.vn check, password meter & terms checkbox
+- `web/src/app/(auth)/forgot-password/page.tsx` — Forgot password page with 60s cooldown resend timer
+- `web/src/app/(auth)/reset-password/page.tsx` — Reset password page with token verification & strength check
+- `web/src/app/(auth)/verify-email/page.tsx` — Verify email page with holographic mail icon & 60s resend button
+- `web/tests/auth-redesign.test.ts` — Comprehensive unit and contract test suite for auth redesign
 
 ## Feature Inventory
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| F01 | Schema Migration 006 | `006_pomodoro_party.sql` with tables `study_rooms`, `study_room_members`, `room_reactions` | M1 | ORIGINAL_REQUEST § R1 |
-| F02 | Row Level Security & Indexes | RLS policies using `(SELECT auth.uid())`, `is_study_room_member` function, FK indexes | M1 | ORIGINAL_REQUEST § R1 |
-| F03 | Realtime Publication | Enable `supabase_realtime` and `REPLICA IDENTITY FULL` on study room tables | M1 | ORIGINAL_REQUEST § R1 |
-| F04 | TypeScript Database Types | Updated `Database` interface in `web/src/types/database.ts` with row/insert/update types | M1 | ORIGINAL_REQUEST § R1 |
-| F05 | Study Rooms Service Layer | `study-rooms-service.ts` with offline/mock fallback for unconfigured Supabase Cloud | M1 | ORIGINAL_REQUEST § R1 |
-| F06 | Cyber-Glass Study Lobby | `/study/rooms` page with filtering tabs (Tất cả, Môn đại cương, Môn chuyên ngành, Nhóm Đồ Án) | M2 | ORIGINAL_REQUEST § R2 |
-| F07 | Create Room Modal | Modal supporting 3 room types: Public, 6-digit PIN, Workspace-bound | M2 | ORIGINAL_REQUEST § R2 |
-| F08 | PIN Entry Modal | 6-digit numeric PIN modal with validation and auto-focus | M2 | ORIGINAL_REQUEST § R2 |
-| F09 | Dynamic Room Route | `/study/rooms/[code]` dynamic page with PIN gate and room loading | M2 | ORIGINAL_REQUEST § R2 |
-| F10 | Workspace Embedded Room | 5th tab `study_room` in `/workspaces/[workspaceId]` with `<WorkspaceStudyRoomPanel />` | M2 | ORIGINAL_REQUEST § R2 |
-| F11 | Server NTP Offset Route | `GET /api/study/rooms/time` SNTP endpoint calculating client-server offset (<200ms) | M3 | ORIGINAL_REQUEST § R3 |
-| F12 | Realtime Clock Sync Hook | `use-study-room-realtime.ts` synchronizing timer countdown across all clients | M3 | ORIGINAL_REQUEST § R3 |
-| F13 | Silent Focus Chat Lock | Text chat input disabled during focusing phase | M3 | ORIGINAL_REQUEST § R3 |
-| F14 | Floating Particle Reactions | Floating reactions (🔥, 👏, ❤️, 💪, ⚡) with GPU-accelerated CSS animations | M3 | ORIGINAL_REQUEST § R3 |
-| F15 | Break Mode Experience | Unlocked chat, lo-fi relaxation music, and resource sharing during breaks | M3 | ORIGINAL_REQUEST § R3 |
-| F16 | Deserter Shame Mechanism | Red pulsing danger border, alarm siren, callout banner, and -50 XP penalty on tab switch/quit | M3 | ORIGINAL_REQUEST § R3 |
-| F17 | Member Holographic Stage | Grid displaying member 3D holographic avatars with neon status lights (Green, Red, Yellow) | M4 | ORIGINAL_REQUEST § R4 |
-| F18 | 3D Three.js Leaderboard Arena | 3-tier podium (Gold, Silver, Bronze), rotating spotlight, cyberpunk gold trophy, neon fireworks | M4 | ORIGINAL_REQUEST § R4 |
-| F19 | Weekly Leaderboard Page | `/study/rooms/leaderboard` page with top 3 focus students and ranking table | M4 | ORIGINAL_REQUEST § R4 |
-| F20 | Three.js Memory Safety | Explicit cleanup of geometries, materials, renderer, event listeners, and animation loop | M4 | ORIGINAL_REQUEST § R4 |
-| F21 | E2E & Unit Test Suite | `web/tests/pomodoro-party.test.ts` covering 7 distinct test suites | M5 | ORIGINAL_REQUEST § Quality Gates |
-| F22 | Quality Gates Verification | 100% test pass (513+ tests), 0 typecheck errors, 100% build pass | M5 | ORIGINAL_REQUEST § Quality Gates |
+| F01 | Split-Screen 50/50 Desktop Layout | Symmetrical 50/50 desktop layout, fixed 100vh, zero outer double scrollbars | M1 | ORIGINAL_REQUEST § R1 |
+| F02 | Mobile/Tablet Fluid Aurora Layout | Single center column on `< 1024px` with GPU CSS Fluid Ambient Aurora blobs | M1 | ORIGINAL_REQUEST § R1 |
+| F03 | Three.js 3D Hologram Knowledge Stage | Faceted Icosahedron crystal, wireframe cage, 3 gyroscopic orbital rings, 140 particles | M1 | ORIGINAL_REQUEST § R1 |
+| F04 | Dual Neon Spotlights | Cyan (`#38bdf8`) & Violet (`#a855f7`) spotlights with pointer parallax tracking | M1 | ORIGINAL_REQUEST § R1 |
+| F05 | WebGL Memory Safety & Cleanup | Strict disposal of geometries, materials, renderer, event listeners, and RAF | M1 | ORIGINAL_REQUEST § R1 |
+| F06 | Dynamic Feature Carousel | Auto-sliding carousel (5s cycle, hover pause) of "Bộ Ba Siêu Năng" | M1 | ORIGINAL_REQUEST § R1 |
+| F07 | Student Live Stats & Quotes | 12,450+ study hours statistic, active students metric, daily inspiring quotes | M1 | ORIGINAL_REQUEST § R1 |
+| F08 | Auth Validation Logic Engine | Pure TS functions for password strength, .edu.vn regex, and 60s cooldown math | M2 | ORIGINAL_REQUEST § R2, R3, R4 |
+| F09 | 1-Click Demo Quick Login Button | Instant autofill and login with `minh.nguyen@campus.edu.vn` / `Demo@123456` | M2 | ORIGINAL_REQUEST § R2 |
+| F10 | Supabase Social OAuth Login | Google & GitHub OAuth buttons with graceful offline mock fallback | M2 | ORIGINAL_REQUEST § R2 |
+| F11 | Cyberpunk Input Styling | Neon cyan glow on focus (`focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(61,232,255,0.25)]`) | M2 | ORIGINAL_REQUEST § R2 |
+| F12 | Password Visibility Toggle | Intuitive show/hide password toggle button with Eye/EyeOff icons | M2 | ORIGINAL_REQUEST § R2 |
+| F13 | Remember Me Checkbox | "Ghi nhớ đăng nhập" checkbox with state handling | M2 | ORIGINAL_REQUEST § R2 |
+| F14 | Shake Micro-Interaction | `animate-panic-shake` animation and neon red alert banner on failed login | M2 | ORIGINAL_REQUEST § R2 |
+| F15 | Student Registration Form | Full name, .edu.vn email, password, and password confirmation | M3 | ORIGINAL_REQUEST § R3 |
+| F16 | 4-Tier Password Strength Meter | Real-time gauge: Weak (Red), Medium (Yellow), Good (Cyan), Strong (Neon Green) | M3 | ORIGINAL_REQUEST § R3 |
+| F17 | Password Criteria Checklist | Live badges for length $\ge 8$, uppercase, numbers, and special characters | M3 | ORIGINAL_REQUEST § R3 |
+| F18 | Terms of Service Checkbox | Mandatory agreement to CampusOS Academic Code of Conduct & Terms | M3 | ORIGINAL_REQUEST § R3 |
+| F19 | Forgot Password Flow with 60s Cooldown | Password reset request with interactive 60-second countdown cooldown timer | M4 | ORIGINAL_REQUEST § R4 |
+| F20 | Reset Password Form | Token parameter handling, password confirmation, and password strength meter | M4 | ORIGINAL_REQUEST § R4 |
+| F21 | Verify Email Screen with Holographic Mail | Glowing holographic mail icon (`shadow-[0_0_35px_rgba(61,232,255,0.4)]`) & 60s resend | M4 | ORIGINAL_REQUEST § R4 |
+| F22 | Auth Redesign Test Suite | `web/tests/auth-redesign.test.ts` covering all 6 test suites (~40 tests) | M5 | ORIGINAL_REQUEST § Quality Gates |
+| F23 | Quality Gates Verification | 100% test pass (680+ tests), 0 typecheck errors, 100% clean production build | M5 | ORIGINAL_REQUEST § Quality Gates |
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M1 | Supabase Realtime & Schema + Types | `006_pomodoro_party.sql`, `web/src/types/database.ts`, `study-rooms-service.ts` | none | DONE |
-| M2 | Lobby & 3 Study Room types UI | `/study/rooms`, `/study/rooms/[code]`, `/workspaces/[workspaceId]` 5th tab, modals | M1 | DONE |
-| M3 | Realtime Study Room Core & NTP Sync | `/api/study/rooms/time`, realtime hook, Silent Focus, particles, Deserter penalty | M1, M2 | DONE |
-| M4 | Member Stage & 3D Three.js Leaderboard | `/study/rooms/leaderboard`, 3D podium, trophy, spotlight, fireworks, holo grid | M1, M2 | DONE |
-| M5 | Test Suite & Quality Gates Verification | `web/tests/pomodoro-party.test.ts`, npm test, typecheck, build verification | M1, M2, M3, M4 | DONE |
+| M1 | Split-Screen Layout, 3D Hologram & Feature Carousel | `(auth)/layout.tsx`, `auth-3d-showcase.tsx`, `auth-feature-carousel.tsx` | none | DONE |
+| M2 | Validation Engine, Cyber-Glass Login & 1-Click Demo | `auth-validation.ts`, `(auth)/login/page.tsx` (Demo button, OAuth, shake) | none | DONE |
+| M3 | Registration & 4-Level Password Strength Meter | `(auth)/register/page.tsx`, `password-strength-meter.tsx` | M2 | DONE |
+| M4 | Forgot Password, Reset Password & Verify Email | `forgot-password/page.tsx`, `reset-password/page.tsx`, `verify-email/page.tsx` | M2, M3 | DONE |
+| M5 | E2E & Unit Test Suite + Quality Gates Verification | `web/tests/auth-redesign.test.ts`, npm test, typecheck, build verification | M1, M2, M3, M4 | DONE |
 
 ## Interface Contracts
-### Study Room Realtime Message Types
-```typescript
-export type RoomType = 'public' | 'private_pin' | 'workspace';
-export type RoomStatus = 'waiting' | 'focusing' | 'break';
-export type MemberStatus = 'focusing' | 'distracted' | 'break';
 
-export interface StudyRoomRealtimeState {
-  room: {
-    id: string;
-    code: string;
-    title: string;
-    subject: string;
-    current_status: RoomStatus;
-    start_time_iso: string | null;
-    end_time_iso: string | null;
-    focus_duration_minutes: number;
-    break_duration_minutes: number;
-    host_id: string | null;
-    room_type: RoomType;
-  };
-  members: Array<{
-    user_id: string;
-    name: string;
-    avatar_url?: string;
-    status: MemberStatus;
-    total_minutes: number;
-    last_ping_at: string;
-  }>;
+### Auth Validation Types (`web/src/lib/auth-validation.ts`)
+```typescript
+export type PasswordStrengthTier = 'weak' | 'medium' | 'good' | 'strong';
+
+export interface PasswordCriteria {
+  minLength: boolean;    // >= 8 chars
+  hasUppercase: boolean; // [A-Z]
+  hasLowercase: boolean; // [a-z]
+  hasNumber: boolean;    // [0-9]
+  hasSpecial: boolean;   // [!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]
 }
 
-export type RealtimeBroadcastEvent =
-  | { type: 'TIMER_SYNC'; status: RoomStatus; startTimeIso: string; endTimeIso: string; serverTimestamp: number }
-  | { type: 'REACTION'; id: string; userId: string; userName: string; emoji: string; xPercent: number; timestamp: number }
-  | { type: 'MEMBER_VIOLATION'; userId: string; userName: string; reason: string; penaltyXp: number; timestamp: number };
+export interface PasswordStrengthResult {
+  score: number;         // 0 to 5
+  percent: number;       // 0, 25, 50, 75, 100
+  tier: PasswordStrengthTier;
+  label: string;         // 'Yếu' | 'Trung bình' | 'Tốt' | 'Cực mạnh'
+  color: string;         // Hex code
+  criteria: PasswordCriteria;
+}
+
+export interface CooldownState {
+  remainingSeconds: number; // 0 to 60
+  canResend: boolean;       // true if remainingSeconds === 0
+  formattedLabel: string;   // e.g. "Gửi lại mã sau (45s)" or "Gửi lại mã"
+}
+
+export const DEMO_STUDENT_CREDENTIALS = {
+  email: 'minh.nguyen@campus.edu.vn',
+  password: 'Demo@123456',
+  fullName: 'Nguyễn Nhật Minh',
+} as const;
+
+export function calculatePasswordStrength(password: string): PasswordStrengthResult;
+export function isValidEduVnEmail(email: string): boolean;
+export function calculateCooldownState(
+  lastSentTimestamp: number | null | undefined,
+  cooldownDurationSeconds?: number,
+  currentTimestamp?: number
+): CooldownState;
 ```
 
-### NTP Server Time API Contract
+### Component Props Contracts
 ```typescript
-// GET /api/study/rooms/time
-export interface ServerTimeResponse {
-  serverTime: number; // Date.now() timestamp
-  iso: string;        // new Date().toISOString()
+// web/src/components/auth/auth-3d-showcase.tsx
+export interface Auth3DShowcaseProps {
+  className?: string;
+  intensity?: number;
+  interactive?: boolean;
+}
+
+// web/src/components/auth/password-strength-meter.tsx
+export interface PasswordStrengthMeterProps {
+  password: string;
+  showCriteria?: boolean;
+  className?: string;
+}
+
+// web/src/components/auth/auth-feature-carousel.tsx
+export interface FeatureSlide {
+  id: string;
+  superpowerTag: string;
+  badge: string;
+  iconType: 'cat' | 'ai' | 'party';
+  title: string;
+  subtitle: string;
+  description: string;
+  metricBadge: string;
+  accentGradient: string;
+  borderColor: string;
 }
 ```

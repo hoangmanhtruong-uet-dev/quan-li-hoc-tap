@@ -1,72 +1,66 @@
-# BRIEFING — 2026-10-17T04:51:00Z
+# BRIEFING — 2026-10-17T07:29:30Z
 
 ## Mission
-Implement Supabase Pomodoro Party schema migration `006_pomodoro_party.sql`, update TypeScript database types `web/src/types/database.ts`, and implement `web/src/lib/study-rooms-service.ts` with real queries and offline fallback.
+Implement Milestone M1: Symmetrical 50/50 Split-Screen layout `(auth)/layout.tsx`, Vanilla Three.js 3D Hologram stage `auth-3d-showcase.tsx`, and Dynamic Feature Carousel "Bộ Ba Siêu Năng" `auth-feature-carousel.tsx`.
 
 ## 🔒 My Identity
-- Archetype: worker_m1
+- Archetype: worker
 - Roles: implementer, qa, specialist
 - Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m1
-- Original parent: 09e91f48-3c8b-4ec8-bbb9-500dee6152ac
-- Milestone: M1 (Backend Schema & Study Rooms Service)
+- Original parent: 29257fd0-4cce-43cc-906d-4f5f80b1ce6e
+- Milestone: M1
 
 ## 🔒 Key Constraints
-- Follow Postgres & Supabase best practices (FK indexes, `(select auth.uid())` in RLS, explicit check constraints).
-- Write ownership:
-  - `supabase/migrations/006_pomodoro_party.sql`
-  - `web/src/types/database.ts`
-  - `web/src/lib/study-rooms-service.ts`
-- Run `npm run typecheck` and `npm test` in `web/` to confirm 0 type errors and 100% test pass.
-- Offline/mock fallback for unconfigured environments in `study-rooms-service.ts`.
-- Integrity mandate: genuine implementation, no fake or hardcoded tests.
+- EXCLUSIVE WRITE OWNERSHIP:
+  - web/src/app/(auth)/layout.tsx
+  - web/src/components/auth/auth-3d-showcase.tsx
+  - web/src/components/auth/auth-feature-carousel.tsx
+  (Do NOT touch files outside exclusive ownership)
+- Mandatory Integrity: No cheating, no fake mocks/stubs, genuine implementation.
+- Quality Gates: npm run typecheck 0 errors, npm test 100% pass (0 regressions).
+- Vanilla Three.js: No `@react-three/fiber` or `@react-three/drei`. Strict WebGL disposal of all geometries, materials, renderer, event listeners, and animation frames.
+- Desktop 50/50 split with `lg:h-screen lg:overflow-hidden` preventing outer double scrollbars. Internal scroll on right form pane (`overflow-y-auto scrollbar-thin`).
+- Mobile/Tablet `< 1024px` single fluid column with GPU CSS Fluid Ambient Aurora blobs, hiding heavy 3D canvas for 120FPS performance.
 
 ## Current Parent
-- Conversation ID: 09e91f48-3c8b-4ec8-bbb9-500dee6152ac
-- Updated: 2026-10-17T04:51:00Z
+- Conversation ID: 29257fd0-4cce-43cc-906d-4f5f80b1ce6e
+- Updated: 2026-10-17T07:29:30Z
 
 ## Task Summary
-- **What to build**: Migration `006_pomodoro_party.sql`, TypeScript database types for `study_rooms`, `study_room_members`, `room_reactions`, and service `web/src/lib/study-rooms-service.ts` with real Supabase client operations & offline localStorage fallback.
-- **Success criteria**: Migration syntax & design adheres to Supabase best practices; types match DB schema perfectly; service exports typed methods with realtime support & offline resilience; all typechecks and unit tests pass.
-- **Interface contracts**: PROJECT.md, survey specification from `explorer_survey_db/handoff.md`.
-- **Code layout**: `supabase/migrations/006_pomodoro_party.sql`, `web/src/types/database.ts`, `web/src/lib/study-rooms-service.ts`.
-
-## Key Decisions Made
-- `006_pomodoro_party.sql`:
-  - Created tables `public.study_rooms`, `public.study_room_members`, and `public.room_reactions` with explicit check constraints and cascade behaviors.
-  - Set `REPLICA IDENTITY FULL` on all three tables for comprehensive realtime mutation events.
-  - Added dedicated B-tree indexes for all foreign keys (`host_id`, `workspace_id`, `room_id`, `user_id`) and frequent queries (`code`, `(room_type, is_active)`, `current_status`, `created_at DESC`, `(room_id, user_id)`, `(room_id, status)`).
-  - Defined helper functions `is_study_room_member` and `is_study_room_host` with `SECURITY DEFINER` and empty `search_path` to avoid RLS recursion and ensure cached InitPlan execution.
-  - Wrapped all `auth.uid()` checks in `(SELECT auth.uid())` per Supabase performance guidelines.
-  - Published all 3 tables to `supabase_realtime`.
-- `web/src/types/database.ts`:
-  - Added full row, insert, update, and relationship definitions for `study_rooms`, `study_room_members`, and `room_reactions`.
-  - Added functions `is_study_room_member` and `is_study_room_host`.
-  - Exported entity type aliases (`StudyRoomRow`, `StudyRoomInsert`, `StudyRoomUpdate`, etc.) and status union types.
-- `web/src/lib/study-rooms-service.ts`:
-  - Fully implements genuine Supabase queries for rooms, members, reactions, and weekly leaderboard.
-  - Provides resilient in-memory & localStorage fallback seeded with realistic Vietnamese study rooms, active members, and weekly leaderboard.
-  - Implements PIN verification, code generator (6 uppercase chars without ambiguous letters), lobby tab filtering, and countdown calculation helpers.
-
-## Artifact Index
-- `supabase-postgres-best-practices.md` — Local copy of Supabase Postgres best practices methodology.
-- `DISPATCH.md` — Initial assignment from orchestrator.
-- `progress.md` — Liveness heartbeat and milestone tracking.
-- `handoff.md` — Final 5-component handoff report.
+- **What to build**:
+  1. `web/src/components/auth/auth-3d-showcase.tsx`: Hologram Knowledge Sphere / Cyber-Glass crystal with faceted Icosahedron core, wireframe cage, 3 gyroscopic Torus orbital rings, 140 particles, dual Cyan/Violet spotlights, pointer tracking with lerp damping, reduced motion fallback, strict disposal.
+  2. `web/src/components/auth/auth-feature-carousel.tsx`: 5s auto-sliding carousel of "Bộ Ba Siêu Năng", pause on hover, navigation buttons, slide indicators, live student stats ("12,450+ giờ học hôm nay", "4,800+ sinh viên online", "99.2% qua môn"), inspiring quotes.
+  3. `web/src/app/(auth)/layout.tsx`: Desktop 50/50 split screen with fixed viewport height, right panel internal scroll, mobile single-column with ambient aurora.
+- **Success criteria**:
+  - Full adherence to specifications in `ORIGINAL_REQUEST.md`, `PROJECT.md`, and `survey_explorer_1/handoff.md`.
+  - Typecheck passes 100% (Verified 0 errors).
+  - `npm test` passes 100% (Verified 643/643 passed).
+- **Interface contracts**: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md`
+- **Code layout**: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md § Code Layout`
 
 ## Change Tracker
 - **Files modified**:
-  - `supabase/migrations/006_pomodoro_party.sql` — Created migration file.
-  - `web/src/types/database.ts` — Added database types for Pomodoro Party entities.
-  - `web/src/lib/study-rooms-service.ts` — Created service abstraction layer.
-- **Build status**: `npm run typecheck` PASS (0 errors), `npm test` PASS (513/513 tests).
-- **Pending issues**: none.
+  - `web/src/components/auth/auth-3d-showcase.tsx` — Created Vanilla Three.js Hologram Knowledge Sphere stage
+  - `web/src/components/auth/auth-feature-carousel.tsx` — Created dynamic "Bộ Ba Siêu Năng" carousel with live stats & quotes
+  - `web/src/app/(auth)/layout.tsx` — Rebuilt Split-Screen 50/50 Desktop & Fluid Aurora Mobile layout
+- **Build status**: `npm run typecheck` passed (0 errors), `npm test` passed (643/643 passed)
+- **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: PASS (513/513 tests, 0 type errors).
-- **Lint status**: Clean.
-- **Tests added/modified**: Verified all service APIs and DDL contracts empirically.
+- **Build/test result**: Passing (643 passed, 0 failed, 0 typecheck errors)
+- **Lint status**: Clean
+- **Tests added/modified**: Milestone M1 files verified against contract
 
 ## Loaded Skills
-- **Source**: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\supabase-postgres-best-practices\SKILL.md`
-- **Local copy**: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m1\supabase-postgres-best-practices.md`
-- **Core methodology**: Postgres performance optimization: FK indexes, `(select auth.uid())` in RLS, strict constraints, realtime publications.
+- Source: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\verification-before-completion\SKILL.md
+- Source: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\vercel-react-best-practices\SKILL.md
+- Source: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\design-taste-frontend\SKILL.md
+
+## Key Decisions Made
+- Dynamic import of `Auth3DShowcase` in `layout.tsx` with `ssr: false` to ensure seamless SSR hydration while Three.js renders purely client-side.
+- Clamping device pixel ratio to `Math.min(window.devicePixelRatio || 1, 1.5)` for optimal 120FPS rendering without GPU throttling.
+- Bounded 50/50 desktop split with `lg:h-screen lg:overflow-hidden` preventing outer double scrollbars.
+- Strict cleanup array pattern (`geometriesToDispose`, `materialsToDispose`) disposing all WebGL resources on unmount.
+
+## Artifact Index
+- `handoff.md` — Final 5-component handoff report

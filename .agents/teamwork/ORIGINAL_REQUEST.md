@@ -514,3 +514,62 @@ Integrity mode: development
 - [ ] Bộ kiểm thử dự án: `npm test` tiếp tục PASS 100% (513+ tests) và bổ sung test suite `web/tests/pomodoro-party.test.ts`.
 - [ ] `npm run typecheck` đạt **0 lỗi** TypeScript.
 - [ ] `npm run build` biên dịch thành công 100% các static/dynamic routes.
+
+
+## 2026-10-17T07:15:36Z
+
+Rebuild toàn diện toàn bộ phân hệ Xác thực (Auth Flow) của CampusOS gồm 5 trang (Login, Register, Forgot Password, Reset Password, Verify Email) sang kiến trúc Split-Screen 50/50 cao cấp, tích hợp Sân khấu 3D Three.js Hologram, Feature Carousel giới thiệu "Bộ 3 Siêu Năng", Nút Đăng nhập nhanh Demo 1-Click, Thanh đo độ mạnh mật khẩu neon và hiệu ứng rung lắc (Shake) micro-interactions.
+
+Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap
+Integrity mode: development
+
+## Requirements
+
+### R1. Khung Bố Cục Split-Screen 50/50 & Sân Khấu 3D Three.js (`(auth)/layout.tsx`)
+- Tái cấu trúc `web/src/app/(auth)/layout.tsx`:
+  - **Desktop (≥ 1024px)**: Chia đôi màn hình 50/50 đối xứng hoàn hảo, chiều cao 100vh cố định không bị tràn cuộn trang kép.
+  - **Mobile & Tablet (< 1024px)**: Tự động co về 1 cột trung tâm sang trọng với nền Fluid Ambient Aurora.
+- Sân khấu 3D Three.js (`web/src/components/auth/auth-3d-showcase.tsx`):
+  - Canvas Three.js hiển thị quả cầu tri thức năng lượng số / khối pha lê Cyber-Glass Hologram xoay nhẹ và phản ứng theo con trỏ chuột.
+  - Đèn Spotlight neon (Cyan `#38bdf8` & Violet `#a855f7`).
+  - Dọn dẹp bộ nhớ WebGL an toàn (`cancelAnimationFrame`, `dispose` geometry/material/renderer) khi unmount.
+- Dynamic Feature Carousel (`web/src/components/auth/auth-feature-carousel.tsx`):
+  - Tự động trượt giới thiệu "Bộ Ba Siêu Năng" của CampusOS:
+    1. 🐱 *Mèo Cam Giám Sát Cực Đoan* (URL Blacklist & AI Webcam Face Tracking)
+    2. 🎴 *AI Study Hub 1M Tokens & Flashcard 3D SM-2* (Phân tích slide PDF bài giảng)
+    3. 🏆 *Đấu Trường Pomodoro Party & Bục Vinh Danh 3D* (Học nhóm thời gian thực)
+  - Số liệu thống kê sinh viên: "12,450+ giờ học hôm nay", câu danh ngôn truyền cảm hứng học tập mỗi ngày.
+
+### R2. Trang Đăng Nhập Cyber-Glass & Tiện Ích Đột Phá (`(auth)/login/page.tsx`)
+- Form Cyber-Glass với hiệu ứng kính mờ `backdrop-blur-2xl bg-card/60 border border-white/10 shadow-[0_0_50px_rgba(61,232,255,0.15)]`.
+- Nút **"⚡ Đăng nhập nhanh Demo 1-Click"**:
+  - Tự động điền và đăng nhập ngay bằng tài khoản sinh viên mẫu (`minh.nguyen@campus.edu.vn` / `Demo@123456`) để giảng viên, khách chấm bài thử nghiệm tức thì mà không cần gõ phím.
+- Nút Social Login qua Google & GitHub tích hợp Supabase Auth.
+- Ô Input thiết kế Cyberpunk: viền phát sáng neon khi focus (`focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(61,232,255,0.25)]`).
+- Nút mắt ẩn/hiện mật khẩu trực quan.
+- Checkbox "Ghi nhớ đăng nhập" (Remember Me).
+- Hiệu ứng rung lắc (Shake animation) khi đăng nhập sai thông tin kèm alert cảnh báo đỏ neon.
+
+### R3. Trang Đăng Ký & Thanh Đo Độ Mạnh Mật Khẩu (`(auth)/register/page.tsx`)
+- Form đăng ký sinh viên: Họ và tên, Email sinh viên (`.edu.vn`), Mật khẩu, Xác nhận mật khẩu.
+- **Thanh đo độ mạnh mật khẩu (Password Strength Meter)** 4 cấp độ thời gian thực:
+  - Yếu (Đỏ), Trung bình (Vàng), Tốt (Xanh ngọc), Cực mạnh (Xanh lục neon).
+  - Phân tích trực quan các tiêu chí: ≥8 ký tự, chữ hoa, số và ký tự đặc biệt.
+- Checkbox đồng ý Điều khoản Dịch vụ & Quy chuẩn Học thuật CampusOS.
+
+### R4. Đồng Bộ Trang Quên Mật Khẩu, Đặt Lại Mật Khẩu & Xác Thực Email
+- `(auth)/forgot-password/page.tsx`: Gửi link khôi phục mật khẩu qua Email kèm đồng hồ đếm ngược 60 giây gửi lại mã.
+- `(auth)/reset-password/page.tsx`: Form đặt lại mật khẩu mới với xác nhận mật khẩu và kiểm tra độ mạnh.
+- `(auth)/verify-email/page.tsx`: Giao diện thông báo kích hoạt tài khoản sinh viên với icon thư Holographic phát sáng và nút gửi lại mã.
+
+## Acceptance Criteria
+
+### Verification & Quality Gates
+- [ ] Bố cục Split-Screen 50/50 hiển thị mượt mà trên Desktop và co gọn thông minh trên Mobile/Tablet.
+- [ ] Sân khấu Three.js 3D Hologram hoạt động 60/120fps, không rò rỉ bộ nhớ khi chuyển trang.
+- [ ] Nút "Đăng nhập nhanh Demo 1-Click" kích hoạt đăng nhập thành công vào thẳng Dashboard.
+- [ ] Nút ẩn/hiện mật khẩu, hiệu ứng rung lắc (Shake) khi nhập sai và thanh đo độ mạnh mật khẩu hoạt động chuẩn xác.
+- [ ] Cả 5 trang Login, Register, Forgot Password, Reset Password, Verify Email đồng bộ phong cách Cyber-Glass.
+- [ ] Bộ kiểm thử: `npm test` tiếp tục PASS 100% (643+ tests) và bổ sung test suite `web/tests/auth-redesign.test.ts`.
+- [ ] `npm run typecheck` đạt **0 lỗi** TypeScript.
+- [ ] `npm run build` biên dịch thành công 100% các static/dynamic routes.

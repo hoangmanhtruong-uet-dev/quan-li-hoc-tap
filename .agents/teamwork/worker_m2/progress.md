@@ -1,19 +1,26 @@
-# Progress Log - worker_m2
+# Progress - worker_m2
 
-Last visited: 2026-10-17T05:10:00Z
+Last visited: 2026-10-17T07:32:00Z
+Status: Verifying build & tests
 
-## Current Milestone: Pomodoro Party Realtime Study Rooms UI
-- [x] Read `DISPATCH.md`, `ORIGINAL_REQUEST.md`, `PROJECT.md`, `explorer_survey_ui/handoff.md`, and `web/src/lib/study-rooms-service.ts`.
-- [x] Copied and loaded domain skills (`design-taste-frontend`, `web-design-guidelines`).
-- [x] Initialized and updated `BRIEFING.md` with append-only preservation.
-- [x] Inspected existing workspace page and study route hierarchy.
-- [x] Built `web/src/components/study/create-room-modal.tsx` with 3 room types (Public, 6-digit PIN, Workspace-bound) and validation.
-- [x] Built `web/src/components/study/pin-entry-modal.tsx` with 6-digit numeric input, auto-verify, and shake feedback.
-- [x] Built `web/src/app/(main)/study/rooms/page.tsx` Lobby with Cyber-Glass UI, HUD stats bar, 4 filtering tabs, status chips, search, and room grid.
-- [x] Built `web/src/app/(main)/study/rooms/[code]/page.tsx` Dynamic Room page with PIN gate, synchronized countdown timer, Silent Focus discipline, floating reactions, break chat, and public shame banner.
-- [x] Built `web/src/components/study/workspace-study-room-panel.tsx` with 1-click room creation and online members preview.
-- [x] Integrated 5th tab `study_room` into `web/src/app/(main)/workspaces/[workspaceId]/page.tsx` and added quick hero CTA.
-- [x] Verified `npm run typecheck` (passed with 0 errors).
-- [x] Verified `npm test` (passed 597/597 tests).
-- [ ] Waiting for `npm run build` background task-96 to complete.
-- [ ] Document final results in `handoff.md` and notify parent orchestrator via `send_message`.
+- [x] Initialized DISPATCH.md and BRIEFING.md
+- [x] Read ORIGINAL_REQUEST.md, PROJECT.md, and survey reports
+- [x] Inspected existing `web/src/app/(auth)/login/page.tsx`
+- [x] Implemented `web/src/lib/auth-validation.ts`
+  - calculatePasswordStrength: 5 criteria, 4 tiers, colors (#EF4444, #F59E0B, #06B6D4, #22C55E), labels, percentages
+  - isValidEduVnEmail: strict .edu.vn regex with spoofing protection and case/trim handling
+  - calculateCooldownState: 60s cooldown with clock skew protection
+  - DEMO_STUDENT_CREDENTIALS: minh.nguyen@campus.edu.vn / Demo@123456
+- [x] Implemented `web/src/app/(auth)/login/page.tsx`
+  - Cyber-Glass container with backdrop-blur-2xl, bg-card/60, border-white/10, cyan glow
+  - ⚡ Đăng nhập nhanh Demo 1-Click button with automatic login
+  - Supabase Social OAuth (Google & GitHub) with SVG icons and graceful offline fallback
+  - Cyberpunk inputs with cyan focus glow
+  - Show/Hide password toggle with Eye/EyeOff icons
+  - Remember Me checkbox with localStorage persistence
+  - Panic shake error micro-interaction + neon red alert banner
+  - Navigation links to /forgot-password and /register
+- [x] Ran `npm run typecheck` (0 errors)
+- [x] Ran `npm test` (643/643 passed)
+- [/] Running `npm run build`
+- [ ] Prepare handoff report and notify orchestrator

@@ -1,74 +1,58 @@
-# BRIEFING — 2026-10-17T05:12:00Z
+# BRIEFING — 2026-10-17T07:32:00Z
 
 ## Mission
-Build the Pomodoro Party Study Rooms UI: Lobby page (/study/rooms) with Cyber-Glass UI, Create Room Modal, 6-digit PIN Entry Modal, dynamic Study Room page (/study/rooms/[code]), and Workspace Study Room Panel integrated into /workspaces/[workspaceId]/page.tsx.
+Implement Milestone M2: create `web/src/lib/auth-validation.ts` and rebuild `web/src/app/(auth)/login/page.tsx` with Cyber-Glass UI and demo login.
 
 ## 🔒 My Identity
-- Archetype: worker
+- Archetype: worker_m2
 - Roles: implementer, qa, specialist
 - Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m2
-- Original parent: 5bd8e140-4c1e-4580-b966-e8064ec8f7d3
-- Milestone: M2 - Dashboard Gen Z Interactive Rebuild
-- [2026-10-17T05:02:25Z] Milestone: Pomodoro Party Realtime Study Rooms UI (Lobby, Modals, Dynamic Room, Workspace Panel)
-- [2026-10-17T05:02:25Z] Current parent: 09e91f48-3c8b-4ec8-bbb9-500dee6152ac
+- Original parent: 29257fd0-4cce-43cc-906d-4f5f80b1ce6e
+- Milestone: M2
 
 ## 🔒 Key Constraints
-- EXCLUSIVE WRITE OWNERSHIP:
-  * web/src/components/dashboard/dashboard-hero.tsx
-  * web/src/components/dashboard/today-timeline.tsx
-  * web/src/components/dashboard/deadline-arena.tsx
-  * web/src/components/dashboard/ai-mascot-coach.tsx
-  * web/src/components/dashboard/game-hud-stats.tsx
-  * web/src/components/dashboard/squad-kanban-exam.tsx
-  * web/src/components/dashboard/marquee-daily-wrapped.tsx
-  * web/src/app/(main)/dashboard/page.tsx
-- DO NOT CHEAT: real implementations only, no facade, maintain real state and real behavior.
-- Run `npm test`, `npm run typecheck`, and `npm run build` in `web/` and verify all pass.
-- [2026-10-17T05:02:25Z] EXCLUSIVE WRITE OWNERSHIP FOR CURRENT MILESTONE:
-  * web/src/app/(main)/study/rooms/page.tsx
-  * web/src/components/study/create-room-modal.tsx
-  * web/src/components/study/pin-entry-modal.tsx
-  * web/src/app/(main)/study/rooms/[code]/page.tsx
-  * web/src/components/study/workspace-study-room-panel.tsx
-  * web/src/app/(main)/workspaces/[workspaceId]/page.tsx
+- EXCLUSIVE WRITE OWNERSHIP: Only create/modify `web/src/lib/auth-validation.ts` and `web/src/app/(auth)/login/page.tsx`
+- Do not cheat, no dummy implementations, maintain real state and behavior
+- Verify 0 errors with `npm run typecheck` and `npm test` in `web/`
+- All communications to parent via `send_message`
 
 ## Current Parent
-- Conversation ID: 09e91f48-3c8b-4ec8-bbb9-500dee6152ac
-- Updated: 2026-10-17T05:02:25Z
+- Conversation ID: 29257fd0-4cce-43cc-906d-4f5f80b1ce6e
+- Updated: 2026-10-17T07:32:00Z
 
 ## Task Summary
-- **What to build**:
-  1. `/study/rooms` Lobby page with Cyber-Glass UI, filtering tabs (Tất cả, Môn học đại cương, Môn chuyên ngành, Nhóm Đồ Án), room grid with live stats, search bar, and create button.
-  2. `create-room-modal.tsx` with 3 room types (Public, 6-digit PIN, Workspace-bound) and validation.
-  3. `pin-entry-modal.tsx` for entering 6-digit PIN to join private rooms.
-  4. `/study/rooms/[code]` dynamic room page with PIN gate verification, room details loading, synchronized countdown timer, member presence grid with status indicator (Xanh: Tập trung, Đỏ: Phân tâm/phạt, Vàng: Nghỉ giải lao), floating reactions during focus, chat/lofi during break, and danger shame banner.
-  5. `workspace-study-room-panel.tsx` with quick join / launch and timer preview.
-  6. Integrate `study_room` as 5th tab in `web/src/app/(main)/workspaces/[workspaceId]/page.tsx`.
-- **Success criteria**: 100% genuine logic, full TypeScript safety, 0 typecheck errors, 100% test pass, successful production build.
+- **What to build**: `auth-validation.ts` (password strength, .edu.vn validator, cooldown state, demo student credentials) and `login/page.tsx` (Cyber-Glass container, 1-click demo login, social OAuth with fallback, cyberpunk inputs, show/hide password, remember me, panic-shake error banner, nav links)
+- **Success criteria**: Typecheck passes, tests pass, real functional implementation matching requirements
+- **Interface contracts**: PROJECT.md, survey_explorer_2/handoff.md
+- **Code layout**: web/src/lib/auth-validation.ts, web/src/app/(auth)/login/page.tsx
+
+## Key Decisions Made
+- Implemented `calculatePasswordStrength` with 5 criteria and 4 tiers matching exact colors (`#EF4444`, `#F59E0B`, `#06B6D4`, `#22C55E`) and labels.
+- Implemented `isValidEduVnEmail` with strict domain structure verification and spoofing protection.
+- Implemented `calculateCooldownState` with clock skew tolerance and formatted labels.
+- Rebuilt `login/page.tsx` with Cyber-Glass styling, 1-Click Demo login using `DEMO_STUDENT_CREDENTIALS`, Google/GitHub OAuth with offline fallback, cyberpunk inputs, show/hide password toggle, remember me checkbox, panic shake micro-interaction, and responsive navigation.
+
+## Artifact Index
+- `DISPATCH.md` — assignment from orchestrator
+- `progress.md` — heartbeat and progress tracker
+- `handoff.md` — final handoff report
 
 ## Change Tracker
 - **Files modified**:
-  * `web/src/components/study/create-room-modal.tsx`: Modal supporting 3 room types (Public, PIN, Workspace), durations, auto code generation, validation.
-  * `web/src/components/study/pin-entry-modal.tsx`: 6-digit numeric PIN entry modal with instant verification and shake animation feedback.
-  * `web/src/app/(main)/study/rooms/page.tsx`: Lobby page with Cyber-Glass UI, live stats HUD, 4 category tabs, search input, status filters, room grid, and modal integration.
-  * `web/src/app/(main)/study/rooms/[code]/page.tsx`: Realtime study room with PIN authentication gate, synchronized countdown timer, Silent Focus discipline with floating reactions, break chat, member stage, and shame/penalty mechanism.
-  * `web/src/components/study/workspace-study-room-panel.tsx`: Dedicated workspace study room panel with 1-click creation and member presence.
-  * `web/src/app/(main)/workspaces/[workspaceId]/page.tsx`: Added 5th tab `study_room` and hero CTA for Pomodoro Party.
-  * `web/tests/study-rooms-ui.test.ts`: Added comprehensive unit test suite covering tab filtering, PIN verification, remaining seconds calculation, code generation, and component integrity.
-- **Build status**: PASS (`npm run typecheck` 0 errors, `npm test` 603/603 passing, `npm run build` 34/34 routes compiled).
+  - `web/src/lib/auth-validation.ts`: created pure TypeScript authentication validation library
+  - `web/src/app/(auth)/login/page.tsx`: rebuilt login page with Cyber-Glass container, 1-Click Demo login, social OAuth, cyberpunk inputs, show/hide password, panic shake
+- **Build status**: typecheck passed (0 errors), npm test passed (643/643 passed)
 - **Pending issues**: none
 
 ## Quality Status
-- **Build/test result**: PASS across all test suites and Next.js routes
+- **Build/test result**: Pass (typecheck 0 errors, tests 643/643 pass)
 - **Lint status**: clean
-- **Tests added/modified**: `web/tests/study-rooms-ui.test.ts` (6 new test cases added, 603 total passing)
+- **Tests added/modified**: validation library tested via node runner
 
 ## Loaded Skills
-- **design-taste-frontend**:
-  - Source: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\design-taste-frontend\SKILL.md
-  - Local copy: .agents/teamwork/worker_m2/skills/design-taste-frontend/SKILL.md
-  - Core methodology: Anti-slop frontend, Cyber-Glass design system, frosted glassmorphism, 1px neon borders, high contrast WCAG, motion with reduced-motion fallback.
-- **web-design-guidelines**:
-  - Source: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\web-design-guidelines\SKILL.md
-  - Local copy: .agents/teamwork/worker_m2/skills/web-design-guidelines/SKILL.md
-  - Core methodology: Accessibility compliance, keyboard navigation, clear ARIA dialogs, single line CTA buttons, contrast checks.
+- **Source**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\verification-before-completion\SKILL.md
+  - **Local copy**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m2\verification-before-completion.md
+  - **Core methodology**: Evidence before assertions always. Run checks and confirm outputs before claiming completion.
+- **Source**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\design-taste-frontend\SKILL.md
+  - **Local copy**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m2\design-taste-frontend.md
+  - **Core methodology**: Anti-slop frontend design, distinctive cyberpunk aesthetic, responsive layouts, thoughtful interactions.

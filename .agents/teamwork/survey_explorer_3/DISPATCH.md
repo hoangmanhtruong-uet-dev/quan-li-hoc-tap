@@ -1,32 +1,21 @@
-## 2026-10-12T13:37:40Z
+## 2026-10-17T07:18:14Z
 You are survey_explorer_3.
-Your working directory is: d:\MyProjects\MyProjectToMoney\TarotCouple\.agents\teamwork\survey_explorer_3
-Authoritative user request: d:\MyProjects\MyProjectToMoney\TarotCouple\.agents\teamwork\ORIGINAL_REQUEST.md
+Your working directory is: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\survey_explorer_3
+Authoritative user request file: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md
 
-Your mission:
-Survey and investigate R3 & R4: Frontend Journal Upgrade (`/me/history`), Accessibility & Admin Health View, Invariants, and Verification Setup.
-Specifically:
-1. Read ORIGINAL_REQUEST.md.
-2. Investigate `src/lib/journal-store.ts`:
-   - Current `JournalEntry` interface.
-   - Adding `userNote?: string`, `updatedAt?: string`.
-   - Exporting `updateJournalNote(id: string, note: string): JournalEntry[]`.
-3. Investigate `src/app/(app)/me/history/page.tsx`:
-   - Locate all `window.confirm()` calls and design the inline confirmation modal matching `#13111E` and `#C9A24A`.
-   - Instant search filter (by question, card names in VN/EN, personal notes).
-   - Personal reflection note editor in modal.
-   - `top-18` class to `top-20` fix.
-   - `aria-label` for icon-only buttons.
-   - `<CustomCursorFollower />` integration.
-4. Investigate `src/app/(admin)/admin/funnel/page.tsx`:
-   - System & AI/Supabase Health status banner fetching `/api/health`.
-5. Check invariants across codebase:
-   - Occurrences of `#D9B36A` in `src/app` and `src/components`.
-   - `backdrop-blur` on reading cards.
-   - `[0, 350, 700]` ms stagger in `rut-bai`.
-6. Inspect test suites and setup for `tests/golive_audit_verification.test.ts`.
-
-Write your findings to:
-`d:\MyProjects\MyProjectToMoney\TarotCouple\.agents\teamwork\survey_explorer_3\report.md`
-and write a standard handoff report to `d:\MyProjects\MyProjectToMoney\TarotCouple\.agents\teamwork\survey_explorer_3\handoff.md`.
-Then send a message back to the orchestrator reporting completion.
+You MUST read d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md before starting work (focus on the section 2026-10-17T07:15:36Z).
+Your task is to conduct an in-depth survey of the test infrastructure, quality gates, and test requirements for the Auth redesign:
+1. Examine web/package.json, tsconfig.json, next.config.js, and web/tests/.
+2. Check how the current test suite is run (e.g. node --test, npm test, etc.), how many tests currently exist (reported 643+ tests), and how existing tests are structured (unit, schema, components, logic).
+3. Check typecheck and build command scripts and how they are executed in web/.
+4. Map out the test design for the new test suite web/tests/auth-redesign.test.ts:
+   - Password strength calculation logic tests (4 tiers, regex validation, score thresholds).
+   - Demo 1-Click login credentials and validation.
+   - Email .edu.vn validation rules.
+   - 60s cooldown timer logic.
+   - Layout & Three.js lifecycle contracts (cleanup, event listeners, canvas presence).
+   - Component export/interface contracts across all 5 auth pages.
+5. Provide a detailed verification plan for all Quality Gates (npm test passing 100%, npm run typecheck with 0 errors, npm run build with 100% clean compilation).
+Write your complete report to: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\survey_explorer_3\handoff.md
+Update your progress.md periodically.
+When done, notify orchestrator_17 via send_message.
