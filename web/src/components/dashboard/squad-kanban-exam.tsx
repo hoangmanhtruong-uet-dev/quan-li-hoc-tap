@@ -620,24 +620,24 @@ export function SquadKanbanExam() {
               <div className="border-t-2 border-dashed border-white/15 my-2" />
 
               {/* Live Countdown Grid */}
-              <div className="bg-black/40 border border-white/10 rounded-xl p-3 flex items-center justify-between text-center font-mono">
+              <div suppressHydrationWarning className="bg-black/40 border border-white/10 rounded-xl p-3 flex items-center justify-between text-center font-mono">
                 <div>
-                  <span className="block text-lg font-bold text-aurora-lime">{examCountdown.days}</span>
+                  <span suppressHydrationWarning className="block text-lg font-bold text-aurora-lime">{examCountdown.days}</span>
                   <span className="text-[9px] text-muted-foreground uppercase">Ngày</span>
                 </div>
                 <span className="text-muted-foreground">:</span>
                 <div>
-                  <span className="block text-lg font-bold text-foreground">{String(examCountdown.hours).padStart(2, '0')}</span>
+                  <span suppressHydrationWarning className="block text-lg font-bold text-foreground">{String(examCountdown.hours).padStart(2, '0')}</span>
                   <span className="text-[9px] text-muted-foreground uppercase">Giờ</span>
                 </div>
                 <span className="text-muted-foreground">:</span>
                 <div>
-                  <span className="block text-lg font-bold text-foreground">{String(examCountdown.minutes).padStart(2, '0')}</span>
+                  <span suppressHydrationWarning className="block text-lg font-bold text-foreground">{String(examCountdown.minutes).padStart(2, '0')}</span>
                   <span className="text-[9px] text-muted-foreground uppercase">Phút</span>
                 </div>
                 <span className="text-muted-foreground">:</span>
                 <div>
-                  <span className="block text-lg font-bold text-aurora-pink">{String(examCountdown.seconds).padStart(2, '0')}</span>
+                  <span suppressHydrationWarning className="block text-lg font-bold text-aurora-pink">{String(examCountdown.seconds).padStart(2, '0')}</span>
                   <span className="text-[9px] text-muted-foreground uppercase">Giây</span>
                 </div>
               </div>

@@ -1,51 +1,60 @@
-# BRIEFING — 2026-10-17T01:13:00Z
+# BRIEFING — 2026-10-17T05:01:00Z
 
 ## Mission
-Empirically stress-test tab closure, CampusOS focus redirection, and exemption cooldown boundary conditions in Milestone 1.
+Adversarially challenge and verify Milestone 1 (Postgres DDL migration, TypeScript types, RLS security, and study rooms service).
 
 ## 🔒 My Identity
-- Archetype: challenger
+- Archetype: empirical challenger
 - Roles: critic, specialist
 - Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\challenger_m1_2
-- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
-- Milestone: Milestone 1
-- Instance: 2 of 2
+- Original parent: 09e91f48-3c8b-4ec8-bbb9-500dee6152ac
+- Milestone: M1
+- Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Must run verification code directly; empirical reproduction required for any bugs
-- .agents/teamwork/ must contain only metadata
+- Run verification tests empirically
+- Validate PostgreSQL DDL migration syntax against PostgreSQL 15/16 grammar rules
+- Check for column discrepancies, enum type safety, RLS policy leakage, and Realtime publication
+- Write verdict (APPROVE or REJECT) in handoff.md and notify with send_message
 
 ## Current Parent
-- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
-- Updated: 2026-10-17T01:09:24Z
+- Conversation ID: 09e91f48-3c8b-4ec8-bbb9-500dee6152ac
+- Updated: 2026-10-17T04:54:11Z
 
 ## Review Scope
-- **Files to review**: extension/manifest.json, extension/background.js, web/tests/extension-bridge.test.ts, web/tests/challenger-m1-extension-stress.test.ts
-- **Interface contracts**: PROJECT.md, TEST_READY.md, worker_m1_1/handoff.md, ORIGINAL_REQUEST.md
-- **Review criteria**: correctness, boundary condition rigor, race resilience, stress testing
+- **Files to review**: `supabase/migrations/006_pomodoro_party.sql`, `web/src/types/database.ts`, `web/src/lib/study-rooms-service.ts`
+- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md` (2026-10-17T04:34:11Z)
+- **Review criteria**: PostgreSQL 15/16 syntax, column schema match, enum type safety, RLS leaks, Realtime publication
 
 ## Attack Surface
-- **Hypotheses tested**: 
-  1. `handleCloseTabAndFocusCampus` tab redirection: verified existing tab activation, window focus, fallback creation when no tabs exist, error suppression when tab already closed, and deduplication across pattern queries. (PASS)
-  2. Exemption cooldown exact boundary math: verified 179,999ms (denied, waitSeconds: 1) vs 180,000ms (granted), sub-millisecond timeline interpolation, and isExempt strict comparison. (PASS)
-  3. Violation counter monotonic increment under rapid/concurrent events: verified 100 rapid sequential increments, 100 concurrent async promises, 50 concurrent LOCKOUT_VIOLATION messages, and state lifecycle reset invariants. (PASS)
-- **Vulnerabilities found**: 0 confirmed failure modes in M1 scope. Implementation is mathematically robust and fault-tolerant.
-- **Untested angles**: Full content script injection (M2 scope) and webcam face tracking MediaPipe worker (M3 scope).
+- **Hypotheses tested**:
+  1. PostgreSQL 15/16 DDL grammar compliance (deprecated features, syntax validity): PASSED
+  2. Redundant index analysis: Found 2 redundant duplicate indexes (`idx_study_rooms_code`, `idx_study_room_members_room_user`)
+  3. Realtime publication fault tolerance: Found single-block exception handler skipping subsequent tables if first table already exists
+  4. RLS security leakage: Found plaintext `pin_code` select exposure for active rooms and `host_id` insertion spoofing
+  5. TypeScript schema alignment: 100% matched across columns and enum check constraints
+  6. Service stress tests: Exposed keyword overlap in `filterRoomsByTab` ('thuật toán' in general tab) and NaN handling in `calculateRemainingSeconds`
+- **Vulnerabilities found**:
+  - Medium: Publication DO block drops remaining tables if `duplicate_object` caught on first table
+  - Low-Medium: Row-level SELECT on active rooms returns `pin_code` column to client
+  - Low: Redundant indexes on already UNIQUE columns
+  - Low: `toán` keyword in `filterRoomsByTab` matches `thuật toán chuyên sâu`
+- **Untested angles**:
+  - Live Supabase Cloud connection under high network concurrency (offline mock verified)
 
 ## Loaded Skills
-- **Source**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\verification-before-completion\SKILL.md
-- **Local copy**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\challenger_m1_2\skills\verification-before-completion.md
-- **Core methodology**: Evidence before assertions; run verification commands and verify outputs directly before claiming pass.
+- **Source**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\supabase-postgres-best-practices\SKILL.md
+- **Local copy**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\supabase-postgres-best-practices\SKILL.md
+- **Core methodology**: Postgres performance optimization, RLS InitPlan wrapping, FK indexing, and safe schema design
 
 ## Key Decisions Made
-- Authored dedicated empirical test suite at `web/tests/challenger-m1-extension-stress.test.ts` with 18 comprehensive test cases across 3 sections.
-- Verified 453/453 tests PASS across 30 test files on `npm test` and 0 errors on `npm run typecheck`.
-- Explicit Verdict: APPROVE Milestone 1 deliverables.
+- Executed 22 empirical adversarial tests in `web/tests/challenger-m1-adversarial.test.ts` (all 22 PASSED)
+- Executed full suite `npm test` (597/597 tests PASSED) and `npm run typecheck` (0 errors)
+- Formulated final verdict: APPROVE (with documented non-blocking hardening recommendations)
 
 ## Artifact Index
-- DISPATCH.md — dispatch message
-- BRIEFING.md — working memory
-- progress.md — liveness heartbeat
-- web/tests/challenger-m1-extension-stress.test.ts — empirical stress harness (18 tests)
-- handoff.md — final review and challenge report
+- `.agents/teamwork/challenger_m1_2/BRIEFING.md` — persistent working memory
+- `.agents/teamwork/challenger_m1_2/progress.md` — liveness heartbeat
+- `.agents/teamwork/challenger_m1_2/handoff.md` — 5-component adversarial handoff report & verdict
+- `web/tests/challenger-m1-adversarial.test.ts` — empirical test suite (22 tests)

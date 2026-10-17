@@ -1,59 +1,65 @@
-# BRIEFING — 2026-10-17T01:12:00Z
+# BRIEFING — 2026-10-17T04:57:00Z
 
 ## Mission
-Objectively review, verify, and stress-test Milestone 1: Manifest V3 Configuration & Background Service Worker.
+Independently review and adversarial stress-test Milestone 1 work products: `supabase/migrations/006_pomodoro_party.sql`, `web/src/types/database.ts`, and `web/src/lib/study-rooms-service.ts`. Check integrity, SQL best practices, type safety, resilience, and test passes, and issue a verdict.
 
 ## 🔒 My Identity
-- Archetype: reviewer-critic
+- Archetype: reviewer
 - Roles: reviewer, critic
 - Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m1_1
-- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
-- Milestone: Milestone 1: Manifest V3 Configuration & Background Service Worker
+- Original parent: 09e91f48-3c8b-4ec8-bbb9-500dee6152ac
+- Milestone: M1 (Backend Schema, Database Types & Service Layer)
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Check for integrity violations (hardcoded test results, facade logic, bypassed work)
-- Adhere strictly to the 5-component handoff protocol
-- Test independently before issuing verdict
+- Check for integrity violations (hardcoded test results, facade implementations, bypassed tasks, fabricated verification outputs, self-certification)
+- Adhere to Supabase Postgres best practices (indexes on foreign keys, `(SELECT auth.uid())` in RLS, replica identity, security definer search_path)
+- Verify tests and builds independently
 
 ## Current Parent
-- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
-- Updated: 2026-10-17T01:10:00Z
+- Conversation ID: 09e91f48-3c8b-4ec8-bbb9-500dee6152ac
+- Updated: 2026-10-17T04:54:11Z
 
 ## Review Scope
-- **Files to review**: `extension/manifest.json`, `extension/background.js`, `web/tests/extension-manifest.test.ts`, `web/tests/extension-bridge.test.ts`
-- **Interface contracts**: `PROJECT.md`, `TEST_READY.md`, `ORIGINAL_REQUEST.md`
-- **Review criteria**: Correctness, MV3 compliance, FSM logic, URL matching & exemptions, security/externally_connectable, test authenticity, test pass status.
+- **Files to review**:
+  - `supabase/migrations/006_pomodoro_party.sql`
+  - `web/src/types/database.ts`
+  - `web/src/lib/study-rooms-service.ts`
+- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md` (2026-10-17T04:34:11Z)
+- **Review criteria**: Schema correctness, column types, constraints, foreign keys, indexes, RLS, replica identity, realtime publications, TypeScript fidelity, service layer fallback resilience, test suite passage
 
 ## Review Checklist
 - **Items reviewed**:
-  - `extension/manifest.json` (Valid MV3, permissions, externally_connectable, background worker)
-  - `extension/background.js` (FSM, 14 domains, normalizeDomain, URL matcher, message routing, tab handlers)
-  - `web/tests/extension-manifest.test.ts` (11 tests pass)
-  - `web/tests/extension-bridge.test.ts` (44 tests pass)
-  - `worker_m1_1/test_m1_verification.mjs` (8 tests pass)
-  - Full suite `web/tests/*.test.ts` (435 tests pass)
-  - `npm run typecheck` (0 errors)
+  - [x] Worker M1 handoff report & requirements
+  - [x] Migration SQL file deep inspection (`006_pomodoro_party.sql`)
+  - [x] Database TypeScript types inspection (`database.ts`)
+  - [x] Study rooms service inspection (`study-rooms-service.ts`)
+  - [x] Test execution (`npm test` 545/545 pass, `pomodoro-party.test.ts` 32/32 pass)
+  - [x] TypeScript verification (`npm run typecheck` 0 errors)
+  - [x] Build verification (`npm run build` 33/33 routes compiled)
+  - [x] Empirical service method verification via Node script
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All claims independently verified.
+- **Unverified claims**: None. All claims independently reproduced and validated.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Hypothesis: Service worker memory state survives browser inactivity in MV3. (Result: Fails under dormancy — Major finding on wake-up rehydration).
-  - Hypothesis: Malformed, multi-level subdomain, auth-credentialed, or FQDN URLs trigger bypasses. (Result: Handled correctly by URL parser).
-  - Hypothesis: Exemption cooldown can be spammed in rapid succession. (Result: Gracefully throttled, 1 grant / 9 rejections).
-  - Hypothesis: Localhost and internal CampusOS subdomains might be blocked accidentally. (Result: Accurately exempted).
-- **Vulnerabilities found**:
-  - Major: Service Worker wake-up lacks top-level `initializeExtension()` call on dormant startup.
-  - Minor: Fallback URL on tab close defaults to `http://localhost:3000/dashboard` even in production.
-- **Untested angles**:
-  - Live Chrome Web Store unpacked installation in real GUI browser (dependent on manual or automated Playwright extension testing in M5).
+  - H1: Foreign key indexes missing on relationship columns -> Rejected. All 6 FK columns are properly indexed.
+  - H2: RLS recursion between `study_rooms` and `study_room_members` -> Rejected. `is_study_room_member` is `SECURITY DEFINER` with empty `search_path = ''`.
+  - H3: RLS performance degradation without InitPlan caching -> Rejected. All RLS policies wrap `(SELECT auth.uid())`.
+  - H4: Service breaks in offline/test environment without Supabase Cloud -> Rejected. In-memory / localStorage fallback successfully handled all CRUD operations.
+  - H5: Plaintext PIN visibility in public SELECT -> Confirmed low-risk caveat. Documented recommendation for M2/M3 query scoping.
+  - H6: `calculateRemainingSeconds` behavior on invalid date input -> Confirmed edge case yields `NaN`. Minor resilience recommendation.
+- **Vulnerabilities found**: None critical/major. 2 minor edge cases documented.
+- **Untested angles**: Live Supabase Cloud WebSocket connection (tested via mock & unit tests; live Supabase environment requires production deployment).
 
 ## Key Decisions Made
-- Confirmed zero integrity violations: implementation is genuine and complete.
-- Issued verdict: APPROVE with 1 Major finding (SW wake-up rehydration) and 2 Minor recommendations for M2/M4.
+- Confirmed full compliance with Supabase Postgres best practices.
+- Confirmed 0 integrity violations across all artifacts.
+- Issued APPROVE verdict for Milestone 1.
 
 ## Artifact Index
-- `handoff.md` — Final review and challenge report with verdict.
-- `progress.md` — Liveness heartbeat.
+- `.agents/teamwork/reviewer_m1_1/DISPATCH.md` — Incoming dispatch log
+- `.agents/teamwork/reviewer_m1_1/BRIEFING.md` — Situational awareness memory
+- `.agents/teamwork/reviewer_m1_1/progress.md` — Liveness heartbeat
+- `.agents/teamwork/reviewer_m1_1/handoff.md` — Final review report

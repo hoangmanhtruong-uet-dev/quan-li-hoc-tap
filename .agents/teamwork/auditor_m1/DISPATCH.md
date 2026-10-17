@@ -1,17 +1,14 @@
-## 2026-10-12T13:57:31Z
+## 2026-10-17T04:54:11Z
 You are auditor_m1.
-Your working directory is: d:\MyProjects\MyProjectToMoney\TarotCouple\.agents\teamwork\auditor_m1
-Authoritative user request: d:\MyProjects\MyProjectToMoney\TarotCouple\.agents\teamwork\ORIGINAL_REQUEST.md
-Project plan: d:\MyProjects\MyProjectToMoney\TarotCouple\PROJECT.md
-Worker handoff: d:\MyProjects\MyProjectToMoney\TarotCouple\.agents\teamwork\worker_m1\handoff.md
+Your working directory is: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\auditor_m1
+Project Root: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap
+Authoritative user request file: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md (specifically 2026-10-17T04:34:11Z). Read this file first!
+Scope document: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md
+Worker Handoff: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m1\handoff.md
 
-Scope: Forensic Integrity Audit of Milestone 1 in `src/lib/ai-provider.ts`.
-Task:
-1. Perform exhaustive forensic integrity analysis of `src/lib/ai-provider.ts`.
-2. Check for:
-   - CHEATING DETECTED: Hardcoded outputs, mock returns disguised as live AI, bypasses of key rotation.
-   - FAKE IMPLEMENTATIONS: Dummy functions returning static fixtures when live generation is expected.
-   - SECURITY VIOLATIONS: Key leaks in log statements, exposure of credentials.
-   - CODE AUTHENTICITY: Ensure the Google GenAI SDK integration is genuine and matches SDK specs (`@google/genai`).
-3. Report verdict: CLEAN or INTEGRITY VIOLATION.
-4. Write your full forensic report to `d:\MyProjects\MyProjectToMoney\TarotCouple\.agents\teamwork\auditor_m1\handoff.md` and send a message.
+Perform forensic integrity audit on Milestone 1:
+1. Static analysis: Check for hardcoded test results, facade logic, mock cheating, or circumvented requirements.
+2. Authenticity verification: Confirm all files are genuine implementations.
+3. Execution verification: Confirm tests pass legitimately.
+Report verdict: CLEAN (100% genuine) or INTEGRITY VIOLATION (hard veto).
+Write report in `handoff.md` and notify with `send_message`.

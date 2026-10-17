@@ -1,122 +1,118 @@
-# Test Infrastructure & Runner Architecture: Chrome Extension & Web App Integration
+# CampusOS Testing Infrastructure (`TEST_INFRA.md`)
 
-## 1. Overview
-This document specifies the end-to-end testing architecture, test tiers, runner configuration, and verification methodology for the **CampusOS AI Giám Sát Học Tập Cực Đoan** Chrome Extension (Manifest V3) and Next.js Web App integration.
+## 1. Overview & Architectural Principles
 
-The test infrastructure validates:
-1. **Extension Manifest V3 Configuration & Security**: Schema integrity, permissions (`tabs`, `storage`, `activeTab`, `scripting`, `declarativeNetRequest`), `externally_connectable` access control, and MV3 service worker declarations.
-2. **Background Service Worker & FSM Engine**: Session state lifecycle (`idle`, `focusing`, `break`), 14 default blacklist domain matching, subdomain resolution, and internal domain exemption.
-3. **Supervisor Arbitration & Lockout Coordination**: 5-second countdown triggers, tab close coordination, focus redirection to CampusOS, and 180-second exemption cooldown math.
-4. **Two-Way Web App Bridge & Gamification Sync**: Protocol contracts (`START_FOCUS`, `CHECK_URL`, `LOCKOUT_VIOLATION`), -50 XP penalty with 0 floor, level/rank demotions, and Supabase cloud sync compatibility.
-
----
-
-## 2. Test Runner Architecture
-- **Engine**: Node.js 20+ native test runner (`node:test`, `node:assert/strict`) with TypeScript type stripping support (`--experimental-strip-types`).
-- **Zero Overhead**: Does not rely on heavy runtime wrappers (Vitest/Jest/Playwright daemon overhead), executing all 435 tests project-wide in under 2.8 seconds.
-- **Execution Mode**: Native ECMAScript Modules (ESM) with explicit `.ts` and `.js` relative imports.
-- **Offline & Isolation Guarantee**: Tests are 100% self-contained, requiring zero active internet connections, live Supabase cloud credentials, or browser window servers.
+CampusOS utilizes the native Node.js Test Runner (`node:test` and `node:assert/strict`) leveraging Node's built-in TypeScript type stripping (`--experimental-strip-types`). This architecture achieves:
+- **Instant Execution**: Over 500+ unit, integration, and mathematical tests execute in **< 3.5 seconds** without compilation overhead or Babel/esbuild bundling lag.
+- **Zero Heavy Dependencies**: Eliminates bulky test frameworks (Jest, Mocha, Vitest) in `web/`, reducing `node_modules` weight and eliminating cross-package version conflicts.
+- **Deterministic & Isolated**: Tests run in clean Node processes with isolated in-memory stores, mathematical mocks, and deterministic fixtures.
+- **Strict Empirical Verification**: Assertions verify exact DDL migrations, PostgreSQL RLS policies, TypeScript database contracts, SNTP clock offsets, game theory mechanics, and WebGL memory disposal.
 
 ---
 
-## 3. Directory & File Layout
-```
-d:/MyProjects/MyProjectToMoney/Web-quan-li-hoc-tap/
-├── extension/
-│   ├── manifest.json                  # Manifest V3 specification
-│   ├── background.js                  # Service worker FSM & message router
-│   ├── content.js                     # Cyber-Glass Lockout HUD & 5s timer
-│   └── assets/fat-orange-cat.png      # Supervisor mascot graphic
-├── web/
-│   ├── src/lib/
-│   │   ├── gamification.ts            # Level, XP progress, and rank calculations
-│   │   ├── campus-store.ts            # Reactive store & penalty dispatch
-│   │   └── supabase-sync.ts           # Supabase sync & offline mutation queue
-│   ├── tests/
-│   │   ├── extension-manifest.test.ts # 11 tests: Manifest V3 schema & security
-│   │   ├── extension-bridge.test.ts   # 44 tests: 4-Tier bridge & FSM validation
-│   │   ├── supervisor-arbiter.test.ts # 3 tests: Fat Orange Cat discipline arbitration
-│   │   ├── tasks-redesign.test.ts     # 40 tests: Tasks NLP & store gamification
-│   │   └── ... (25 additional test suites covering full CampusOS stack)
-│   └── package.json                   # "test": "node --experimental-strip-types --test tests/*.test.ts"
-├── TEST_INFRA.md                      # This specification document
-└── TEST_READY.md                      # Test completion & readiness certification
+## 2. Test Runner Configuration
+
+The test runner is configured directly in `web/package.json`:
+
+```json
+{
+  "scripts": {
+    "test": "node --experimental-strip-types --test tests/*.test.ts"
+  }
+}
 ```
 
+### Execution Commands
+
+| Target | Command | Description |
+|---|---|---|
+| **All Test Suites** | `npm test` (inside `web/`) | Runs all test suites in `web/tests/*.test.ts` |
+| **Pomodoro Party Suite** | `node --experimental-strip-types --test tests/pomodoro-party.test.ts` | Runs the 7-suite Pomodoro Party real-time test suite |
+| **Typecheck** | `npm run typecheck` (inside `web/`) | Validates TypeScript compiler with 0 errors (`tsc --noEmit`) |
+| **Production Build** | `npm run build` (inside `web/`) | Compiles all static/dynamic Next.js routes with 0 errors |
+
 ---
 
-## 4. Standard 4-Tier Test Suite Specification
+## 3. Test Suite Catalog
 
-### Tier 1: Feature Coverage (Core Functional Capabilities)
-Minimum 5 atomic tests per feature covering the primary behavior and interface contracts:
+The test infrastructure encompasses 35 distinct test suites covering frontend, backend, AI, gamification, and real-time multiplayer systems:
 
-| Feature Area | Minimum Tests | Implemented Tests | Covered Scenarios |
+| # | Test File | Domain / Scope | Coverage Areas |
 |---|---|---|---|
-| **Manifest V3 Schema & Permissions** | 5 | 11 | JSON parsing, manifest_version 3, semver versioning, permissions (`tabs`, `storage`, `activeTab`, `scripting`, `declarativeNetRequest`), prohibited permission exclusion, background module type, popup action, icons, web accessible resources, anti-MV2 deprecation audit. |
-| **Blacklist Domain Matching** | 5 | 5 | Exact match for all 14 default domains (`facebook.com`, `youtube.com`, `tiktok.com`, `twitter.com`, `x.com`, `instagram.com`, `netflix.com`, `bilibili.com`, `shopee.vn`, `reddit.com`, `threads.net`, `twitch.tv`, `discord.com`, `lazada.vn`), multi-level subdomains, safe/educational domain exclusion, `normalizeDomain` utility, custom blacklist CRUD. |
-| **Internal Exemptions & System URLs** | 5 | 5 | `localhost:3000` & `127.0.0.1:3000` dev origins, `campusos.vn` production/staging domains, browser internal schemes (`chrome://`, `about:blank`, `edge://`), non-web schemes (`file://`, `data:`, `blob:`), FQDN trailing dot normalization. |
-| **Background FSM Lifecycle** | 5 | 5 | Initial `idle` state, `startFocus` transition & start timestamp, `pauseFocus` elapsed time preservation, `stopFocus` reset, `startBreak` relaxation mode. |
-| **Lockout Trigger & Message Protocol** | 5 | 5 | `PING` handshake, `CHECK_URL` active tab assessment, `LOCKOUT_VIOLATION` counter increment, `TOGGLE_WEBCAM` flag persistence, `GET_POPUP_DATA` / `SYNC_STATE` full state export. |
-| **Exemption Management & Cooldown** | 5 | 5 | First request grant (180s grace), `isExempt` active check, second request denial within 180s cooldown, exact `waitSeconds` calculation in error response, renewal after 180s expiry. |
-| **-50 XP Penalty & Gamification** | 5 | 5 | Standard 50 XP deduction, 0 XP floor clamp (never negative), exact 0 XP input, Level 2 demotion to Level 1, multi-violation successive penalties with progression recalculation. |
+| 1 | `pomodoro-party.test.ts` | **Pomodoro Party Realtime** | DDL migration 006, DB types, NTP sync (<200ms), PIN/Room auth, Silent Focus, Deserter penalty, 3D memory safety |
+| 2 | `campus-redesign.test.ts` | Core Engine & Gamification | XP progression, Streak/Freeze rules, Calendar load score, Conflicts, NLP calendar, ICS roundtrip |
+| 3 | `tasks-redesign.test.ts` | Tasks & Eisenhower Matrix | Vietnamese NLP quickadd, 4 Eisenhower quadrants, date grouping, task lifecycle, Pomodoro drawer |
+| 4 | `pomodoro-leo.test.ts` | 3D Mèo Leo Supervisor | Squash & stretch physics, jiggle spring dynamics, 3-point lighting, micro-saccades, TTS lip-sync |
+| 5 | `quick-task-nlp-sync.test.ts` | Quick Task Modal | NLP multi-entity extraction, 4 priority tiers, 3D particle state, store synchronization |
+| 6 | `supabase-sync-engine.test.ts` | Offline-First Sync Engine | Optimistic mutations, echo suppression, offline queue replay, custom event propagation |
+| 7 | `challenger-m1-schema-sql.test.ts` | SQL Migration 003 Contracts | Master DDL validation, table column checks, RLS security policies, index naming conventions |
+| 8 | `challenger-m1-database-types.test.ts` | Database TypeScript Types | Type fidelity between `003_complete_campusos_schema.sql` and `web/src/types/database.ts` |
+| 9 | `extension-sync-penalty.test.ts` | Extension Violation Bridge | Two-way communication, URL blacklist detection, -50 XP penalty, lockout HUD triggers |
+| 10 | `ai-webcam-tracking.test.ts` | AI Face Mesh & Posture | Head pose calculation, eye aspect ratio (EAR), distraction detection, alarm triggers |
+| 11 | `workspace-engine.test.ts` | Workspace & Projects | RBAC permissions (OWNER, ADMIN, MANAGER, MEMBER, VIEWER), Kanban board, audit logs |
+| 12 | `workspace-permissions.test.ts` | Workspace Security | Permission boundary enforcement, immutable owner protection, privilege escalation guards |
+| 13 | `club-engine.test.ts` | Student Clubs Ecosystem | Club events, financial ledger balances, member directory, committee task delegation |
+| 14 | `dorm-engine.test.ts` | Dormitory Management | Room chore rotation, roommate expense splitting, shared utility accounting |
+| 15 | `profile-notifications-settings.test.ts` | Student Hub & Preferences | Holographic student ID, academic radar chart, notification tabs, Google Calendar sync |
+| 16 | `ai-study-hub.test.ts` | AI Academic Hub | Syllabus summarization, automated quiz generation, course flashcards, PDF QA |
+| 17 | `supabase-auth-profile.test.ts` | Auth & Session Security | Supabase auth integration, session tokens, user onboarding, automatic profile seeding |
+| 18 | `supervisor-arbiter.test.ts` | Supervisor Discipline Rules | Mắng cooldown, "Tôi đang tra tài liệu" grace periods, discipline scores |
+| 19 | ... (17 additional test suites) | Component & Unit Suites | Academic calculation, growth engines, coach heuristics, storage buckets |
 
 ---
 
-### Tier 2: Boundary & Corner Cases
-Adversarial inputs and extreme boundary stress:
-- **T2.1: Empty & Malformed Inputs**: Empty strings, `null`, `undefined`, numbers, objects, and whitespace-only URLs return `null` / `false` without throwing.
-- **T2.2: Invalid URL Formatting**: Missing schemes, spaces in hostnames, query-only strings, unsupported protocols (FTP) handled safely.
-- **T2.3: Deep Subdomains & False Positive Rejection**: Multi-segmented subdomains (`alpha.beta.gamma.m.facebook.com`) match root blacklist, while lookalike domains (`notfacebook.com`) are correctly permitted.
-- **T2.4: HTTP Authentication Credentials**: URLs containing basic auth credentials (`http://user:pass@reddit.com/r/all`) parse cleanly without bypass.
-- **T2.5: Rapid Exemption Spam**: Rapid consecutive exemption button clicks (10 calls in 1ms) execute cleanly with only 1 grant and 9 controlled cooldown rejections.
-- **T2.6: Millisecond Cooldown Boundary**: Exact boundary evaluation (at t = 179,999ms request is denied; at t = 180,000ms request is granted).
-- **T2.7: Extreme Penalty Clamping**: Excessive penalty values (e.g. 1000 XP penalty on 1 XP) cleanly floor at 0 XP.
+## 4. Testing Conventions & Coding Standards
 
----
+### 4.1 Native Assertions
+Tests strictly use `node:test` and `node:assert/strict`:
+```typescript
+import { test, describe, beforeEach } from 'node:test';
+import assert from 'node:assert/strict';
 
-### Tier 3: Cross-Feature Combinations
-End-to-end multi-step flows simulating integrated operations:
-- **T3.1: Full Enforcement Pipeline**: `START_FOCUS` -> visit `facebook.com` (Violates, count=1) -> click "Tôi đang tra tài liệu" (Granted, 180s) -> visit `youtube.com` (Permitted during grace) -> Exemption expires -> visit `tiktok.com` (Violates, count=2) -> Close tab signal & -50 XP penalty applied.
-- **T3.2: State Interruption (Pause & Resume)**: `startFocus` -> `pauseFocus` -> visit `youtube.com` (no violation because paused) -> resume `startFocus` -> visit `youtube.com` (violation triggered immediately).
-- **T3.3: Break Mode Interruption**: `startBreak` -> visit `youtube.com` (no violation because break mode suppresses enforcement) -> session returns to focus -> enforcement resumes.
-- **T3.4: Dynamic Blacklist Customization in Session**: Removing `reddit.com` from blacklist during live focus allows access -> re-adding `reddit.com` re-enables blocking immediately.
-
----
-
-### Tier 4: Real-World Student Workflows
-Realistic Vietnamese student scenarios:
-- **T4.1: Mixed Research & Accidental Distraction**: Student researches across `campusos.vn`, `github.com`, and `stackoverflow.com` without hindrance -> accidentally clicks `facebook.com` notification -> Lockout HUD & violation registered.
-- **T4.2: Legitimate Video Research Grace Period**: Student needs a 2-minute PostgreSQL video tutorial on YouTube -> clicks "Tôi đang tra tài liệu" -> watches video within 180s grace period -> returns to CampusOS before cooldown expiration with 0 violations.
-- **T4.3: Penalty & Recovery Gamification Cycle**: Student at 85 XP incurs -50 XP penalty (down to 35 XP) -> regains focus and completes a 25-minute Pomodoro session (+100 XP) -> recovers to 135 XP with Level 1 progression.
-
----
-
-## 5. Test Invocation Commands
-
-### 1. Execute Extension & Bridge Suites Only
-```powershell
-cd web
-node --experimental-strip-types --test tests/extension-manifest.test.ts tests/extension-bridge.test.ts
+describe('Suite Name', () => {
+  test('descriptive behavior statement', () => {
+    assert.strictEqual(actual, expected);
+    assert.deepStrictEqual(actualObj, expectedObj);
+    assert.match(str, /regex/);
+    assert.ok(condition, 'diagnostic failure message');
+  });
+});
 ```
-*Expected*: 55 tests pass in < 200ms with 0 failures.
 
-### 2. Execute Entire Project Test Suite
-```powershell
-cd web
-npm test
-```
-*Expected*: 435 tests pass in < 3.0s with 0 failures.
-
-### 3. Verify TypeScript Compilation & Type Safety
-```powershell
-cd web
-npm run typecheck
-```
-*Expected*: Exit code 0, 0 TypeScript errors.
+### 4.2 Verifiable Genuine Assertions (No Cheating / No Facades)
+- **Zero Vacuous Tests**: Tests must never assert trivially true statements (`assert.ok(true)`).
+- **Authoritative Expected Output**: Every assertion derives from mathematical proofs, PostgreSQL specification constraints, or documented architectural contracts in `PROJECT.md`.
+- **Adversarial & Boundary Verification**: Every feature includes stress tests with:
+  1. Boundary numbers (0, negative, extreme values, precision floats).
+  2. Malformed strings (empty, whitespace, special characters, unicode, SQL meta-characters).
+  3. Network jitter, out-of-order latency packets, and clock skew.
 
 ---
 
-## 6. Environment Invariants
-- Node.js >= 20.0.0 (supports native test runner & `--experimental-strip-types`).
-- Cross-platform compatible (Windows, macOS, Linux).
-- Absolute path independence: manifest path resolution uses `import.meta.url` and works regardless of current shell directory.
+## 5. Isolation & Mocking Strategy
+
+### 5.1 SNTP Clock Synchronization Mock
+Network latency and client clock drift are deterministically modeled via high-precision timestamps ($T_0, T_1, T_2, T_3$), validating that:
+$$\Delta = \frac{T_3 - T_0}{2}, \quad \Theta = T_{\text{server}} - (W_{\text{client}} + \Delta)$$
+Tests verify that clients with $\pm 15,000\text{ms}$ clock skews converge to $\Delta < 200\text{ms}$ (typically identical second countdowns).
+
+### 5.2 WebGL & Three.js Memory Safety Mock
+Because headless Node.js environments lack a hardware WebGL context, Three.js scenes are validated using procedural scene graphs and explicit disposal spies:
+- Verifying `geometry.dispose()` is called for all instantiated geometries.
+- Verifying `material.dispose()` is called across all material instances.
+- Verifying `renderer.dispose()` releases the WebGL state.
+- Verifying event listeners and `requestAnimationFrame` IDs are cancelled on component unmount.
+
+### 5.3 Offline-First Store & Fallback Mocking
+Tests verify fallback pathways when Supabase Cloud is unreachable (`mock-supabase.supabase.co`):
+- Local mock study rooms are generated with deterministic IDs and statuses.
+- Local broadcast channels or memory event buses mirror real-time message routing.
+
+---
+
+## 6. Continuous Quality Gates
+
+All pull requests and milestones must satisfy the three mandatory Quality Gates:
+1. **Type Safety**: `npm run typecheck` exits with code 0 (0 errors).
+2. **Test Suite**: `npm test` passes 100% of all test suites (525+ tests, 0 failures, 0 skipped).
+3. **Build Integrity**: `npm run build` succeeds cleanly across all 35+ routes.

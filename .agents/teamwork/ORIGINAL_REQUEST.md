@@ -462,3 +462,55 @@ Integrity mode: development
 - [ ] Sự kiện vi phạm gửi thành công về Web App và trừ -50 XP trên Supabase Database.
 - [ ] Bộ kiểm thử dự án `npm test` tiếp tục PASS 100% (380+ tests) và `npm run typecheck` 0 lỗi.
 - [ ] Next.js Web App biên dịch thành công (`npm run build`).
+
+
+## 2026-10-17T04:34:11Z
+
+Xây dựng hệ thống Đấu Trường Học Nhóm Realtime (Pomodoro Party) kết nối Supabase Realtime Channels, đồng bộ đồng hồ Pomodoro đa người chơi (<200ms), cơ chế kỷ luật Silent Focus & bêu tên kẻ bỏ cuộc, và Bục Vinh Danh 3D Three.js.
+
+Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap
+Integrity mode: development
+
+## Requirements
+
+### R1. Cơ sở dữ liệu Supabase Realtime & Schema (`supabase/migrations/006_pomodoro_party.sql`)
+- Tạo các bảng CSDL với Row Level Security (RLS) và kích hoạt Supabase Realtime:
+  - `public.study_rooms`: Lưu trữ phòng học (`code` 6 ký tự ngẫu nhiên hoặc slug môn học, `title`, `subject`, `host_id`, `room_type` ['public', 'private_pin', 'workspace'], `pin_code`, `workspace_id`, `focus_duration_minutes`, `break_duration_minutes`, `current_status` ['waiting', 'focusing', 'break'], `start_time_iso`, `end_time_iso`, `is_active`).
+  - `public.study_room_members`: Quản lý thành viên đang online (`room_id`, `user_id`, `status` ['focusing', 'distracted', 'break'], `joined_at`, `total_minutes_contributed`, `camera_on`, `last_ping_at`).
+  - `public.room_reactions`: Kênh broadcast hiệu ứng hạt reaction bay thời gian thực (`room_id`, `user_id`, `emoji`, `created_at`).
+- Cập nhật định nghĩa TypeScript vào `web/src/types/database.ts`.
+
+### R2. Sảnh chờ & 3 Hình thức Phòng học (`/study/rooms`, `/study/rooms/[code]`, `/workspaces/[id]`)
+- Giao diện Sảnh Danh Sách Phòng Học (`/study/rooms`) phong cách Cyber-Glass cao cấp:
+  - Tab lọc: Tất cả, Môn học đại cương, Môn chuyên ngành, Nhóm Đồ Án.
+  - Nút "Tạo Phòng Mới": Modal chọn loại phòng (Công khai, Mã PIN bảo mật 6 số, hoặc gắn với Workspace).
+  - Modal "Nhập PIN" khi bấm vào phòng riêng tư.
+- Tích hợp 1 phòng học riêng trực tiếp vào trang chi tiết Workspace (`/workspaces/[id]`).
+
+### R3. Phòng Học Realtime: Silent Focus, Đồng Bộ Đồng Hồ & Hiệu Ứng Bay
+- Đồng hồ đếm ngược đồng bộ hoàn hảo:
+  - Dùng Supabase Realtime Channel Broadcast/Presence kết hợp chênh lệch thời gian máy chủ (NTP offset) để đảm bảo toàn bộ thành viên trong phòng có cùng một mốc giây đếm ngược (độ lệch < 200ms).
+- Kỷ luật tương tác "Silent Focus":
+  - **Trong giờ học (45-50 phút)**: Tắt khung chat văn bản tránh buôn chuyện; chỉ cho phép thả các Reaction hạt bay lơ lửng (Floating Particles: 🔥, 👏, ❤️, 💪, ⚡) bay từ avatar người gửi lên đỉnh màn hình.
+  - **Trong giờ giải lao (5-10 phút)**: Tự động mở khung chat giải lao, nhạc lofi thư giãn và chia sẻ tài liệu.
+- Cơ chế Bêu Tên Kẻ Bỏ Cuộc:
+  - Khi Extension hoặc hệ thống phát hiện 1 thành viên đổi tab sang trang đen hoặc bấm rời phòng sớm: Avatar của thành viên đó trên sân khấu ảo chuyển sang **viền đỏ nhấp nháy cảnh báo (Danger Flash)**, âm thanh còi báo động Mèo Cam vang lên, và banner bêu tên công khai: *"Thành viên [Tên] đã phân tâm/bỏ cuộc và bị phạt -50 XP!"*.
+
+### R4. Sân Khấu Thành Viên & Bục Vinh Danh 3D Three.js (Weekly Leaderboard Arena)
+- Sân khấu thành viên Cyber-Glass:
+  - Lưới Grid hiển thị Avatar 3D Holographic của các thành viên đang cùng ngồi học với đèn trạng thái neon (Xanh: Tập trung cao độ, Đỏ: Bị phạt, Vàng: Nghỉ giải lao).
+- Bục Vinh Danh 3D hàng tuần (`/study/rooms/leaderboard`):
+  - Canvas Three.js hiển thị bục 3 cấp độ (Vàng, Bạc, Đồng) với ánh sáng Spotlight xoay, cúp vàng Cyberpunk, hiển thị top 3 sinh viên có tổng số giờ focus cao nhất tuần kèm hiệu ứng pháo hoa neon.
+
+## Acceptance Criteria
+
+### Verification & Quality Gates
+- [ ] File migration `supabase/migrations/006_pomodoro_party.sql` hợp lệ và TypeScript types trong `web/src/types/database.ts` khớp 100%.
+- [ ] Tạo phòng mới thành công với cả 3 chế độ (Công khai, Mã PIN 6 số, Workspace) và tham gia phòng qua URL `/study/rooms/[code]`.
+- [ ] Đồng hồ đếm ngược giữa các client đồng bộ chính xác theo Server Timestamp.
+- [ ] Trong pha 'focusing': Input chat bị khóa, người dùng click reaction thì các icon hạt bay (Particles) xuất hiện trên màn hình phòng học.
+- [ ] Giả lập vi phạm: Trạng thái thành viên đổi sang 'distracted' với viền đỏ cảnh báo và phạt trừ XP.
+- [ ] Sân khấu Bục Vinh Danh 3D render mượt mà bằng Three.js mà không gây giật lag hay rò rỉ bộ nhớ (dispose scene khi unmount).
+- [ ] Bộ kiểm thử dự án: `npm test` tiếp tục PASS 100% (513+ tests) và bổ sung test suite `web/tests/pomodoro-party.test.ts`.
+- [ ] `npm run typecheck` đạt **0 lỗi** TypeScript.
+- [ ] `npm run build` biên dịch thành công 100% các static/dynamic routes.

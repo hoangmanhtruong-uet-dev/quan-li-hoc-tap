@@ -12,6 +12,7 @@ import { WorkspaceKanban } from '@/components/workspaces/workspace-kanban';
 import { WorkspaceDocuments } from '@/components/workspaces/workspace-documents';
 import { WorkspaceMembersRbac } from '@/components/workspaces/workspace-members-rbac';
 import { WorkspaceActivityLog } from '@/components/workspaces/workspace-activity-log';
+import { WorkspaceStudyRoomPanel } from '@/components/study/workspace-study-room-panel';
 import {
   ArrowLeft,
   Layers,
@@ -24,6 +25,7 @@ import {
   Sparkles,
   BookOpen,
   Trash2,
+  Timer,
 } from 'lucide-react';
 
 export default function WorkspaceDetailPage() {
@@ -47,7 +49,7 @@ export default function WorkspaceDetailPage() {
     removeMember,
   } = useWorkspace(workspaceId);
 
-  const [activeTab, setActiveTab] = useState<'kanban' | 'documents' | 'members' | 'activity'>('kanban');
+  const [activeTab, setActiveTab] = useState<'kanban' | 'documents' | 'members' | 'activity' | 'study_room'>('kanban');
 
   if (!workspace) {
     return (
@@ -148,6 +150,17 @@ export default function WorkspaceDetailPage() {
             <p className="text-sm text-slate-300 leading-relaxed max-w-2xl">
               {workspace.description}
             </p>
+
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab('study_room')}
+                className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/15 px-3.5 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/25 transition-all"
+              >
+                <Timer className="h-3.5 w-3.5 text-cyan-400" />
+                <span>Vào phòng học nhóm (Pomodoro Party)</span>
+              </button>
+            </div>
           </div>
 
           {/* Progress Circle & Quick Stats */}
@@ -205,12 +218,13 @@ export default function WorkspaceDetailPage() {
         </div>
       </div>
 
-      {/* 3. 4 Cyber-Glass Tabs Navigation */}
+      {/* 3. 5 Cyber-Glass Tabs Navigation */}
       <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-2">
         {[
           { id: 'kanban', label: 'Bảng Kanban', icon: Kanban, count: workspace.tasks.length },
           { id: 'documents', label: 'Tài liệu & Tài nguyên', icon: FileText, count: workspace.documents.length },
           { id: 'members', label: 'Thành viên & RBAC', icon: Users, count: workspace.members.length },
+          { id: 'study_room', label: 'Phòng học nhóm', icon: Timer, count: 'LIVE' },
           { id: 'activity', label: 'Nhật ký hoạt động', icon: Activity, count: workspace.activities.length },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -267,6 +281,13 @@ export default function WorkspaceDetailPage() {
             onChangeMemberRole={changeMemberRole}
             onRemoveMember={removeMember}
             onInviteMember={inviteMember}
+          />
+        )}
+
+        {activeTab === 'study_room' && (
+          <WorkspaceStudyRoomPanel
+            workspaceId={workspaceId}
+            workspaceName={workspace.name}
           />
         )}
 

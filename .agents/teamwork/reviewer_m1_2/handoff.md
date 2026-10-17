@@ -1,215 +1,199 @@
-# BÁO CÁO THẨM ĐỊNH ĐỘC LẬP MILESTONE 1 (M1 INDEPENDENT REVIEW & ADVERSARIAL CHALLENGE REPORT)
+# Milestone 1 Review & Adversarial Challenge Report
 
-**Reviewer / Adversarial Critic**: `reviewer_m1_2`  
-**Working Directory**: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m1_2`  
-**Parent Orchestrator ID**: `051c51ec-d4c0-431c-b685-75179c16a0da`  
-**Timestamp**: 2026-10-17T01:14:00Z  
-**Verdict**: **`REQUEST_CHANGES`**  
+**Author**: `reviewer_m1_2` (Roles: reviewer, critic)  
+**Target Milestone**: M1 - Supabase Realtime & Schema + Types + Service Layer  
+**Target Files**:
+- `supabase/migrations/006_pomodoro_party.sql`
+- `web/src/types/database.ts`
+- `web/src/lib/study-rooms-service.ts`
 
----
-
-## 1. Quan sát Trực tiếp (Observation)
-
-### 1.1. Các Tệp Tin Được Kiểm Tra Trực Tiếp
-- `extension/manifest.json`: 66 dòng, JSON hợp lệ chuẩn Manifest V3.
-- `extension/background.js`: 658 dòng, ES Module triển khai Service Worker FSM, bộ lọc URL, bộ định tuyến thông điệp, storage sync.
-- `extension/assets/fat-orange-cat.png`: 405,717 bytes, tồn tại vật lý.
-- `web/tests/extension-manifest.test.ts`: 163 dòng, 11 test cases thẩm định cấu hình Manifest V3.
-- `web/tests/extension-bridge.test.ts`: 718 dòng, 44 test cases bao phủ 4 tầng kiểm thử (T1-T4).
-- `web/src/lib/gamification.ts`: Chứa logic tính toán rank, level và XP penalty.
-
-### 1.2. Kết Quả Kiểm Thử Độc Lập
-Reviewer đã tự thực thi các lệnh kiểm thử trong môi trường thực tế:
-1. `node --experimental-strip-types --test tests/extension-manifest.test.ts tests/extension-bridge.test.ts` (trong `web/`):
-   ```
-   ✔ Extension Bridge & Supervisor Arbitration Suite (extension-bridge.test.ts) (10.95ms)
-   ✔ Chrome Extension Manifest V3 Schema & Security Suite (extension-manifest.test.ts) (4.76ms)
-   ℹ tests 55, suites 11, pass 55, fail 0
-   ℹ duration_ms 140.252
-   ```
-2. `npm test` (trong `web/`):
-   ```
-   ℹ tests 435, suites 14, pass 435, fail 0, duration_ms 2732.2284
-   ```
-3. `npm run typecheck` (trong `web/`):
-   ```
-   > campusos-web@0.1.0 typecheck
-   > tsc --noEmit
-   Exit code 0, 0 TypeScript errors.
-   ```
-4. `node --test .agents/teamwork/worker_m1_1/test_m1_verification.mjs`:
-   ```
-   ℹ tests 8, suites 0, pass 8, fail 0, duration_ms 75.3484
-   ```
-
-### 1.3. Đánh Giá Tính Liêm Chính (Integrity Audit)
-- **Hardcoded test results**: Không phát hiện. Logic tính toán thời gian, chuẩn hóa URL, FSM và tính điểm hoàn toàn động.
-- **Dummy / Facade implementations**: Không phát hiện. `background.js` triển khai đầy đủ các hàm xử lý storage, query tabs, broadcast message, close tab.
-- **Shortcuts / Task bypass**: Không phát hiện.
-- **Fabricated verification logs**: Không phát hiện. Mọi kết quả kiểm thử được reviewer tái lập chính xác 100%.
-
-### 1.4. Phát Hiện Kiến Trúc Trực Tiếp Trên Mã Nguồn
-1. **Dormancy State Loss (Mất trạng thái khi Service Worker bị tắt ngầm)**:
-   Tại `extension/background.js` (dòng 600-609):
-   ```javascript
-   if (typeof chrome !== 'undefined' && chrome.runtime) {
-     chrome.runtime.onInstalled?.addListener(() => {
-       initializeExtension().catch(console.error);
-     });
-     chrome.runtime.onStartup?.addListener(() => {
-       initializeExtension().catch(console.error);
-     });
-   ```
-   `initializeExtension()` chỉ được gọi khi cài đặt extension (`onInstalled`) hoặc khởi động trình duyệt (`onStartup`). Nó **KHÔNG ĐƯỢC GỌI** ở top-level khi Service Worker thức dậy sau khi bị Chrome đưa vào trạng thái ngủ đông (hibernation / idle termination sau ~30 giây không hoạt động).
-   Tại dòng 239:
-   ```javascript
-   export const sessionFsm = new SupervisorSessionFSM();
-   ```
-   Khi Service Worker thức dậy do sự kiện `tabs.onActivated` hoặc `tabs.onUpdated`, biến `sessionFsm` trong bộ nhớ RAM được khởi tạo lại với constructor mặc định (`state: 'idle'`). Vì `initializeExtension()` không chạy, `sessionFsm` không tải lại trạng thái `focusing` từ `chrome.storage`.
-2. **Duplicate Violation Triggering Trên `tabs.onUpdated`**:
-   Tại `extension/background.js` (dòng 642-656):
-   ```javascript
-   if (chrome.tabs?.onUpdated) {
-     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-       try {
-         const urlToCheck = changeInfo.url || tab?.url;
-         if (!urlToCheck) return;
-         await checkAndHandleTabViolation({
-           id: tabId,
-           url: urlToCheck,
-           windowId: tab?.windowId
-         });
-       } catch (err) {
-         console.warn('[CampusOS Background] onUpdated handler warning:', err);
-       }
-     });
-   }
-   ```
-   Khi người dùng tải một trang web vi phạm (ví dụ `facebook.com`), trình duyệt Chrome kích hoạt sự kiện `tabs.onUpdated` nhiều lần (lần 1: `status: 'loading'` kèm URL; lần 2: `title` thay đổi; lần 3: `status: 'complete'`). Vì mã nguồn dùng fallback `tab?.url` khi `changeInfo.url` không có, mỗi lần title hoặc status thay đổi đều gọi lại `checkAndHandleTabViolation`, dẫn đến vi phạm bị đếm 2–3 lần và phạt -100 XP đến -150 XP cho một lần mở trang.
-3. **Thư Mục `extension/popup` Chưa Tồn Tại**:
-   Trong `extension/manifest.json` khai báo `"default_popup": "popup/popup.html"`, nhưng thư mục `extension/popup` hiện chưa được tạo (dự kiến thuộc Milestone 4).
+**Verdict**: **APPROVE**  
+**Integrity Audit**: **PASSED (No violations found)**  
+**Adversarial Risk Assessment**: **LOW**
 
 ---
 
-## 2. Chuỗi Suy Luận (Logic Chain)
+## 1. Observation
 
-### 2.1. Thẩm Định An Toàn & Bảo Mật Manifest V3 (ĐẠT)
-- **Quyền hạn (Permissions)**: Khai báo đúng 5 quyền cần thiết (`tabs`, `storage`, `activeTab`, `scripting`, `declarativeNetRequest`). Không chứa bất kỳ quyền nguy hiểm nào như `webRequestBlocking`, `debugger`, `management`, `nativeMessaging`.
-- **Kết nối ngoại vi (`externally_connectable`)**: Bị giới hạn nghiêm ngặt tại `http://localhost:3000/*`, `http://127.0.0.1:3000/*`, `https://*.campusos.vn/*`, `https://campusos.vn/*`. Hoàn toàn không cho phép wildcard mở `<all_urls>` hay `*://*/*`.
-- **Tài nguyên truy cập web (`web_accessible_resources`)**: Chỉ công khai ảnh mascot `assets/fat-orange-cat.png` và thư mục `assets/*`, không phơi bày script hay file cấu hình nhạy cảm.
+### 1.1 Direct Inspection of Artifacts
 
-### 2.2. Thẩm Định Logic Nghiệp Vụ & An Toàn Ngoại Lệ (ĐẠT)
-- **Chuẩn hóa URL (`normalizeDomain` & `getMatchedBlacklistDomain`)**:
-  - `getMatchedBlacklistDomain` bọc toàn bộ logic trong khối `try...catch`, sử dụng đối tượng chuẩn `new URL(rawUrl)` và lọc giao thức `http/https`. Các URL dị dạng (`http:///`, khoảng trắng, ký tự đặc biệt, giao thức lạ `blob:`, `data:`, `file:`, `chrome://`) đều trả về an toàn `null` mà không gây văng unhandled exception.
-  - Phân giải chính xác subdomain (`m.facebook.com`, `gaming.youtube.com`), đồng thời ngăn chặn triệt để tấn công giả mạo tên miền (`notfacebook.com` không bị chặn).
-  - Ngoại trừ hoàn toàn `localhost`, `127.0.0.1` và `*.campusos.vn`.
-- **FSM & Thuật toán Ân hạn 180s Cooldown**:
-  - `requestExemption` tính toán chính xác `cooldownMs = 180000ms`, tính `waitSeconds = Math.ceil((cooldownMs - timeSinceLast) / 1000)`.
-  - Kháng tua lùi đồng hồ hệ thống: Nếu `currentTime < lastExemptionAt`, `timeSinceLast` âm dẫn đến `waitSeconds` lớn hơn 180s, không thể bị exploit để reset cooldown.
+1. **`supabase/migrations/006_pomodoro_party.sql` (234 lines)**:
+   - **Extensions**: Lines 9-10 enable `uuid-ossp` and `pgcrypto`.
+   - **Tables defined**:
+     - `public.study_rooms` (lines 17-35) with 17 columns: `id`, `code` (VARCHAR(16) UNIQUE), `title`, `subject`, `host_id`, `room_type` ('public', 'private_pin', 'workspace'), `pin_code`, `workspace_id`, `focus_duration_minutes` (5..180), `break_duration_minutes` (1..60), `current_status` ('waiting', 'focusing', 'break'), `start_time_iso`, `end_time_iso`, `is_active`, `max_participants` (2..100), `created_at`, `updated_at`.
+     - `public.study_room_members` (lines 38-48) with constraint `CONSTRAINT uq_study_room_member UNIQUE (room_id, user_id)`.
+     - `public.room_reactions` (lines 51-57) with columns `id`, `room_id`, `user_id`, `emoji`, `created_at`.
+   - **Replica Identity**: Lines 60-62 apply `REPLICA IDENTITY FULL` to all three tables.
+   - **Foreign Key Indexes**: Lines 69-86 define indexes for all foreign key and hot query paths:
+     - `idx_study_rooms_code`, `idx_study_rooms_host_id`, `idx_study_rooms_workspace_id`, `idx_study_rooms_type_active`, `idx_study_rooms_status`, `idx_study_rooms_created_at`.
+     - `idx_study_room_members_room`, `idx_study_room_members_user`, `idx_study_room_members_room_user`, `idx_study_room_members_status`, `idx_study_room_members_last_ping`.
+     - `idx_room_reactions_room`, `idx_room_reactions_user`, `idx_room_reactions_created_at`.
+   - **Helper Functions**:
+     - `public.is_study_room_member(UUID)` (lines 93-103) with `SECURITY DEFINER` and `SET search_path = ''`.
+     - `public.is_study_room_host(UUID)` (lines 105-115) with `SECURITY DEFINER` and `SET search_path = ''`.
+     - Grants/Revokes properly set on lines 117-122.
+   - **Row Level Security**:
+     - `ENABLE ROW LEVEL SECURITY` on all three tables (lines 128-130).
+     - All user auth evaluations wrap `(SELECT auth.uid())` for PostgreSQL InitPlan query caching (lines 137, 144, 145, 151, 155, 162, 180, 186, 190, 197, 215).
+   - **Realtime Publication**: Lines 224-233 safely append the tables to `supabase_realtime` inside a `DO $$ ... EXCEPTION WHEN duplicate_object THEN NULL; END $$;` block.
 
-### 2.3. Lập Luận Chi Tiết Về 2 Lỗi Kiến Trúc Cần Khắc Phục (CRITICAL & MAJOR)
+2. **`web/src/types/database.ts` (1791 lines)**:
+   - Lines 1491-1646 define complete TypeScript tables schema for `study_rooms`, `study_room_members`, and `room_reactions` including `Row`, `Insert`, `Update`, and `Relationships`.
+   - Lines 1651-1659 define database function signatures for `is_study_room_member` and `is_study_room_host`.
+   - Lines 1776-1791 export top-level types: `StudyRoomRow`, `StudyRoomInsert`, `StudyRoomUpdate`, `StudyRoomMemberRow`, `StudyRoomMemberInsert`, `StudyRoomMemberUpdate`, `RoomReactionRow`, `RoomReactionInsert`, `RoomReactionUpdate`, `StudyRoomType`, `StudyRoomStatus`, `StudyRoomMemberStatus`.
 
-#### Lỗi 1 (Critical): Service Worker Dormancy & Hibernation State Loss
-1. Trong Chrome Manifest V3, Service Worker không chạy liên tục như Background Page của Manifest V2. Sau khoảng 30 giây không có sự kiện, tiến trình Service Worker sẽ bị Chrome giải phóng khỏi bộ nhớ RAM để tiết kiệm tài nguyên.
-2. Khi người dùng bấm "Bắt đầu Focus" trên Web App CampusOS:
-   - Message `START_FOCUS` được gửi tới extension.
-   - `sessionFsm.startFocus()` đưa trạng thái lên `focusing` và lưu vào storage qua `persistCurrentState()`.
-3. Sinh viên tập trung học trong 2 phút (Service Worker rơi vào trạng thái ngủ đông và bị terminate).
-4. Sinh viên mất tập trung và mở tab `facebook.com`.
-5. Chrome đánh thức Service Worker dậy và kích hoạt sự kiện `chrome.tabs.onActivated`.
-6. Tuy nhiên, khi script `background.js` được nạp lại:
-   - `export const sessionFsm = new SupervisorSessionFSM();` chạy, tạo phiên bản FSM mới với trạng thái mặc định là `idle`.
-   - `chrome.runtime.onInstalled` **không chạy** (chỉ chạy khi cài đặt extension).
-   - `chrome.runtime.onStartup` **không chạy** (chỉ chạy khi mở cả trình duyệt Chrome).
-   - `initializeExtension()` không được gọi!
-7. Sự kiện `tabs.onActivated` chạy hàm `checkAndHandleTabViolation(tab)`:
-   - Kiểm tra: `if (!sessionFsm.isFocusing()) return;`
-   - Vì `sessionFsm.state` đang là `idle`, hàm lập tức thoát (`return`).
-8. **Hệ quả thực tế**: Extension hoàn toàn không phát hiện vi phạm, không hiển thị Lockout HUD và không trừ điểm XP của sinh viên! Đây là lỗ hổng cốt lõi làm vô hiệu hóa chức năng giám sát của extension trong điều kiện hoạt động thực tế.
+3. **`web/src/lib/study-rooms-service.ts` (1186 lines)**:
+   - Exports core types (`StudyRoomRealtimeState`, `RealtimeBroadcastEvent`, `LeaderboardStudent`, `CreateStudyRoomInput`, `StudyRoomMemberWithProfile`).
+   - Implements full CRUD with live Supabase client querying and offline fallback:
+     - `listStudyRooms`, `getStudyRoomByCode`, `getStudyRoomById`, `createStudyRoom`, `updateStudyRoom`, `verifyRoomPin`, `deleteStudyRoom`.
+     - `joinStudyRoom`, `leaveStudyRoom`, `getStudyRoomMembers`, `updateMemberStatus`, `pingStudyRoomMember`.
+     - `postRoomReaction`, `getRecentReactions`, `getWeeklyStudyLeaderboard`.
+     - Utility helpers: `generateRoomCode` (excludes ambiguous chars `0, O, 1, I`), `calculateRemainingSeconds`, `filterRoomsByTab`.
+   - Seeded in-memory and `localStorage` mock stores provide 5 realistic Vietnamese academic study rooms, 5 participants, and top weekly focus contributors.
 
-#### Lỗi 2 (Major): Multi-Penalty Loop Trên `chrome.tabs.onUpdated`
-1. Tại `tabs.onUpdated`, câu lệnh `const urlToCheck = changeInfo.url || tab?.url;` cho phép kiểm tra URL ngay cả khi `changeInfo.url` là `undefined`.
-2. Khi người dùng điều hướng tới `https://youtube.com`:
-   - Lần 1: Chrome gửi `changeInfo = { status: 'loading', url: 'https://youtube.com' }` -> Vi phạm đếm 1, trừ 50 XP.
-   - Lần 2: Trang web cập nhật tiêu đề tab, Chrome gửi `changeInfo = { title: 'YouTube' }` (không có `changeInfo.url`). Fallback lấy `tab.url` vẫn là `https://youtube.com` -> Vi phạm đếm 2, trừ thêm 50 XP (thành -100 XP).
-   - Lần 3: Trình duyệt tải xong trang, Chrome gửi `changeInfo = { status: 'complete' }`. Fallback lấy `tab.url` vẫn là `https://youtube.com` -> Vi phạm đếm 3, trừ thêm 50 XP (thành -150 XP).
-3. **Hệ quả thực tế**: Người dùng chỉ mở tab một lần nhưng bị phạt lũy kế gấp 2-3 lần (mất 100 đến 150 XP thay vì 50 XP).
+### 1.2 Tool Execution Results
 
----
-
-## 3. Vấn đề Tồn tại & Lưu ý (Caveats)
-
-- Bộ test suite chạy trong môi trường Node.js (`node:test`) kiểm tra các hàm thuần túy (pure functions) và các phương thức FSM trong cùng một tiến trình bộ nhớ liên tục, nên không tự động mô phỏng chu kỳ sleep/wake của Chrome Service Worker MV3.
-- Thư mục `extension/popup` chưa tồn tại là điều đã được ghi nhận trong lộ trình phân chia công việc (Milestone 4). Tuy nhiên, khi Chrome mở popup từ biểu tượng extension, nếu tệp tin `popup.html` không tồn tại sẽ gây lỗi mở popup. Cần bảo đảm M4 tạo file này đúng vị trí đã khai báo trong manifest.
+- **Command**: `npm run typecheck` in `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web`
+  - Output: `tsc --noEmit` exited with code 0 (0 errors).
+- **Command**: `npm test` in `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web`
+  - Output: `ℹ tests 545 | ℹ suites 41 | ℹ pass 545 | ℹ fail 0 | ℹ duration_ms 3055.1754`
+- **Command**: `node --experimental-strip-types --test tests/pomodoro-party.test.ts`
+  - Output: `ℹ tests 32 | ℹ suites 7 | ℹ pass 32 | ℹ fail 0 | ℹ duration_ms 269.1781`
+- **Command**: `npm run build` in `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web`
+  - Output: Next.js 14.2.5 compiled successfully, 33/33 static pages generated without error.
 
 ---
 
-## 4. Kết luận (Conclusion)
+## 2. Logic Chain
 
-- **Đánh giá chung**: Chất lượng mã nguồn của Milestone 1 rất tốt, cấu trúc ES Module rõ ràng, tuân thủ 100% chuẩn Manifest V3, bảo mật nghiêm ngặt và không có bất kỳ dấu hiệu gian lận hay vi phạm liêm chính nào (0 Integrity Violations). Bộ test 55/55 và hồi quy 435/435 pass 100%.
-- **Quyết định thẩm định**: **`REQUEST_CHANGES`**  
-  Cần thực hiện một đợt hiệu chỉnh ngắn (khoảng 15-20 dòng code) trong `extension/background.js` để khắc phục 2 lỗi kiến trúc nêu trên trước khi chuyển giao sang Milestone 2.
+1. **Integrity Validation**:
+   - Inspected `web/src/lib/study-rooms-service.ts` and `web/tests/pomodoro-party.test.ts` for signs of cheating:
+     - No hardcoded test responses or expected outputs embedded in production files.
+     - Real computational and mathematical logic (SNTP offset, RTT calculation, collision checks, array filters, local storage sync, Supabase query chains).
+     - No facade implementations: every method interacts with Supabase when configured or performs genuine in-memory Map operations when unconfigured.
+   - Conclusion: **Zero integrity violations**.
 
-### Các Yêu Cầu Thay Đổi Cụ Thể (Action Items Cho Worker)
+2. **Schema & Database Best Practices**:
+   - `006_pomodoro_party.sql` strictly adheres to `supabase-postgres-best-practices`:
+     - Primary keys use UUID with `gen_random_uuid()`.
+     - Check constraints restrict domain values on room types, statuses, durations, and participant counts.
+     - Every foreign key (`host_id`, `workspace_id`, `room_id`, `user_id`) has a dedicated btree index for join performance and cascading deletes.
+     - RLS evaluates `(SELECT auth.uid())` to enable PostgreSQL to evaluate the user identity once via InitPlan rather than per-row.
+     - `is_study_room_member` and `is_study_room_host` functions use `SECURITY DEFINER` with `SET search_path = ''` to prevent search path hijacking and avoid infinite RLS recursion.
+   - Conclusion: **Database DDL is robust, performant, and secure**.
 
-1. **Khắc phục Lỗi 1 (Rehydration Guard khi Service Worker thức dậy)**:
-   Trong `extension/background.js`, thiết lập cơ chế nạp lại trạng thái tự động mỗi khi Service Worker khởi động:
-   ```javascript
-   let initPromise = null;
-   export function ensureInitialized() {
-     if (!initPromise) {
-       initPromise = initializeExtension().catch((err) => {
-         console.error('[CampusOS Background] Initialization failed:', err);
-         initPromise = null; // Cho phép thử lại nếu lỗi
-       });
-     }
-     return initPromise;
-   }
-   
-   // Kích hoạt nạp dữ liệu ngay khi Service Worker script được nạp vào bộ nhớ
-   ensureInitialized();
-   ```
-   Đồng thời, tại đầu các hàm `checkAndHandleTabViolation` và `handleMessageRequest`, bổ sung:
-   ```javascript
-   await ensureInitialized();
-   ```
-2. **Khắc phục Lỗi 2 (Lọc sự kiện `changeInfo.url` và Debounce vi phạm)**:
-   Trong bộ lắng nghe `chrome.tabs.onUpdated`:
-   ```javascript
-   if (chrome.tabs?.onUpdated) {
-     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-       try {
-         // Chỉ kiểm tra khi có sự kiện thay đổi URL thực sự để tránh phạt trùng lặp
-         if (!changeInfo.url) return;
-         await checkAndHandleTabViolation({
-           id: tabId,
-           url: changeInfo.url,
-           windowId: tab?.windowId
-         });
-       } catch (err) {
-         console.warn('[CampusOS Background] onUpdated handler warning:', err);
-       }
-     });
-   }
-   ```
-   Đồng thời trong `checkAndHandleTabViolation`, lưu vết `lastViolationTimeByTab` (ví dụ: không kích hoạt 2 lần vi phạm trên cùng một tab trong vòng 3000ms).
+3. **Type Safety & Contracts**:
+   - `web/src/types/database.ts` matches the column names, types, and constraints of `006_pomodoro_party.sql` exactly.
+   - `npm run typecheck` passes with zero errors across the entire Next.js repository.
+   - Downstream milestones (M2, M3, M4) can safely import types from `src/types/database.ts` and `src/lib/study-rooms-service.ts`.
+
+4. **Service Layer Resilience**:
+   - When running in an environment without configured Supabase credentials (e.g. offline dev, unit tests), the service layer gracefully falls back to persistent in-memory / localStorage storage.
+   - Operations maintain referential integrity: joining rooms upserts or appends members, reactions are capped to prevent memory bloat, and pin validation is handled cleanly.
 
 ---
 
-## 5. Phương pháp Kiểm chứng Độc lập (Verification Method)
+## 3. Adversarial Challenges & Findings
 
-Sau khi worker cập nhật các điểm trên, chạy lại các lệnh xác minh:
-1. Xác minh Manifest và Bridge Suite:
+### 3.1 [Minor] Challenge 1: Null/Undefined PIN in `verifyRoomPin` causes TypeError
+- **Location**: `web/src/lib/study-rooms-service.ts:799`
+- **Observation**:
+  ```typescript
+  return room.pin_code.trim() === enteredPin.trim();
+  ```
+- **Attack Scenario**: If a caller passes `null` or `undefined` as `enteredPin` when calling `verifyRoomPin(room, enteredPin as any)`, `enteredPin.trim()` throws `TypeError: Cannot read properties of null (reading 'trim')`.
+- **Blast Radius**: Unhandled exception if UI component passes undefined PIN before user types.
+- **Mitigation Suggestion**: Use null-safe check:
+  ```typescript
+  return Boolean(enteredPin && room.pin_code.trim() === enteredPin.trim());
+  ```
+
+### 3.2 [Minor] Challenge 2: Non-date string in `calculateRemainingSeconds` yields `NaN`
+- **Location**: `web/src/lib/study-rooms-service.ts:136-140`
+- **Observation**:
+  ```typescript
+  const startTime = new Date(startTimeIso).getTime();
+  ```
+- **Attack Scenario**: If `startTimeIso` is a corrupted or invalid timestamp string (e.g. `"invalid"`), `startTime` evaluates to `NaN`, propagating `NaN` to `remainingMs` and returning `NaN`.
+- **Blast Radius**: NaN in UI countdown renders broken text (`NaN:NaN`).
+- **Mitigation Suggestion**: Guard with `if (Number.isNaN(startTime)) return durationMinutes * 60;`.
+
+### 3.3 [Minor] Finding 3: Redundant Indexes on Unique Columns
+- **Location**: `supabase/migrations/006_pomodoro_party.sql:69, 79`
+- **Observation**:
+  - `study_rooms.code` is declared `VARCHAR(16) NOT NULL UNIQUE`, which automatically creates a unique btree index (`study_rooms_code_key`). Line 69 then creates `idx_study_rooms_code`.
+  - `study_room_members` declares `CONSTRAINT uq_study_room_member UNIQUE (room_id, user_id)`, creating an index on `(room_id, user_id)`. Line 79 then creates `idx_study_room_members_room_user`.
+- **Blast Radius**: Low. Incurs slight extra disk and write overhead during high-frequency inserts, though completely functional.
+- **Mitigation Suggestion**: In future migrations or cleanup, omit the explicit duplicate index on columns already guarded by unique constraints.
+
+---
+
+## 4. Quality Review Summary
+
+### Review Summary
+**Verdict**: **APPROVE**
+
+### Verified Claims
+- `006_pomodoro_party.sql` defines `study_rooms`, `study_room_members`, and `room_reactions` with correct column types, constraints, and RLS → **VERIFIED**
+- `(SELECT auth.uid())` InitPlan optimization and `SECURITY DEFINER SET search_path = ''` helper functions → **VERIFIED**
+- Realtime publication `ALTER PUBLICATION supabase_realtime ADD TABLE ...` is safe and idempotent → **VERIFIED**
+- `web/src/types/database.ts` matches SQL schema and exports all entity types → **VERIFIED**
+- `web/src/lib/study-rooms-service.ts` provides complete CRUD and offline fallback → **VERIFIED**
+- `npm run typecheck` passes with 0 errors → **VERIFIED**
+- `npm test` passes all 545 tests → **VERIFIED**
+- `web/tests/pomodoro-party.test.ts` passes all 32 tests across 7 suites → **VERIFIED**
+- `npm run build` succeeds across all 33 routes → **VERIFIED**
+
+### Coverage Gaps
+- Live WebSocket latency under 100+ concurrent users: Cannot test without live Supabase Cloud environment; acceptable risk for Milestone 1 unit/architecture scope.
+
+---
+
+## 5. Caveats
+
+- `verifyRoomPin` currently relies on client-side comparison when using the service abstraction. For production environments with untrusted clients, a PostgreSQL RPC function or row-level column masking can prevent `pin_code` exposure.
+- In-memory mock storage resets on Node process exit (by design for test isolation), while persisting in browser via `localStorage`.
+
+---
+
+## 6. Conclusion
+
+Milestone 1 satisfies all functional, architectural, and quality gate criteria specified in `ORIGINAL_REQUEST.md § R1` and `PROJECT.md`. The database schema, TypeScript types, service layer, and test suite are thoroughly implemented, performant, and type-safe.
+
+The minor findings identified during adversarial stress-testing do not block progress and can be trivially hardened by downstream workers.
+
+**Final Verdict**: **APPROVE**
+
+---
+
+## 7. Verification Method
+
+To independently reproduce and verify this review:
+
+1. **Verify TypeScript type safety**:
    ```powershell
    cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
-   node --experimental-strip-types --test tests/extension-manifest.test.ts tests/extension-bridge.test.ts
-   ```
-   *Kỳ vọng: 55/55 tests PASS.*
-2. Xác minh toàn bộ hệ thống Web App:
-   ```powershell
-   npm test
    npm run typecheck
    ```
-   *Kỳ vọng: 435/435 tests PASS, 0 TypeScript errors.*
-3. Kiểm tra kiểm thử độc lập kịch bản Service Worker rehydration:
-   Bổ sung test case kiểm chứng việc gọi `initializeExtension()` sau khi tạo FSM mới để bảo đảm trạng thái `focusing` được khôi phục thành công từ storage.
+   *Expected*: Code 0, 0 errors.
+
+2. **Verify Pomodoro Party 32 unit & contract tests**:
+   ```powershell
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   node --experimental-strip-types --test tests/pomodoro-party.test.ts
+   ```
+   *Expected*: 32 tests pass, 0 fail.
+
+3. **Verify Full Application Test Suite**:
+   ```powershell
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm test
+   ```
+   *Expected*: 545 tests pass, 0 fail.
+
+4. **Verify Production Build**:
+   ```powershell
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm run build
+   ```
+   *Expected*: Code 0, 33/33 static pages generated.

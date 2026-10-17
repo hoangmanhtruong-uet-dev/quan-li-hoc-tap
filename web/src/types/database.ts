@@ -1488,11 +1488,175 @@ export interface Database {
         };
         Relationships: [];
       };
+      study_rooms: {
+        Row: {
+          id: string;
+          code: string;
+          title: string;
+          subject: string;
+          host_id: string | null;
+          room_type: 'public' | 'private_pin' | 'workspace';
+          pin_code: string | null;
+          workspace_id: string | null;
+          focus_duration_minutes: number;
+          break_duration_minutes: number;
+          current_status: 'waiting' | 'focusing' | 'break';
+          start_time_iso: string | null;
+          end_time_iso: string | null;
+          is_active: boolean;
+          max_participants: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          title: string;
+          subject?: string;
+          host_id?: string | null;
+          room_type?: 'public' | 'private_pin' | 'workspace';
+          pin_code?: string | null;
+          workspace_id?: string | null;
+          focus_duration_minutes?: number;
+          break_duration_minutes?: number;
+          current_status?: 'waiting' | 'focusing' | 'break';
+          start_time_iso?: string | null;
+          end_time_iso?: string | null;
+          is_active?: boolean;
+          max_participants?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          title?: string;
+          subject?: string;
+          host_id?: string | null;
+          room_type?: 'public' | 'private_pin' | 'workspace';
+          pin_code?: string | null;
+          workspace_id?: string | null;
+          focus_duration_minutes?: number;
+          break_duration_minutes?: number;
+          current_status?: 'waiting' | 'focusing' | 'break';
+          start_time_iso?: string | null;
+          end_time_iso?: string | null;
+          is_active?: boolean;
+          max_participants?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'study_rooms_host_id_fkey';
+            columns: ['host_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'study_rooms_workspace_id_fkey';
+            columns: ['workspace_id'];
+            referencedRelation: 'workspaces';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      study_room_members: {
+        Row: {
+          id: string;
+          room_id: string;
+          user_id: string;
+          status: 'focusing' | 'distracted' | 'break';
+          joined_at: string;
+          total_minutes_contributed: number;
+          camera_on: boolean;
+          last_ping_at: string;
+        };
+        Insert: {
+          id?: string;
+          room_id: string;
+          user_id: string;
+          status?: 'focusing' | 'distracted' | 'break';
+          joined_at?: string;
+          total_minutes_contributed?: number;
+          camera_on?: boolean;
+          last_ping_at?: string;
+        };
+        Update: {
+          id?: string;
+          room_id?: string;
+          user_id?: string;
+          status?: 'focusing' | 'distracted' | 'break';
+          joined_at?: string;
+          total_minutes_contributed?: number;
+          camera_on?: boolean;
+          last_ping_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'study_room_members_room_id_fkey';
+            columns: ['room_id'];
+            referencedRelation: 'study_rooms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'study_room_members_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      room_reactions: {
+        Row: {
+          id: string;
+          room_id: string;
+          user_id: string;
+          emoji: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          room_id: string;
+          user_id: string;
+          emoji: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          room_id?: string;
+          user_id?: string;
+          emoji?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'room_reactions_room_id_fkey';
+            columns: ['room_id'];
+            referencedRelation: 'study_rooms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'room_reactions_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      is_study_room_member: {
+        Args: { p_room_id: string };
+        Returns: boolean;
+      };
+      is_study_room_host: {
+        Args: { p_room_id: string };
+        Returns: boolean;
+      };
       is_workspace_member: {
         Args: { p_workspace_id: string };
         Returns: boolean;
@@ -1608,3 +1772,19 @@ export type StudentFocusSessionUpdate = Database['public']['Tables']['student_fo
 export type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row'];
 export type StudentProfileInsert = Database['public']['Tables']['student_profiles']['Insert'];
 export type StudentProfileUpdate = Database['public']['Tables']['student_profiles']['Update'];
+
+export type StudyRoomRow = Database['public']['Tables']['study_rooms']['Row'];
+export type StudyRoomInsert = Database['public']['Tables']['study_rooms']['Insert'];
+export type StudyRoomUpdate = Database['public']['Tables']['study_rooms']['Update'];
+
+export type StudyRoomMemberRow = Database['public']['Tables']['study_room_members']['Row'];
+export type StudyRoomMemberInsert = Database['public']['Tables']['study_room_members']['Insert'];
+export type StudyRoomMemberUpdate = Database['public']['Tables']['study_room_members']['Update'];
+
+export type RoomReactionRow = Database['public']['Tables']['room_reactions']['Row'];
+export type RoomReactionInsert = Database['public']['Tables']['room_reactions']['Insert'];
+export type RoomReactionUpdate = Database['public']['Tables']['room_reactions']['Update'];
+
+export type StudyRoomType = 'public' | 'private_pin' | 'workspace';
+export type StudyRoomStatus = 'waiting' | 'focusing' | 'break';
+export type StudyRoomMemberStatus = 'focusing' | 'distracted' | 'break';

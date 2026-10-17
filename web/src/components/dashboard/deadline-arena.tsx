@@ -302,6 +302,7 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
               {!heroDeadline.completed ? (
                 <div className="flex items-baseline gap-2 font-mono tabular-nums font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight">
                   <span
+                    suppressHydrationWarning
                     className={
                       colorTier === 'red'
                         ? 'text-rose-400'
@@ -310,9 +311,7 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
                         : 'text-aurora-lime'
                     }
                   >
-                    {String(heroRemaining.hours).padStart(2, '0')}:
-                    {String(heroRemaining.minutes).padStart(2, '0')}:
-                    {String(heroRemaining.seconds).padStart(2, '0')}
+                    {`${String(heroRemaining.hours).padStart(2, '0')}:${String(heroRemaining.minutes).padStart(2, '0')}:${String(heroRemaining.seconds).padStart(2, '0')}`}
                   </span>
                   <span className="text-xs uppercase font-sans text-muted-foreground tracking-widest">
                     còn lại
@@ -401,7 +400,7 @@ export function DeadlineArena({ onStartFocus }: DeadlineArenaProps = {}) {
                 </h4>
 
                 {!isDone && (
-                  <p className="mt-2 font-mono text-xs font-semibold text-orange-400">
+                  <p suppressHydrationWarning className="mt-2 font-mono text-xs font-semibold text-orange-400">
                     Còn {itemRemaining.hours}h {itemRemaining.minutes}m
                   </p>
                 )}

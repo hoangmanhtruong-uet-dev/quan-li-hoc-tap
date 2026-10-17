@@ -1,189 +1,156 @@
-# M2 Completion Handoff Report: Dashboard Modular Components & Page Assembly
+# Handoff Report: Pomodoro Party Realtime Study Rooms UI (Lobby, Modals, Dynamic Room, Workspace Panel)
 
 **Agent**: `worker_m2`  
-**Parent Orchestrator**: `orchestrator_7` (`5bd8e140-4c1e-4580-b966-e8064ec8f7d3`)  
-**Milestone**: M2 - Dashboard S1–S7 Complete Rebuild & Page Integration  
-**Target Files Modified & Owned**:
-1. `web/src/components/dashboard/dashboard-hero.tsx` (S1)
-2. `web/src/components/dashboard/today-timeline.tsx` (S2)
-3. `web/src/components/dashboard/deadline-arena.tsx` (S3)
-4. `web/src/components/dashboard/ai-mascot-coach.tsx` (S4)
-5. `web/src/components/dashboard/game-hud-stats.tsx` (S5)
-6. `web/src/components/dashboard/squad-kanban-exam.tsx` (S6)
-7. `web/src/components/dashboard/marquee-daily-wrapped.tsx` (S7)
-8. `web/src/app/(main)/dashboard/page.tsx`
+**Working Directory**: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m2`  
+**Milestone**: M2 - Pomodoro Party Realtime Study Rooms Frontend UI  
+**Target Completion Date**: 2026-10-17  
 
 ---
 
 ## 1. Observation
 
-### 1.1 Pre-existing State & File Ownership Check
-- Before modification, `web/src/components/dashboard/` was empty.
-- `web/src/app/(main)/dashboard/page.tsx` was a static placeholder containing mocked lists and an outdated `campusos-dashboard-v1` localStorage key that was not unified with `campus-store.ts`.
-- `framer-motion`, `@react-three/fiber`, and `canvas-confetti` are NOT present in `web/package.json`. The redesign strictly mandates a zero-lag 120FPS performance profile utilizing GPU CSS transforms, native Canvas2D 1-draw-call rendering, and Web Audio API synthesis without external heavy dependencies.
+### 1.1 Deliverables & Code Modifications
+1. **Lobby Page (`web/src/app/(main)/study/rooms/page.tsx:1-420`)**:
+   - Implemented Cyber-Glass Lobby with hero banner, live HUD stats (`totalOpen`, `activeFocusing`, `breakRooms`, `estimatedOnline`).
+   - 4 Category Filtering Tabs (`all`, `general`, `major`, `workspace`) connected to `filterRoomsByTab`.
+   - Real-time search by title, room code, or subject with status filter chips (`all`, `focusing`, `waiting`, `break`).
+   - Room card grid with 1px neon borders, room code pills, status dots, participant limits, and smart join buttons.
+   - Connected `CreateRoomModal` and `PinEntryModal` with session storage and navigation flow.
 
-### 1.2 Delivered Implementations
-1. **`dashboard-hero.tsx` (S1 Hero "Vũ trụ học tập")**:
-   - Stagger reveal heading ("CHÀO BUỔI SÁNG, MINH.") with neon gradient highlight and accessible screen-reader labels.
-   - Dynamic Vietnamese formatted date ("Thứ Năm, 20 tháng 8 · 3 lớp học · 1 deadline sống còn") reactive to real system date and store items.
-   - 1-draw-call pointer-reactive Canvas2D Aurora blob with streak-speed boost and harmonic urgency red pulsing when urgent deadlines exist.
-   - Rotated `🔥 12` streak sticker with tactile canvas particle burst on click.
-   - Streak Freeze tag ("1 Khiên Freeze bảo vệ") and Level & Rank badge ("Cấp 7: Sinh viên cày thuê").
-   - Mood Check-in (`😴 😐 😎 🔥`) updating `state.dailyMood` and `state.moodTimestamp` in `useCampusStore()`, displaying responsive coach feedback tips.
-   - Voice Brain-Dump button supporting Vietnamese Web Speech API dictation with accessible text modal fallback.
-   - Magnetic CTAs (`+ Thêm nhiệm vụ`, `▶ Bắt đầu phiên học (F)`) with cursor tracking.
+2. **Create Room Modal (`web/src/components/study/create-room-modal.tsx:1-380`)**:
+   - Built Cyber-Glass modal supporting all 3 room types: `public` (Công khai), `private_pin` (Mã PIN bảo mật 6 số), and `workspace` (Gắn với Workspace).
+   - Form inputs for title, subject, optional custom/random code, 6-digit PIN input with random PIN generator, focus duration (25/45/50/60/90m), break duration (5/10/15m), and max participants.
+   - Accessible dialog (`role="dialog"`, `aria-modal="true"`, `Escape` key dismissal, focus management).
 
-2. **`today-timeline.tsx` (S2 "Hôm nay" Timeline)**:
-   - Horizontal scrollable/draggable class timeline with mouse drag-to-scroll, grab cursors, and chevron controls.
-   - Real-time "now" clock line & indicator bead ticking `HH:MM:SS` every second.
-   - Active class card with neon pulsing border and live elapsed progress bar based on current system time vs class start/end.
-   - Live countdown badge on upcoming classes ("Bắt đầu sau X phút").
-   - 3D perspective tilt hover cards (`perspective(800px) rotateX/rotateY`) with quick action modals (`Vào lớp`, `Mở tài liệu`, `Ghi chú nhanh`).
+3. **PIN Entry Modal (`web/src/components/study/pin-entry-modal.tsx:1-215`)**:
+   - 6-digit formatted numeric PIN input with `tracking-[0.5em] font-mono`.
+   - Instant auto-verification upon entering 6 digits using `verifyRoomPin`.
+   - Visual feedback: panic shake animation and clear error message on incorrect PIN.
 
-3. **`deadline-arena.tsx` (S3 Deadline Arena)**:
-   - Asymmetric Bento grid layout with prominent Hero Bento cell for the most urgent deadline.
-   - Giant live `HH:MM:SS` countdown ticking every second with dynamic color shifting (`lime → orange → red`).
-   - Panic shake mode (`animate-panic-shake`) triggered when deadline is under 3 hours (`diff < 3 * 3600 * 1000`).
-   - SVG checkmark draw completion circle (`✓`), canvas confetti burst, and floating `+50 XP` notification.
-   - Awards XP and updates deadline completion in `useCampusStore()`.
+4. **Dynamic Realtime Study Room (`web/src/app/(main)/study/rooms/[code]/page.tsx:1-550`)**:
+   - PIN Authentication Gate: guards private rooms, checks query parameters and `sessionStorage`, displays locked gate UI when unauthenticated.
+   - Synchronized countdown timer with `MM:SS` display and server timestamp offset calculation via `calculateRemainingSeconds`.
+   - Silent Focus Discipline: during `focusing` phase, chat input is strictly locked/disabled and floating reaction buttons (🔥, 👏, ❤️, 💪, ⚡) trigger upward animated particles. During `break` phase, chat unlocks for team discussion.
+   - Public Shame Protocol (Cơ chế Bêu Tên Kẻ Bỏ Cuộc): prominent banner alerting that a member has been distracted/left with `-50 XP` penalty, danger flash red border, and Web Audio siren sound. Includes interactive "🚨 Thử Bêu Tên" simulation button.
+   - Virtual Member Grid: Cyber-Glass holographic member cards showing focus status (🟢 Tập trung, 🔴 Phân tâm, 🟡 Giải lao), camera/mic status, and contributed minutes.
 
-4. **`ai-mascot-coach.tsx` (S4 AI Mascot Coach "Squad")**:
-   - Animated SVG mascot (Kubi) with cursor-tracking pupils (clamped vector angles), natural blinking cycle, and mood expressions (sleepy droop/Zzz, cool shades, fire energetic pupils, neutral).
-   - Tap/poke Easter egg on mascot with spring bounce and humorous Gen Z quotes.
-   - Typewriter chat proposal with char-by-char streaming and fast-forward click affordance.
-   - Quick adjustment chips (`Mặc định (45p)`, `Dời xuống tối`, `Ngắn hơn 25p`, `Ôn kiểu flashcard`).
-   - `Chấp nhận kế hoạch`: commits study block directly to `state.events` and sets `aiCoachAccepted: true` in `useCampusStore()`.
+5. **Workspace Study Room Panel (`web/src/components/study/workspace-study-room-panel.tsx:1-255`)**:
+   - Loads dedicated workspace room using `listStudyRooms({ workspace_id: workspaceId })`.
+   - Provides 1-click room activation button if none exists.
+   - Displays dedicated room card, live countdown status, online member presence, and direct full-screen entry link.
 
-5. **`game-hud-stats.tsx` (S5 Stats & Goal "Game HUD")**:
-   - Weekly study goal radial ring (`8.5 / 12 giờ`, 71% progress) with count-up animation and liquid gradient stroke.
-   - XP bar and level progression bound to `gamification.ts` (Level 7 "Sinh viên cày thuê", 2840 XP, xpToNextLevel 760).
-   - 12-week GitHub study streak heatmap (7 rows x 12 columns = 84 days) with hover tooltips and current day highlight ring.
-   - "Môn cần chú ý" warning sticker (`-1.5°` rotated) for MAT202 with animated SVG grade sparkline (grades [8.2, 7.8, 7.5, 6.8, 6.2, 6.0], target 7.0 dashed line, and CTA `Luyện đề bù ngay`).
+6. **Workspace Tab 5 Integration (`web/src/app/(main)/workspaces/[workspaceId]/page.tsx:15-28, 52, 150-163, 225, 284-289`)**:
+   - Added `study_room` as the 5th tab with `Timer` icon and `'LIVE'` badge.
+   - Added quick hero CTA button `"Vào phòng học nhóm (Pomodoro Party)"` to switch directly to the study room tab.
+   - Renders `<WorkspaceStudyRoomPanel workspaceId={workspaceId} workspaceName={workspace.name} />`.
 
-6. **`squad-kanban-exam.tsx` (S6 Squad Kanban & Upcoming Exams)**:
-   - 3-column interactive mini Kanban (`Đang làm`, `Chờ review`, `Đã xong`) with native HTML5 drag-and-drop, touch/arrow button controls, and quick task creation.
-   - Stacked member avatars with initial badges and tooltips.
-   - Squad Leaderboard (weekly study hours ranking, user rank, streak, level, progress bars).
-   - `👉 Poke` button with Web Audio API chime (`880Hz -> 1320Hz`), in-app toast notification, and 8s cooldown.
-   - Concert-Ticket Upcoming Exam card with perforated notches (`-left-3` / `-right-3`), live countdown days/hours/minutes/seconds, and prep progress bar.
-   - `✨ Tạo đề cương AI` modal with 4-week structured syllabus, markdown copy, and "Thêm buổi học vào Lịch" button.
+7. **Unit Test Suite (`web/tests/study-rooms-ui.test.ts:1-205`)**:
+   - Added 6 comprehensive test suites verifying room tab partitioning, PIN verification, remaining seconds calculation, code generation, workspace tab declarations, and page component existence.
 
-7. **`marquee-daily-wrapped.tsx` (S7 Marquee Footer & Daily Wrapped)**:
-   - Dual-direction infinite Gen Z study quote marquee (`animate-marquee-left` and `animate-marquee-right`), paused on hover, with smooth reduced-motion fallback.
-   - `Chốt ngày hôm nay` CTA opening Spotify-Wrapped-style Daily Wrapped 5-slide story modal.
-   - 5-slide story with auto-advance (5s), pause on press/hold, left/right navigation, and keyboard shortcuts (Space, ArrowLeft, ArrowRight, Escape).
-   - Shareable Holographic Trading Card preview with `📋 Sao chép tóm tắt flex` and `✨ Chốt sổ (+50 XP Thưởng)`.
-
-8. **`web/src/app/(main)/dashboard/page.tsx` (Page Assembly)**:
-   - Assembles S1–S7 in cohesive Neo-Brutal Aurora layout with ambient GPU CSS glow blobs and 4% noise overlay.
-   - Dynamic imports for heavy overlay modals (`StrictPomodoroModal`, `CommandPalette`, `KeyboardShortcutsModal`) with `{ ssr: false }`.
-   - Wired focus triggers across sections to launch `StrictPomodoroModal`, syncing completed session minutes and XP via `recordSession()`.
-   - Integrated global keyboard shortcuts (`N`, `Cmd+K`, `?`, `F`) and custom window event listeners.
-
----
-
-## 2. Logic Chain
-
-1. **Store Synchronization**:
-   - All components subscribe to and update `useCampusStore()`.
-   - Adding a task or deadline in S1, S3, or S6 immediately updates `state.deadlines` or `state.kanbanTasks`.
-   - Accepting an AI study plan in S4 inserts a `study` event into `state.events`, which immediately shows up in S2 Today's Timeline and the shared calendar.
-   - Completing a deadline in S3 awards +50 XP, updates `state.deadlines`, and triggers floating XP + confetti.
-   - Completing a focus session in `StrictPomodoroModal` calls `recordSession(minutes, disciplineScore)`, persisting XP, Level, and Streak into localStorage (`campusos-shared-v2`).
-
-2. **120FPS Performance & Zero Bundle Bloat**:
-   - Replaced any theoretical external animation dependencies with lightweight GPU-accelerated CSS transforms (`transform`, `opacity`), 1-draw-call Canvas2D shaders, and Web Audio API oscillators.
-   - Used Next.js `dynamic(..., { ssr: false })` for heavy overlay modals so initial bundle size of `/dashboard` is kept at a lean 34.6 kB.
-   - All animated components check `state.reducedMotion` and OS motion preferences, substituting static accessible layouts when enabled.
-
-3. **Hydration Safety**:
-   - Dynamic timers, clock beads, and canvas loops are initialized inside `useEffect` or behind `mounted` flags, preventing SSR mismatch.
-
----
-
-## 3. Caveats
-
-- **Speech Recognition Support**: Web Speech API is native to Chromium browsers (Chrome, Edge). On browsers without speech support, the voice button opens the accessible modal fallback, allowing users to type or paste tasks seamlessly.
-- **Audio Autoplay**: The Web Audio chime in the Poke feature is triggered strictly inside user click events (`handlePoke`), conforming to browser autoplay security policies.
-
----
-
-## 4. Conclusion
-
-All 7 modular dashboard components and the dashboard page assembly have been fully implemented with real state, genuine interactive logic, and high-fidelity Neo-Brutal Aurora aesthetics. All 3 verification gates (`npm test`, `npm run typecheck`, and `npm run build`) exited with code 0.
-
----
-
-## 5. Verification Method
-
-### 5.1 Verification Commands Run
-```powershell
-# Directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
-
-# 1. Unit Test Suite (33 pass, 0 fail)
-npm test
-
-# 2. TypeScript Validation (0 errors)
-npm run typecheck
-
-# 3. Next.js Production Build (34/34 routes successfully generated)
-npm run build
-```
-
-### 5.2 Command Output Verbatim
-- **`npm test`**:
-  ```
-  ✔ Gamification: 10 levels exist and mandatory rank titles match (1.0886ms)
-  ✔ Gamification: getLevelInfo resolves correct tiers (0.1908ms)
-  ✔ Gamification: calculateLevelProgress handles progression and max level (0.17ms)
-  ✔ Gamification: Streak and freeze shield rules (0.2536ms)
-  ✔ Gamification: calculateSessionXp formula (0.1767ms)
-  ✔ Calendar Math: time to minutes conversion (0.1634ms)
-  ✔ Calendar Math: computeDailyLoadScore thresholds and levels (0.3773ms)
-  ✔ Calendar Math: detectConflicts finds overlaps and suggestions (0.5232ms)
-  ✔ NLP: parses "ôn xác suất 19h thứ 6 tại thư viện" (2.5413ms)
-  ✔ NLP: parses "họp nhóm lab 14h30 ngày mai" (0.7402ms)
-  ✔ NLP: parses explicit date and exam keyword "thi cuối kỳ toán rời rạc 08:00 ngày 25/11" (0.3656ms)
-  ✔ ICS: serializes and parses back with roundtrip fidelity (0.8507ms)
-  ✔ Auto-Scheduler: proposes valid study blocks before deadlines without overloading (0.5428ms)
-  ✔ Campus Store: createDefaultSharedState anchors to reference date correctly (0.5965ms)
-  ✔ Empirical Stress: createDefaultSharedState anchors relative dates dynamically across edge cases (2.7663ms)
-  ✔ Empirical Stress: formatIsoDateOnly leap year & month rollover correctness (0.1443ms)
-  ✔ Empirical Stress: calculateSessionXp boundary conditions (0.1707ms)
-  ✔ Empirical Stress: recordCompletedSession updates XP, Level, and Badges in shared store (0.6733ms)
-  ✔ Empirical Stress: recordCompletedSession streak preservation and freeze deduction (0.2385ms)
-  ✔ Empirical Stress: recordCompletedSession streak reset when 0 freezes available (0.1836ms)
-  ✔ Empirical Stress: Level and Rank transitions across all 10 tiers (0.1741ms)
-  ✔ Empirical Stress: daysDifference handles pure YYYY-MM-DD vs edge cases (0.161ms)
-  ✔ Empirical Stress: Keyboard event handling rules in global shortcuts (0.4108ms)
-  ✔ Empirical Stress: Audit modal keyboard and focus trapping contracts (8.2503ms)
-  ✔ SupervisorArbiter cho phép mắng lần đầu và áp dụng cooldown (2.0017ms)
-  ✔ SupervisorArbiter tôn trọng thời gian miễn trừ (Tôi đang tra tài liệu) (0.4368ms)
-  ✔ SupervisorArbiter tính điểm kỷ luật chính xác theo số lần vi phạm (0.3512ms)
-  ✔ OWNER has every workspace permission (0.742ms)
-  ✔ VIEWER is read-only (0.1346ms)
-  ✔ MEMBER and MANAGER cannot manage roles (0.1367ms)
-  ✔ ADMIN can manage non-owner roles but cannot change or grant OWNER (0.0935ms)
-  ✔ only the five approved workspace roles exist (0.6529ms)
-  ✔ the final OWNER cannot be demoted or removed (0.1268ms)
-  ℹ tests 33
-  ℹ suites 0
-  ℹ pass 33
-  ℹ fail 0
-  ```
+### 1.2 Verification Outputs
 - **`npm run typecheck`**:
   ```
   > campusos-web@0.1.0 typecheck
   > tsc --noEmit
-  # Exited with code 0 (0 errors)
+  Exit code: 0 (0 errors)
+  ```
+- **`npm test`**:
+  ```
+  ℹ tests 603
+  ℹ suites 54
+  ℹ pass 603
+  ℹ fail 0
+  ℹ duration_ms 3085.6ms
+  Exit code: 0 (100% pass)
   ```
 - **`npm run build`**:
   ```
   ✓ Compiled successfully
   ✓ Generating static pages (34/34)
-  Finalizing page optimization ...
-  Route (app)                               Size     First Load JS
-  ├ ƒ /dashboard                           34.6 kB         138 kB
-  + First Load JS shared by all            87.3 kB
-  # Exited with code 0 (0 build errors)
+  ├ ƒ /study/rooms                                              9.7 kB          175 kB
+  ├ ƒ /study/rooms/[code]                                       9.8 kB          175 kB
+  └ ƒ /workspaces/[workspaceId]                                 16.4 kB         189 kB
+  Exit code: 0 (100% pass)
   ```
+
+---
+
+## 2. Logic Chain
+
+1. **Adherence to Requirements & Survey Specifications**:
+   - Original request `2026-10-17T04:34:11Z` and `DISPATCH.md` required building the Lobby page (`/study/rooms`), `create-room-modal.tsx`, `pin-entry-modal.tsx`, dynamic room page (`/study/rooms/[code]`), and `workspace-study-room-panel.tsx` integrated as the 5th tab in `/workspaces/[workspaceId]/page.tsx`.
+   - By creating all 5 required UI modules with full TypeScript types and genuine state binding to `study-rooms-service.ts`, all user and architectural requirements are satisfied.
+
+2. **Cyber-Glass Design System & Accessibility**:
+   - Following `design-taste-frontend` and `web-design-guidelines`:
+     - Applied standard Cyber-Glass recipe: `rounded-3xl border border-white/10 bg-card/40 backdrop-blur-2xl shadow-2xl` with corner radial glows.
+     - Semantic neon accents: Cyan for general rooms, Lime for active focus and XP, Amber for private PIN rooms, Rose for shame penalty warnings, Purple for workspace binding.
+     - Accessible modals with `role="dialog"`, `aria-modal="true"`, `Escape` listener, and focus trapping.
+     - Single-line CTA buttons with WCAG AA compliant text contrast.
+
+3. **Discipline Mechanisms (Silent Focus & Shame Banner)**:
+   - When in `focusing` state: Chat is locked with clear visual indication, while 5 floating reaction emojis are available for non-distracting encouragement.
+   - When a member is distracted (`status === 'distracted'`), the stage enters a danger flash state with a public shame banner and procedural audio feedback.
+
+4. **Zero-Defect Quality Gates**:
+   - Fixed an initial TypeScript index check in `workspace-study-room-panel.tsx`.
+   - Fixed a test fixture collision in `study-rooms-ui.test.ts`.
+   - Full test run verified: 603 tests pass (100%), typecheck 0 errors, production build succeeds across all 34 routes.
+
+---
+
+## 3. Caveats
+
+- **Audio Autoplay Gestures**:
+  - Web Audio Context requires a user gesture before playing audio. `pomodoroAudio.unlock()` is triggered on user clicks (reactions, start session, test penalty) to ensure sirens and chimes play reliably.
+- **Realtime Channel Latency**:
+  - In environments where Supabase Cloud credentials are not configured, the service layer operates in offline-resilient mode using in-memory state and localStorage, guaranteeing 100% test and build pass.
+
+---
+
+## 4. Conclusion
+
+All 6 assigned tasks for Worker M2 are completely implemented, verified, and passing:
+1. `/study/rooms` Lobby page with Cyber-Glass UI, HUD stats bar, 4 category filtering tabs, search, and room cards.
+2. `create-room-modal.tsx` with all 3 room types (Public, 6-digit PIN, Workspace-bound) and validation.
+3. `pin-entry-modal.tsx` with formatted 6-digit input and instant verification.
+4. `/study/rooms/[code]` dynamic room page with PIN gate, synchronized countdown timer, Silent Focus discipline, floating reactions, break chat, and public shame banner.
+5. `workspace-study-room-panel.tsx` with 1-click dedicated room creation and member preview.
+6. Embedded as the 5th tab `study_room` in `web/src/app/(main)/workspaces/[workspaceId]/page.tsx` with quick hero CTA.
+7. Verification passed cleanly: `npm run typecheck` (0 errors), `npm test` (603/603 passed), `npm run build` (34/34 routes generated).
+
+---
+
+## 5. Verification Method
+
+To independently verify the implementation:
+
+1. **Verify TypeScript Types**:
+   ```powershell
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm run typecheck
+   ```
+   *Expected result*: Exit code 0, 0 errors.
+
+2. **Verify Test Suite**:
+   ```powershell
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm test
+   ```
+   *Expected result*: 603 passing tests across 54 suites, 0 failures.
+
+3. **Verify Next.js Production Build**:
+   ```powershell
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm run build
+   ```
+   *Expected result*: All 34 static and dynamic routes compile cleanly, including `/study/rooms`, `/study/rooms/[code]`, and `/workspaces/[workspaceId]`.
+
+4. **Inspect Source Files**:
+   - `web/src/app/(main)/study/rooms/page.tsx`
+   - `web/src/components/study/create-room-modal.tsx`
+   - `web/src/components/study/pin-entry-modal.tsx`
+   - `web/src/app/(main)/study/rooms/[code]/page.tsx`
+   - `web/src/components/study/workspace-study-room-panel.tsx`
+   - `web/src/app/(main)/workspaces/[workspaceId]/page.tsx`
+   - `web/tests/study-rooms-ui.test.ts`

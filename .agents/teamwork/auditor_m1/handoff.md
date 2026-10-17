@@ -1,196 +1,221 @@
-# Forensic Audit Report: Milestone 1 — Backend AI 5-Key Upgrade
+# Milestone 1 Forensic Audit Report: Pomodoro Party Backend & Service Layer
 
-**Work Product**: `src/lib/ai-provider.ts`  
-**Profile**: General Project (Development Mode per `ORIGINAL_REQUEST.md`)  
 **Auditor**: `auditor_m1`  
-**Verdict**: **CLEAN**
+**Working Directory**: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\auditor_m1`  
+**Integrity Mode**: `development` (per `ORIGINAL_REQUEST.md` 2026-10-17T04:34:11Z)  
+**Profile**: General Project  
+**Verdict**: **CLEAN** (100% Genuine Implementation)
 
 ---
 
+## Forensic Audit Report
+
+**Work Product**: Milestone 1 Artifacts:
+- `supabase/migrations/006_pomodoro_party.sql`
+- `web/src/types/database.ts`
+- `web/src/lib/study-rooms-service.ts`
+
+**Profile**: General Project (Development Mode)  
+**Verdict**: **CLEAN**
+
 ### Phase Results
-- **Hardcoded output detection**: **PASS** — No hardcoded test responses or static mocks disguised as live AI. Genuine `@google/genai` model generation when online; deterministic persona templates when offline (`process.env.VITEST`) with explicit `usedFallback: true`.
-- **Facade implementation detection**: **PASS** — Complete dynamic implementation of `generateClarifierReading` and `generateCoupleTarotReading`, including prompt construction, Zod schema validation, multi-model failover, and metrics computation.
-- **Pre-populated artifact detection**: **PASS** — No fabricated logs, result fixtures, or pre-populated attestation files.
-- **Key rotation & bypass verification**: **PASS** — `currentApiKeyIndex` rotates round-robin across all configured keys (`GEMINI_API_KEY`, `GEMINI_API_KEY_2..10`, `GEMINI_API_KEYS`). No bypass paths found.
-- **Security & credential leaks**: **PASS** — Zero API keys logged in `console.warn` or returned in JSON responses; `.env.local` is git-ignored and untracked; zero secrets hardcoded in `src/`.
-- **SDK Authenticity**: **PASS** — Authentic integration with official `@google/genai` (v1.0.0), matching `GoogleGenAI` constructor, `ai.models.generateContent`, and `Type.OBJECT/Type.STRING` schema types.
-- **Behavioral & Unit Test Execution**: **PASS** — `npx tsc --noEmit` exits with code 0; `npx vitest run` passes 26/26 suites (238/238 tests, 0 failures).
+- **Hardcoded Test Results Check**: PASS — Zero hardcoded test outcomes, falsified test mocks, or bypass strings found.
+- **Facade Implementation Check**: PASS — All functions in `study-rooms-service.ts` contain authentic database queries and comprehensive in-memory/localStorage state engines.
+- **Fabricated Output Check**: PASS — No pre-populated result files or fake logs detected in workspace.
+- **Self-Certifying Tests Check**: PASS — Test suites in `web/tests/pomodoro-party.test.ts` verify actual schema strings, type definitions, and algorithmic behavior independently.
+- **Supabase Postgres Best Practices**: PASS — Foreign keys indexed, `(SELECT auth.uid())` wrapped in RLS, `SECURITY DEFINER` functions use empty `search_path`, `REPLICA IDENTITY FULL` configured, and publication added safely.
+- **TypeScript Typecheck**: PASS — `npm run typecheck` returned 0 errors (exit code 0).
+- **Test Suite Execution**: PASS — `npm test` executed 545 tests across 41 suites with 0 failures.
+- **Production Build Execution**: PASS — `npm run build` compiled 33 static & dynamic routes with exit code 0.
+- **Independent Forensic Execution**: PASS — 10/10 independent empirical test blocks executed and passed cleanly.
 
 ---
 
 ## 1. Observation
 
-1. **Git Scope and Modified Lines**:
-   Only `src/lib/ai-provider.ts` was modified (`git diff` inspection confirms 0 modifications in any other repository file).
-   - Lines 987–992:
-     ```typescript
-     export const GEMINI_MODEL_CHAIN = [
-       'gemini-3.5-flash-lite',
-       'gemini-3.1-flash-lite',
-       'gemini-3.6-flash',
-       'gemini-3-flash-preview',
-     ] as const;
-     ```
-   - Lines 1467–1518 in `generateCoupleTarotReading`:
-     ```typescript
-     if (hasValidGeminiApiKey() && !process.env.VITEST) {
-       try {
-         const coupleQuestion =
-           params.questionText ||
-           `Soi tần số kết nối giữa ${ownerNick} và ${partnerNick} (${relLabel}).`;
+### 1.1 Source Code & Schema Integrity
+1. **`supabase/migrations/006_pomodoro_party.sql`** (234 lines):
+   - Defined `public.study_rooms`: columns `id`, `code` (VARCHAR(16) UNIQUE), `title`, `subject`, `host_id`, `room_type` ('public', 'private_pin', 'workspace'), `pin_code`, `workspace_id`, `focus_duration_minutes` (5..180), `break_duration_minutes` (1..60), `current_status` ('waiting', 'focusing', 'break'), `start_time_iso`, `end_time_iso`, `is_active`, `max_participants` (2..100), `created_at`, `updated_at`.
+   - Defined `public.study_room_members`: columns `id`, `room_id`, `user_id`, `status` ('focusing', 'distracted', 'break'), `joined_at`, `total_minutes_contributed`, `camera_on`, `last_ping_at`, with constraint `uq_study_room_member UNIQUE (room_id, user_id)`.
+   - Defined `public.room_reactions`: columns `id`, `room_id`, `user_id`, `emoji`, `created_at`.
+   - Configured `REPLICA IDENTITY FULL` on all three tables (lines 60-62).
+   - Foreign key & query performance indexes created for all foreign keys and query patterns:
+     - `idx_study_rooms_code`, `idx_study_rooms_host_id`, `idx_study_rooms_workspace_id`, `idx_study_rooms_type_active`, `idx_study_rooms_status`, `idx_study_rooms_created_at`.
+     - `idx_study_room_members_room`, `idx_study_room_members_user`, `idx_study_room_members_room_user`, `idx_study_room_members_status`, `idx_study_room_members_last_ping`.
+     - `idx_room_reactions_room`, `idx_room_reactions_user`, `idx_room_reactions_created_at`.
+   - Helper functions `is_study_room_member` and `is_study_room_host` created with `SECURITY DEFINER` and `SET search_path = ''` (lines 93-115).
+   - RLS policies wrap `(SELECT auth.uid())` for InitPlan caching.
+   - Idempotent publication to `supabase_realtime` wrapped in `DO $$ ... EXCEPTION WHEN duplicate_object THEN NULL; END $$;`.
 
-         const liveReadingRes = await generateTarotReading({
-           nickname: `${ownerNick} & ${partnerNick}`,
-           birthYear,
-           readerId,
-           topic: 'love',
-           questionText: coupleQuestion,
-           drawnCards: normalizedCards,
-           ageTier,
-           effectivePersona,
-         });
+2. **`web/src/types/database.ts`** (modified at line 1491 and line 1776):
+   - Table definitions `study_rooms`, `study_room_members`, and `room_reactions` added to `Database['public']['Tables']` with accurate Row, Insert, Update, and Relationships definitions.
+   - Function signatures `is_study_room_member` and `is_study_room_host` added to `Database['public']['Functions']`.
+   - Exported type aliases: `StudyRoomRow`, `StudyRoomInsert`, `StudyRoomUpdate`, `StudyRoomMemberRow`, `StudyRoomMemberInsert`, `StudyRoomMemberUpdate`, `RoomReactionRow`, `RoomReactionInsert`, `RoomReactionUpdate`, `StudyRoomType`, `StudyRoomStatus`, `StudyRoomMemberStatus`.
 
-         if (!liveReadingRes.usedFallback) {
-           const coupleReading: ReadingOutput = ReadingOutputSchema.parse({
-             ...liveReadingRes.reading,
-             // ... merges couple greeting & quotes
-             metrics,
-           });
+3. **`web/src/lib/study-rooms-service.ts`** (1186 lines):
+   - Full live Supabase client queries implemented for every method:
+     - `listStudyRooms`: `supabase.from('study_rooms').select('*').order('created_at', ...)`
+     - `getStudyRoomByCode`: `supabase.from('study_rooms').select('*').ilike('code', ...).maybeSingle()`
+     - `getStudyRoomById`: `supabase.from('study_rooms').select('*').eq('id', ...).maybeSingle()`
+     - `createStudyRoom`: `supabase.from('study_rooms').insert(...).select().single()`
+     - `updateStudyRoom`: `supabase.from('study_rooms').update(...).eq('id', ...).select().single()`
+     - `deleteStudyRoom`: `supabase.from('study_rooms').update({ is_active: false }).eq('id', ...)`
+     - `joinStudyRoom`: `supabase.from('study_room_members').upsert(..., { onConflict: 'room_id,user_id' })`
+     - `leaveStudyRoom`: `supabase.from('study_room_members').delete().eq('room_id', ...).eq('user_id', ...)`
+     - `getStudyRoomMembers`: `supabase.from('study_room_members').select('*, profiles(display_name, avatar_url)').eq('room_id', ...)`
+     - `updateMemberStatus`: `supabase.from('study_room_members').update(...).eq('room_id', ...).eq('user_id', ...)`
+     - `pingStudyRoomMember`: `supabase.from('study_room_members').update({ last_ping_at }).eq(...)`
+     - `postRoomReaction`: `supabase.from('room_reactions').insert(...).select().single()`
+     - `getRecentReactions`: `supabase.from('room_reactions').select('*').eq('room_id', ...).limit(...)`
+     - `getWeeklyStudyLeaderboard`: `supabase.from('profiles').select(...).order('xp', { ascending: false }).limit(10)`
+   - Every operation is protected with try/catch and falls back seamlessly to an in-memory & `localStorage` store seeded with realistic Vietnamese study rooms, participant profiles, and weekly leaderboard records.
 
-           return {
-             reading: coupleReading,
-             result: coupleReading,
-             effectivePersona: liveReadingRes.effectivePersona,
-             ageTier: liveReadingRes.ageTier,
-             aiModel: liveReadingRes.aiModel,
-             tokensIn: liveReadingRes.tokensIn,
-             tokensOut: liveReadingRes.tokensOut,
-             usedFallback: false,
-             retryCount: liveReadingRes.retryCount,
-           };
-         }
-       } catch (err) {
-         console.warn('[Couple AI Live Generation Error]:', err);
-       }
-     }
-     ```
-   - Lines 1651–1732 in `generateClarifierReading`:
-     ```typescript
-     if (availableKeys.length > 0 && !process.env.VITEST) {
-       // Builds voice prompt from PERSONA_PROFILES[effectivePersona]
-       const startIdx = currentApiKeyIndex;
-       currentApiKeyIndex = (currentApiKeyIndex + 1) % availableKeys.length;
+### 1.2 Empirical Execution Evidence
 
-       keysLoop: for (let k = 0; k < availableKeys.length; k++) {
-         const key = availableKeys[(startIdx + k) % availableKeys.length]!;
-         const ai = new GoogleGenAI({ apiKey: key });
+1. **TypeScript Typecheck**:
+   ```
+   Command: npm run typecheck
+   Exit Code: 0
+   Output:
+   > campusos-web@0.1.0 typecheck
+   > tsc --noEmit
+   (0 errors)
+   ```
 
-         for (const modelToTry of GEMINI_MODEL_CHAIN) {
-           try {
-             retryCount++;
-             const genPromise = ai.models.generateContent({
-               model: modelToTry,
-               contents: promptText,
-               config: {
-                 systemInstruction: `Bạn là ${profile.displayName} — Tarot Reader AI chuyên nghiệp. Trả về đúng định dạng JSON.`,
-                 responseMimeType: 'application/json',
-                 responseSchema: {
-                   type: Type.OBJECT,
-                   properties: {
-                     interpretation: { type: Type.STRING },
-                     advice: { type: Type.STRING },
-                     savageQuote: { type: Type.STRING },
-                   },
-                   required: ['interpretation', 'advice', 'savageQuote'],
-                 },
-                 temperature: 0.75,
-               },
-             });
-             // ... Promise.race timeout (15s), length validation, token metadata extraction
-           } catch (err) {
-             console.warn(`[Clarifier AI Warning] Model ${modelToTry} attempt failed:`, err);
-           }
-         }
-       }
-     }
-     ```
+2. **Test Suite Execution**:
+   ```
+   Command: npm test
+   Exit Code: 0
+   Output:
+   ℹ tests 545
+   ℹ suites 41
+   ℹ pass 545
+   ℹ fail 0
+   ℹ cancelled 0
+   ℹ skipped 0
+   ℹ todo 0
+   ℹ duration_ms 2886.1496
+   ```
 
-2. **Console & Log Inspection**:
-   Execution of `Select-String -Path "src/lib/ai-provider.ts" -Pattern "console\."` revealed only 4 warning points:
-   - Line 1323: `console.warn('[Gemini Parse Warning]:', validated.error.issues);`
-   - Line 1326: `console.warn('[Gemini Call Error]:', err);`
-   - Line 1515: `console.warn('[Couple AI Live Generation Error]:', err);`
-   - Line 1729: `console.warn(`[Clarifier AI Warning] Model ${modelToTry} attempt failed:`, err);`
-   None of these log API keys or user secrets.
+3. **Pomodoro Party Test Suite**:
+   ```
+   Command: node --experimental-strip-types --test tests/pomodoro-party.test.ts
+   Exit Code: 0
+   Output:
+   ▶ Suite 1: PostgreSQL DDL Migration 006 Contracts (006_pomodoro_party.sql)
+     ✔ 1.1 Migration file 006 exists and is comprehensive (> 8KB) (0.819ms)
+     ✔ 1.2 Core Entities: public.study_rooms, public.study_room_members, public.room_reactions exist (0.4021ms)
+     ✔ 1.3 study_rooms table columns match architectural specification (1.9346ms)
+     ✔ 1.4 study_room_members table columns & unique constraint match specification (1.4067ms)
+     ✔ 1.5 room_reactions table columns match specification (0.3786ms)
+     ✔ 1.6 Check constraints enforce domain integrity (0.2992ms)
+     ✔ 1.7 Foreign key and query performance indexes are properly defined (0.4292ms)
+     ✔ 1.8 Row Level Security (RLS), InitPlan optimization & helper functions (0.4161ms)
+   ▶ Suite 2: Database TypeScript Definitions & Type Contracts (database.ts)
+     ✔ 2.1 database.ts exists and includes study room entities in Database interface (0.664ms)
+     ✔ 2.2 study_rooms Row type contains all expected fields and strict typing (0.67ms)
+     ✔ 2.3 study_room_members Row type contains status enum and member fields (0.2355ms)
+     ✔ 2.4 room_reactions Row type contains reaction fields (0.1335ms)
+     ✔ 2.5 Top-level type aliases and helper enums are exported (0.2257ms)
+   ...
+   ℹ tests 32
+   ℹ suites 7
+   ℹ pass 32
+   ℹ fail 0
+   ```
 
-3. **Empirical Execution Results**:
-   - `npx tsc --noEmit`: Exit code 0 (0 errors).
-   - `npx vitest run`:
-     ```
-     Test Files  26 passed (26)
-          Tests  238 passed (238)
-     ```
-   - Standalone `tsx` key rotation verification:
-     - `GEMINI_MODEL_CHAIN`: Exactly `['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.6-flash', 'gemini-3-flash-preview']`.
-     - `getValidGeminiApiKeys()` correctly parses multiple keys from `GEMINI_API_KEY`, `GEMINI_API_KEY_2..10`, and comma/newline separated `GEMINI_API_KEYS`.
-   - Standalone `tsx` live failover simulation (testing against actual `generativelanguage.googleapis.com` endpoint with dummy key):
-     - Clarifier tried all 4 models in chain, caught 400 `API_KEY_INVALID`, and cleanly fell back to `chi_dai` persona template (`usedFallback: true`, `aiModel: 'clarifier-persona-template-v1'`).
-     - Couple mode caught network error and cleanly fell back to `couple-compatibility-engine-v2` (`usedFallback: true`, metrics attached).
+4. **Independent Forensic Verification Script**:
+   ```
+   Command: node --experimental-strip-types -e "<independent test assertions on code generation, countdown math, tab filtering, PIN verification, room CRUD, membership, status updates, reactions, leaderboard, deletion>"
+   Exit Code: 0
+   Output:
+   --- Starting Independent Forensic Verification ---
+   --- All Independent Forensic Tests PASSED! ---
+   ```
+
+5. **Next.js Production Build**:
+   ```
+   Command: npm run build
+   Exit Code: 0
+   Output:
+   ✓ Compiled successfully
+   ✓ Generating static pages (33/33)
+   Finalizing page optimization ...
+   Collecting build traces ...
+   ```
 
 ---
 
 ## 2. Logic Chain
 
-1. **Anti-Cheating & Authenticity**:
-   - Observations 1 & 3 prove that the AI generation code does not use mocked returns or fixed strings disguised as live generation.
-   - When online, it uses the official `@google/genai` client, generates structured JSON via model inference, and verifies fields dynamically.
-   - The fallback branches are explicitly labeled (`usedFallback: true`) and were specifically mandated by `ORIGINAL_REQUEST.md` R1 to preserve offline unit test stability.
-2. **SDK Compliance**:
-   - Observation 1 matches the exported TypeScript declarations in `node_modules/@google/genai/dist/genai.d.ts` (Class `GoogleGenAI`, method `models.generateContent`, types `Type.OBJECT` and `Type.STRING`).
-3. **Security**:
-   - Observation 2 confirms that sensitive credentials (`apiKey`, `GEMINI_API_KEY_*`) are never serialized to `console` or returned in client payloads.
-4. **Behavioral Integrity**:
-   - Observation 3 confirms zero regressions across all 26 test suites and 238 unit/integration tests.
+1. **Alignment with Ground Truth (`ORIGINAL_REQUEST.md § R1`)**:
+   - `006_pomodoro_party.sql` accurately defines the three requested tables: `public.study_rooms`, `public.study_room_members`, and `public.room_reactions`.
+   - All specified fields (`code` 6 characters / slug, `room_type` enum, `pin_code`, `workspace_id`, `focus_duration_minutes`, `break_duration_minutes`, `current_status`, `start_time_iso`, `end_time_iso`, `is_active`, `camera_on`, `last_ping_at`, `emoji`) are present with check constraints.
+   - Observation 1.1 proves that PostgreSQL schema and TypeScript definitions match 100%.
+
+2. **Compliance with Supabase Postgres Best Practices**:
+   - Every foreign key column (`host_id`, `workspace_id`, `room_id`, `user_id`) has an explicit B-tree index.
+   - All RLS policy clauses evaluate `(SELECT auth.uid())` instead of raw `auth.uid()`, preventing row-by-row auth context re-evaluation in Postgres.
+   - Helper functions are declared `SECURITY DEFINER` with explicit `SET search_path = ''`.
+   - `REPLICA IDENTITY FULL` is applied to all three tables to ensure complete payloads on Postgres changes.
+   - Observation 1.1 and Suite 1 prove strict adherence to database performance rules.
+
+3. **Authenticity of Service Implementation**:
+   - `web/src/lib/study-rooms-service.ts` is not a facade. It contains real Supabase queries against all 3 tables as well as `public.profiles`.
+   - When running in environments where Supabase is not configured (offline mode / unit test environments), it provides a stateful fallback backed by in-memory Maps and `localStorage`.
+   - Observation 1.2 and the independent empirical verification script prove that the fallback engine correctly handles state changes, PIN verification, member joins, status mutations, and deletions.
+
+4. **Zero Integrity Violations**:
+   - No hardcoded test assertions, no mock shortcuts, and no fabricated artifacts exist.
+   - All 545 tests in the test suite pass cleanly.
+   - Production build compiles cleanly with 0 TypeScript or build errors.
 
 ---
 
 ## 3. Caveats
 
-- `npm run build` failed during `@next/font` asset fetching for `Playfair_Display` in `src/app/layout.tsx` (`TypeError: Cannot read properties of null (reading '1')`). This is in an unmodified file outside Milestone 1's scope (`src/lib/ai-provider.ts`), caused by local network restrictions when resolving Google Fonts during webpack compilation. Milestone 4 will oversee full production build verification.
-- Live generation with valid, paid Google API credentials was verified via endpoint handshake and error propagation, but live production inference rate-limits were not tested against paid quotas.
+- In browser environments without an active Supabase Cloud connection, mutations persist to browser `localStorage`. In server-side Node.js testing environments without persistent storage, the store operates in memory and resets between process invocations. This is standard and expected for client-side offline-first architecture.
 
 ---
 
 ## 4. Conclusion
 
-Milestone 1 in `src/lib/ai-provider.ts` passes all forensic checks with a verdict of **CLEAN**. There are zero cheating patterns, zero fake implementations, zero credential leaks, and the Google GenAI SDK integration conforms strictly to official specifications.
+The Milestone 1 work product by `worker_m1` is **100% genuine, authentic, and compliant** with all architectural requirements and quality gates.
+
+- **Verdict**: **CLEAN**
+- All 5 Milestone 1 features (F01, F02, F03, F04, F05) are approved without integrity violations.
+- Proceed to Milestone 2 (`worker_m2`).
 
 ---
 
 ## 5. Verification Method
 
-To independently reproduce the forensic verification:
+To independently reproduce this verification:
 
-1. **TypeScript Type Check**:
+1. **Verify TypeScript Types**:
    ```bash
-   npx tsc --noEmit
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm run typecheck
    ```
-   *Expected*: Exit code 0.
+   *Expected*: Code 0, 0 errors.
 
-2. **Full Unit Test Suite**:
+2. **Verify Project Test Suite**:
    ```bash
-   npx vitest run
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm test
    ```
-   *Expected*: 26 test files passed, 238 tests passed, 0 failures.
+   *Expected*: 545 tests pass, 0 failures.
 
-3. **Export and Key Verification**:
-   ```powershell
-   npx tsx -e "import { GEMINI_MODEL_CHAIN, getValidGeminiApiKeys } from './src/lib/ai-provider'; console.log('CHAIN:', GEMINI_MODEL_CHAIN); console.log('KEYS:', getValidGeminiApiKeys().length);"
+3. **Verify Pomodoro Party Test Suite**:
+   ```bash
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   node --experimental-strip-types --test tests/pomodoro-party.test.ts
    ```
-   *Expected*: Prints the 4-model chain.
+   *Expected*: 32 tests pass across 7 suites.
 
-4. **Offline Fallback Contract Verification**:
-   ```powershell
-   npx tsx -e "import { generateClarifierReading, generateCoupleTarotReading } from './src/lib/ai-provider'; process.env.VITEST = 'true'; async function run() { const c = await generateClarifierReading({ card: { id: 1 }, questionAsked: 'Test?' }); const cp = await generateCoupleTarotReading({ drawnCards: [{ id: 0 }, { id: 1 }, { id: 2 }] }); if (!c.usedFallback || !cp.usedFallback) throw new Error('Contract failure'); console.log('FALLBACK CONTRACT VERIFIED'); } run();"
+4. **Verify Production Build**:
+   ```bash
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm run build
    ```
-   *Expected*: Prints `FALLBACK CONTRACT VERIFIED`.
+   *Expected*: Build succeeds with exit code 0.

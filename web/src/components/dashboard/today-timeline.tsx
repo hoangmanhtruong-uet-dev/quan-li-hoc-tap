@@ -160,7 +160,7 @@ export function TodayTimeline({ onStartFocus }: TodayTimelineProps = {}) {
           {/* Real-time Clock Bead */}
           <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-aurora-lime/30 bg-aurora-lime/10 px-3 py-1 font-mono text-xs font-bold text-aurora-lime">
             <span className="h-2 w-2 rounded-full bg-aurora-lime animate-ping" />
-            <span>
+            <span suppressHydrationWarning>
               {String(nowTime.hours).padStart(2, '0')}:{String(nowTime.minutes).padStart(2, '0')}:
               {String(nowTime.seconds).padStart(2, '0')}
             </span>
@@ -425,7 +425,7 @@ function TimelineCard({
             </Badge>
           )}
           {isUpcoming && (
-            <Badge variant="secondary" className="text-[11px] font-semibold bg-white/10 text-slate-300">
+            <Badge variant="secondary" suppressHydrationWarning className="text-[11px] font-semibold bg-white/10 text-slate-300">
               <Clock3 className="mr-1 h-3 w-3" />
               {countdownText}
             </Badge>
@@ -446,7 +446,7 @@ function TimelineCard({
           <div className="mt-4 space-y-1.5">
             <div className="flex justify-between text-[11px] font-semibold text-aurora-lime">
               <span>Tiến độ ca học</span>
-              <span>{progressPercent}%</span>
+              <span suppressHydrationWarning>{progressPercent}%</span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
               <div
