@@ -1,113 +1,173 @@
-# TEST_READY: CampusOS /tasks Page Rebuild Test Suite
+# TEST_READY: Chrome Extension & Web App Integration Test Suite
 
-## Status: COMPLETE & READY (Iteration 2 Harmonized)
+## Status: COMPLETE & VERIFIED (100% PASS RATE)
 
-**Date**: 2026-10-13  
-**Author**: Test Writer 2 (`test_writer_e2e_2`)  
-**Parent Conversation ID**: `d87bbdd2-41e0-4e96-8205-9ea9461c7df0`  
-**Target Test Suites**:
-- `web/tests/tasks-redesign.test.ts` (40 tests)
-- `web/tests/challenger-m1-1-tasks-engine.test.ts` (14 tests)
+**Date**: 2026-10-17  
+**Author**: E2E Test Writer (`e2e_test_writer_1`)  
+**Parent Conversation ID**: `051c51ec-d4c0-431c-b685-75179c16a0da`  
+**Test Runner Engine**: Node.js 20+ Native Test Runner (`node:test`, `node:assert/strict`, `--experimental-strip-types`)  
 
 ---
 
-## 1. Test Suite Summary
+## 1. Test Suite Summary & Coverage Metrics
 
-The comprehensive test suite for the CampusOS /tasks rebuild has been fully harmonized with Worker M1-2's fixes and verified using Node.js native test runner (`node:test`, `node:assert/strict`).
+The Chrome Extension Manifest V3 and Web App integration test track has been successfully established and verified:
 
-- **Total Test Cases Project-Wide**: **102 tests** (100% passing cleanly, 0 failures)
-- **`web/tests/tasks-redesign.test.ts`**: 40/40 passing (0 failures)
-- **`web/tests/challenger-m1-1-tasks-engine.test.ts`**: 14/14 passing (0 failures)
-- **`web/tests/m1-store-stress.test.ts`**: 15/15 passing (0 failures)
-- **Existing Calendar & Permissions & Arbiter Suites**: 33/33 passing (0 failures)
-- **TypeScript Typecheck**: 0 errors (`npm run typecheck`)
-- **Execution Duration**: ~2440ms across all 102 tests
+| Test Suite | File Path | Total Tests | Pass | Fail | Execution Time |
+|---|---|---|---|---|---|
+| **Manifest V3 Schema & Security** | `web/tests/extension-manifest.test.ts` | 11 | 11 | 0 | ~117 ms |
+| **Extension Bridge & FSM Arbitration** | `web/tests/extension-bridge.test.ts` | 44 | 44 | 0 | ~144 ms |
+| **Combined Extension Suites** | *Both files* | **55** | **55** | **0** | **~145 ms** |
+| **Full Project Regression Suite** | `web/tests/*.test.ts` (29 files) | **435** | **435** | **0** | **~2,750 ms** |
 
----
-
-## 2. Harmonization & Remediation Verified
-
-### 1. Timezone Baseline Alignment (`tasks-redesign.test.ts`)
-- `REF_DATE` updated to `new Date('2026-10-13T09:00:00')` (local time), eliminating UTC skew against naive ISO strings (`'2026-10-13T11:00:00'`).
-- Urgency level calculation correctly identifies 2h remaining: `color: 'red'`, `isPanic: true`, `isOverdue: false`.
-
-### 2. Unicode Normalization (`challenger-m1-1-tasks-engine.test.ts`)
-- NFD input (`inputNfc.normalize('NFD')`) correctly normalizes to NFC at entry in `tasks-engine.ts`.
-- Verified `course: 'Mạng máy tính'`, `priority: 'high'`, `estimateMin: 90`, and title stripping match NFC behavior.
-
-### 3. IT Acronyms & Word Boundary Safeguards (`challenger-m1-1-tasks-engine.test.ts`)
-- Unicode word boundary around `dowRegex` protects `cntt` (CNTT) and `cnpm` (CNPM) from false Sunday (`cn`) matching.
-- Due date stays today (`'2026-10-13'`) and titles stay intact (`'Bài tập cntt'`, `'Báo cáo cnpm'`).
-
-### 4. Standalone Hours vs Durations (`challenger-m1-1-tasks-engine.test.ts`)
-- Standalone hour with deadline/action verb (`"nộp bài tập mạng 20h"`) correctly parses `dueTime: '20:00'`, leaving `estimateMin: 45`.
-
-### 5. Academic Keyword Elevation in Eisenhower (`challenger-m1-1-tasks-engine.test.ts`)
-- Unicode boundaries elevate Vietnamese academic keywords with diacritics (`cuối kỳ`, `đồ án`, `giữa kỳ`, `chuyên đề`):
-  - `"Ôn tập cuối kỳ"` (due <= 48h) -> `do_first` (Q1)
-  - `"Làm đồ án môn học"` (due <= 48h) -> `do_first` (Q1)
-  - `"Ôn tập giữa kỳ"` (due > 48h) -> `schedule` (Q2)
-  - `"Nghiên cứu chuyên đề"` (due > 48h) -> `schedule` (Q2)
-
-### 6. Timezone Countdown & Date Group Synchrony (`challenger-m1-1-tasks-engine.test.ts`)
-- Local naive ISO `2026-10-13T23:59:00` against local `2026-10-13T22:00:00` returns `countdown: '01:59:00'`, `color: 'red'`, `isPanic: true`.
-- Overdue tasks past midnight are reported as `group === 'overdue'` and `urgency.isOverdue === true` with 100% synchrony (zero UI contradiction).
+- **TypeScript Typecheck Status**: Clean (`npm run typecheck` exits with code 0, 0 errors).
+- **Regression Status**: Zero regressions across all pre-existing 380 CampusOS tests.
 
 ---
 
-## 3. Verification Commands & Results
+## 2. 4-Tier Test Coverage Breakdown
 
-### Command 1: Tasks Redesign Test Suite
-```bash
+### Tier 1: Feature Coverage (41 Tests)
+- **Manifest V3 Specification (11 tests)**:
+  - Valid JSON syntax and manifest_version 3 compliance.
+  - CampusOS naming, semantic versioning, and descriptive metadata.
+  - All 5 required permissions declared (`tabs`, `storage`, `activeTab`, `scripting`, `declarativeNetRequest`).
+  - Strict exclusion of dangerous/prohibited permissions (`debugger`, `webRequestBlocking`).
+  - Broad host permissions (`<all_urls>`) for tab distraction monitoring.
+  - `externally_connectable` rules limited strictly to localhost:3000 and `campusos.vn` (wildcard `*://*/*` blocked).
+  - Background service worker declared as ES module with physical file existence verified.
+  - Action popup configured with `popup/popup.html` and 16/48/128 icons.
+  - Content script injection configured at `document_end` with physical file existence verified.
+  - Physical existence of all resolution icons (`assets/fat-orange-cat.png`).
+  - Web accessible resources exposing mascot assets to `<all_urls>`.
+  - Comprehensive anti-MV2 deprecation audit (no `browser_action`, `page_action`, or `background.scripts`).
+- **Blacklist Domain Matching (5 tests)**:
+  - Exact domain matching for all 14 default blacklist domains.
+  - Multi-level subdomain resolution (`m.facebook.com`, `music.youtube.com`, `v.tiktok.com`, `old.reddit.com`).
+  - Non-blacklisted educational/productivity sites excluded (`github.com`, `stackoverflow.com`, `wikipedia.org`).
+  - `normalizeDomain` utility stripping protocols, paths, query strings, ports, and trailing dots.
+  - Custom blacklist dynamic mutation (add, remove, reset).
+- **Internal Exemptions & System URLs (5 tests)**:
+  - Localhost and 127.0.0.1 development servers strictly exempted.
+  - `campusos.vn` production and staging domains strictly exempted.
+  - Browser internal schemes (`chrome://`, `about:blank`, `edge://`) return safe null.
+  - Non-web protocols (`file://`, `data:`, `blob:`) return safe null without throwing.
+  - Trailing dot FQDN notation (`youtube.com.`) normalized and accurately matched.
+- **Background FSM Session Transitions (5 tests)**:
+  - Default `idle` state initialization with 0 violations and 1500s default duration.
+  - `startFocus` transition to `focusing` with timestamp recording and violation counter reset.
+  - `pauseFocus` preserving elapsed time and returning to `idle`.
+  - `stopFocus` resetting duration and state to `idle`.
+  - `startBreak` transition to `break` state without focus monitoring.
+- **Lockout Trigger & Message Protocol (5 tests)**:
+  - `PING` message returns `PONG` with installed status, version, and current state.
+  - `CHECK_URL` message returns real-time distraction evaluation.
+  - `LOCKOUT_VIOLATION` increments session violation count monotonically.
+  - `TOGGLE_WEBCAM` updates webcam tracking flag in persistent session.
+  - `GET_POPUP_DATA` / `SYNC_STATE` returns complete snapshot of session, blacklist, and violations.
+- **Exemption Management & Cooldown (5 tests)**:
+  - First exemption request grants 180s grace period (`EXEMPTION_GRANTED`).
+  - `isExempt` returns `true` during active grace period.
+  - Consecutive exemption request within 180s cooldown is denied (`EXEMPTION_DENIED`).
+  - `EXEMPTION_DENIED` provides exact remaining `waitSeconds` calculation.
+  - Exemption succeeds again after 180s cooldown period elapses.
+- **-50 XP Penalty & Gamification Calculation (5 tests)**:
+  - Standard deduction: 100 XP - 50 = 50 XP.
+  - 0 XP floor clamp: 30 XP - 50 = 0 XP (never negative).
+  - Exact 0 XP input: 0 XP - 50 = 0 XP.
+  - Level demotion: 220 XP (Level 2) - 50 XP = 170 XP (demotes to Level 1 "Tân sinh viên ngơ ngác").
+  - Multi-violation successive penalties: 3 consecutive violations floor at 0 XP with updated rank title.
+
+### Tier 2: Boundary & Corner Cases (7 Tests)
+- `T2.1`: Empty strings, null, undefined, and non-string inputs return safe null without throwing.
+- `T2.2`: Malformed URLs (spaces, missing hosts, query-only, FTP) handled gracefully.
+- `T2.3`: Multi-segmented subdomains resolve accurately; lookalike domains (`notfacebook.com`) permitted.
+- `T2.4`: URLs containing HTTP authentication credentials parse without bypass.
+- `T2.5`: Rapid consecutive exemption spam (10 clicks in 1ms) yields exactly 1 grant and 9 clean rejections.
+- `T2.6`: Exact millisecond cooldown boundary (179,999ms rejected, 180,000ms granted).
+- `T2.7`: Excessive penalty values (1000 XP penalty on 1 XP) cleanly floor at 0 XP.
+
+### Tier 3: Cross-Feature Combinations (4 Tests)
+- `T3.1`: Full end-to-end enforcement pipeline: Focus start -> Facebook visit (Violates) -> "Tôi đang tra tài liệu" exemption -> YouTube visit (Permitted during grace) -> Exemption expiry -> TikTok visit (Violates) -> Close tab & -50 XP penalty.
+- `T3.2`: State interruption: Pause and resume suppresses and restores enforcement.
+- `T3.3`: Break mode interruption: Break allows leisure browsing without violation triggers.
+- `T3.4`: Dynamic blacklist customization during active session.
+
+### Tier 4: Real-World Student Workflows (3 Tests)
+- `T4.1`: Mixed research and accidental distraction: smooth workflow across CampusOS, GitHub, StackOverflow, followed by accidental Facebook visit triggering lockout HUD.
+- `T4.2`: Legitimate video research grace period: student completes YouTube tutorial within 180s grace period without penalty.
+- `T4.3`: Gamification penalty and recovery cycle: -50 XP penalty followed by 25-minute Pomodoro completion (+100 XP) restoring level progression.
+
+---
+
+## 3. Verification Commands & Outputs
+
+### Target Verification Command
+```powershell
 cd web
-node --experimental-strip-types --test tests/tasks-redesign.test.ts
+node --experimental-strip-types --test tests/extension-manifest.test.ts tests/extension-bridge.test.ts
 ```
-**Result**:
+**Output**:
 ```
-ℹ tests 40
-ℹ suites 0
-ℹ pass 40
+▶ Extension Bridge & Supervisor Arbitration Suite (extension-bridge.test.ts)
+  ▶ Tier 1: Blacklist Domain Matching Algorithm ... pass
+  ▶ Tier 1: Internal Exemptions & System URLs ... pass
+  ▶ Tier 1: Background FSM Session Lifecycle ... pass
+  ▶ Tier 1: Lockout Trigger & Two-Way Message Routing ... pass
+  ▶ Tier 1: Exemption 180s Cooldown & Grace Period ... pass
+  ▶ Tier 1: -50 XP Penalty & Gamification Calculation ... pass
+  ▶ Tier 2: Boundary & Corner Cases ... pass
+  ▶ Tier 3: Cross-Feature Combinations ... pass
+  ▶ Tier 4: Real-World Student Workflows ... pass
+✔ Extension Bridge & Supervisor Arbitration Suite (extension-bridge.test.ts) (10.93ms)
+▶ Chrome Extension Manifest V3 Schema & Security Suite (extension-manifest.test.ts) ... pass
+✔ Chrome Extension Manifest V3 Schema & Security Suite (extension-manifest.test.ts) (4.51ms)
+ℹ tests 55
+ℹ suites 11
+ℹ pass 55
 ℹ fail 0
+ℹ duration_ms 144.85
 ```
 
-### Command 2: Challenger Tasks Engine Test Suite
-```bash
-cd web
-node --experimental-strip-types --test tests/challenger-m1-1-tasks-engine.test.ts
-```
-**Result**:
-```
-ℹ tests 14
-ℹ suites 0
-ℹ pass 14
-ℹ fail 0
-```
-
-### Command 3: Full Project Test Suite
-```bash
+### Full Project Regression Command
+```powershell
 cd web
 npm test
 ```
-**Result**:
+**Output**:
 ```
-ℹ tests 102
-ℹ suites 0
-ℹ pass 102
+ℹ tests 435
+ℹ suites 14
+ℹ pass 435
 ℹ fail 0
+ℹ duration_ms 2750.84
 ```
 
-### Command 4: TypeScript Type Checking
-```bash
+### Static Type Safety Command
+```powershell
 cd web
 npm run typecheck
 ```
-**Result**:
+**Output**:
 ```
-Exit code 0, 0 errors.
+Exit code 0, 0 TypeScript errors.
 ```
 
 ---
 
-## 4. Readiness Declaration
+## 4. Feature Verification Checklist
 
-All test suites across the repository are 100% passing with 0 failures, 0 regressions, and 0 TypeScript errors. Test infrastructure is robust and ready for Milestone 2 (Header & 3D Canvas) and beyond.
+- [x] **F01 Manifest V3 Schema**: Permissions, icons, background worker, popup action verified.
+- [x] **F02 externally_connectable**: Localhost:3000 & campusos.vn connectivity verified; open wildcards prevented.
+- [x] **F03 Background FSM**: `idle`, `focusing`, `break` states and session timings verified.
+- [x] **F04 Blacklist Domain Storage**: 14 default domains, subdomains, normalization, and custom CRUD verified.
+- [x] **F05 & F06 Tab Listeners**: Blacklist match detection and lockout payload dispatch verified.
+- [x] **F07 Tab Close Coordination**: CampusOS focus redirection and tab closure protocol verified.
+- [x] **Exemption Cooldown Math**: 180-second cooldown and exact remaining wait time calculation verified.
+- [x] **-50 XP Gamification Penalty**: 0 XP floor clamp, level demotion, and progression updates verified.
+
+---
+
+## 5. Certification of Readiness
+
+The test infrastructure for Chrome Extension Manifest V3 and Web App integration is certified **COMPLETE, VERIFIED, AND READY** for subsequent milestone deliverables.

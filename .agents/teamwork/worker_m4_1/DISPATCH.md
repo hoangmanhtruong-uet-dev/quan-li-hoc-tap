@@ -1,41 +1,73 @@
-## 2026-10-13T11:43:12Z
-You are worker_m4_1 (teamwork_preview_worker) for Milestone 4 (Detail Drawer, NLP QuickAdd, AI Breakdown, /tasks Page Assembly) of the CampusOS Tasks redesign.
-Your working directory is: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m4_1\
+## 2026-10-17T01:59:04Z
+You are worker_m4_1.
+Your working directory is: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m4_1
 
-Read these files first:
-1. ORIGINAL_REQUEST.md at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md
-2. Master plan at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md
-3. Design spec at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\docs\CampusOS_Tasks_Redesign_Plan.md
-4. Explorer M4 blueprint at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\explorer_m4_1\handoff.md
+MANDATORY FIRST STEP:
+Read the authoritative user request at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md (specifically header ## 2026-10-17T00:51:59Z).
+Also read:
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\spec_miner_survey_3\handoff.md (§ 2.5 & § 2.6)
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\explorer_survey_2\handoff.md
 
 MANDATORY INTEGRITY WARNING:
-DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
+DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
 
-You have EXCLUSIVE WRITE OWNERSHIP of:
-- web/src/components/tasks/drawer/task-detail-drawer.tsx
-- web/src/components/tasks/drawer/unselected-hero.tsx (if split into subcomponent)
-- web/src/components/tasks/drawer/subtask-checklist.tsx (if split into subcomponent)
-- web/src/components/tasks/create/quick-add-modal.tsx
-- web/src/components/tasks/create/ai-breakdown-modal.tsx
-- web/src/app/(main)/tasks/page.tsx
+Exclusive Write Ownership:
+You exclusively own and may create/modify:
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\supabase\migrations\004_extension_focus_violations.sql
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web\src\types\database.ts
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web\src\lib\campus-store.ts
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web\src\lib\supabase-sync.ts
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web\src\features\pomodoro\use-extension-bridge.ts
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web\src\app\api\focus\violation\route.ts
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\extension\popup\popup.html
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\extension\popup\popup.js
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\extension\popup\popup.css
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web\tests\extension-sync-penalty.test.ts
+Do NOT touch or modify any other files.
 
-Implementation Scope:
-1. `task-detail-drawer.tsx` (and subcomponents):
-   - Dual-state intelligent drawer:
-     - Unselected state (`selectedTask === null`): "Việc tiếp theo nên làm" Hero card with urgent task countdown, focus CTA, 7-day mini heatmap, and academic study tips. Gen Z empty state when 0 tasks pending.
-     - Selected state (`selectedTask !== null`): Full in-place editing (title, description, course selector, date/time picker, priority radio chips #FF3D6E / #FFB020 / #3DE8FF, 1-5 difficulty stars, subtasks checklist manager with toggle/add/delete/reorder, Pomodoro mini widget with planned/done sessions & focus CTA, notes, delete task with confirmation).
-   - Responsive mechanics: slide-over panel on desktop (>=1024px), bottom sheet with drag handle on mobile (<1024px).
-2. `quick-add-modal.tsx`:
-   - Vietnamese NLP task creation powered by `parseVietnameseTaskInput` from `web/src/lib/tasks-engine.ts`.
-   - Real-time preview chips (title, course, date/time, duration, priority, confidence %).
-   - Quick chips for courses, dates, duration, priorities.
-   - Enter to submit via `addTask` in `campus-store.ts`.
-3. `ai-breakdown-modal.tsx`:
-   - Assignment / Syllabus prompt input textarea.
-   - Generates 4-5 progressive stages with time estimates and difficulty.
-   - Review checklist (editable titles, toggle steps, add/remove).
-   - Button to create task with subtasks via `addTask`.
-4. `src/app/(main)/tasks/page.tsx`:
-   - Fully assembles `QuestBoardHeader`, `ControlsBar`, `BulkActionBar`, all 4 views (`ListView`, `KanbanView`, `MatrixView`, `TodayView`), `TaskDetailDrawer`, `QuickAddModal`, `AiBreakdownModal`, and `StrictPomodoroModal` (imported dynamically with { ssr: false }).
-   - Wires global keyboard shortcuts: `N` (new task), `/` (search), `1-4` (switch views), `J/K` (card navigation), `X` (toggle complete), `E` (open drawer), `F` (focus mode), `Del` (delete), `?` (shortcuts cheatsheet modal), `Cmd/Ctrl+K` (command palette), `Escape` (close drawer/modals).
-   - Enforces strict zero-overflow container: `min-h-screen w-full min-w-0 max-w-full overflow-x-hidden`.
+Mission:
+Implement Milestone 4: Web App Bridge, Supabase -50 XP Penalty & Realtime Popup.
+
+1. `supabase/migrations/004_extension_focus_violations.sql`:
+   - Valid PostgreSQL DDL adding `violation_count` to `profiles`, `student_profiles`, and `student_focus_sessions`:
+     ```sql
+     ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS violation_count INTEGER NOT NULL DEFAULT 0;
+     ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS violation_count INTEGER NOT NULL DEFAULT 0;
+     ALTER TABLE public.student_focus_sessions ADD COLUMN IF NOT EXISTS violation_count INTEGER NOT NULL DEFAULT 0;
+     ```
+2. `web/src/types/database.ts`:
+   - Update TypeScript interfaces for `profiles`, `student_profiles`, and `student_focus_sessions` to include `violation_count?: number`.
+3. `web/src/lib/campus-store.ts`:
+   - Export `penalizeViolation(amount = 50, reason?: string)`:
+     - Deduct XP: `nextXp = Math.max(0, prev.xp - amount)`.
+     - Recalculate level and rank: `const { level, rankTitle } = calculateLevelAndRank(nextXp);`.
+     - Increment `violationCount` / `totalShameCount`.
+     - Call `setSharedState` and dispatch `campusos-store-update` event.
+     - Call `pushToSupabaseCloudDebounced()` to update `profiles` and `recordFocusViolationToSupabase(...)` to update session.
+     - Return `{ xpDeducted: prev.xp - nextXp, nextXp, level, rankTitle }`.
+4. `web/src/lib/supabase-sync.ts`:
+   - Export `recordFocusViolationToSupabase(payload: { penaltyXp: number; domain?: string; reason?: string })`:
+     - Updates `profiles` / `student_profiles` and logs violation in `student_focus_sessions`.
+     - Supports offline mutation queue fallback.
+5. `web/src/features/pomodoro/use-extension-bridge.ts`:
+   - Hook facilitating bidirectional communication:
+     - Sends `START_FOCUS`, `PAUSE_FOCUS`, `STOP_FOCUS`, `REQUEST_EXEMPTION` to extension.
+     - Listens for `EXTENSION_VIOLATION` messages and calls `penalizeViolation(50, domain)`.
+     - Emits toasts and alerts.
+6. `web/src/app/api/focus/violation/route.ts`:
+   - API route handling `POST /api/focus/violation`: validates payload `{ domain, reason, penaltyXp }`, updates Supabase or returns mock confirmation in dev.
+7. `extension/popup/`:
+   - `popup.html`: 360x480 Cyber-Glass card with Pomodoro status and real-time `MM:SS` timer, customizable blacklist manager (add, remove, restore 14 defaults), and AI Webcam toggle.
+   - `popup.js`: Communicates with `background.js` via `chrome.runtime.sendMessage`, syncs real-time timer, updates blacklist storage, and toggles camera.
+   - `popup.css`: Cyber-Glass styles matching CampusOS (#0A0A12, neon lime #C6FF3D, neon rose #FF3D6E).
+8. `web/tests/extension-sync-penalty.test.ts`:
+   - Unit tests covering `penalizeViolation` deduction, 0 XP floor clamp, level demotion, Supabase violation recording, migration syntax validation, and popup message contracts.
+9. Verification:
+   Run in `web/`:
+   `node --experimental-strip-types --test tests/extension-sync-penalty.test.ts`
+   `npm test`
+   `npm run typecheck`
+   `npm run build`
+   Ensure 100% tests pass with 0 errors.
+10. Document all changes and test outputs in `handoff.md` in your working directory. Send completion message when done.

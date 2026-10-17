@@ -1,229 +1,167 @@
-# Forensic Audit Report: Milestone 2 (Quest Board Header & 3D Blocks)
+# BÁO CÁO GIÁM SÁT TOÀN VẸN FORENSIC AUDIT (HANDOFF REPORT)
+## MILESTONE 2: CYBER-GLASS LOCKOUT HUD & VIETNAMESE TTS (`extension/content.js`)
 
-**Work Product**: Milestone 2 Deliverables:
-- `web/src/components/tasks/header/quest-board-header.tsx`
-- `web/src/components/tasks/header/floating-blocks-3d.tsx`
-- `web/src/components/tasks/header/stat-stickers.tsx`
-- `web/src/components/tasks/header/progress-ring.tsx`
-
-**Auditor**: `auditor_m2_1`  
-**Parent Conversation ID**: `d87bbdd2-41e0-4e96-8205-9ea9461c7df0`  
-**Profile**: General Project  
-**Integrity Mode**: Development (per `ORIGINAL_REQUEST.md` timestamp `## 2026-10-13T07:48:15Z`)  
-**Verdict**: **CLEAN**
+**Auditor Agent**: `auditor_m2_1`  
+**Working Directory**: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\auditor_m2_1`  
+**Work Product Audited**: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\extension\content.js`  
+**Profile**: General Project (Integrity Mode: `development` per `ORIGINAL_REQUEST.md` § 2026-10-17T00:51:59Z)  
+**Binary Verdict**: **`CLEAN`**  
+**Timestamp**: 2026-10-17T01:43:00Z  
 
 ---
 
-## Forensic Integrity Summary
+## Forensic Audit Report
 
-| # | Forensic Check | Result | Evidence & Notes |
-|---|----------------|:------:|------------------|
-| 1 | **Hardcoded test results & fake stats** | **PASS** | Zero hardcoded numbers or fake mocks. Stats are dynamically derived from reactive store `useCampusStore` (`tasks.length`, `doing`, `high`, `done`, `hasOverdue`, `getTaskDateGroup`). |
-| 2 | **Facade implementations (3D Engine)** | **PASS** | Genuine vanilla Three.js WebGL implementation (`THREE.Scene`, `THREE.PerspectiveCamera`, `THREE.WebGLRenderer`, `THREE.InstancedMesh(BoxGeometry, MeshLambertMaterial, 40)`). Real lighting, dynamic transformation matrices, color assignments, and particle points pool (`THREE.Points`). |
-| 3 | **Canvas2D particle simulation** | **PASS** | Genuine Canvas2D physics particle simulation for confetti on 100% completion (32 particles, radial velocities, gravity `vy += 0.12`, rotation `rotation += vRot`, alpha fade, and animation cleanup). |
-| 4 | **Pre-populated verification outputs** | **PASS** | Zero pre-populated log files, result artifacts, or dummy attestation files found across `web/` outside `node_modules` and `.next`. |
-| 5 | **Self-certifying tests / Cheating** | **PASS** | No test mocking or bypassed verification. Production build and typecheck execute genuine TypeScript and Next.js compiler pipelines. |
-| 6 | **Build & Test Execution** | **PASS** | `npm run typecheck` exited with code 0 (0 TS errors). `npm test` passed 102/102 tests (0 failures). `npm run build` compiled 34 static/dynamic routes successfully with code 0. |
-| 7 | **Performance & Accessibility Fallbacks** | **PASS** | Full reduced-motion and mobile (<768px) bypass to CSS aurora gradient. Tab inactivity throttling (`if (document.hidden) return;`) drops GPU usage to 0% in background. Proper resource disposal (`geometry.dispose()`, `material.dispose()`, `renderer.dispose()`) prevents memory leaks. |
+**Work Product**: `extension/content.js`  
+**Profile**: General Project (Integrity Mode: `development`)  
+**Verdict**: **`CLEAN`**  
 
----
-
-## 1. Observation
-
-Direct observations from source inspection, forensic analysis, and live tool execution:
-
-### 1.1 Source Code Inspection
-
-1. **`web/src/components/tasks/header/quest-board-header.tsx`** (253 lines):
-   - **Store consumption**: Lines 75–77 invoke `useCampusStore()`, extracting `tasks` and `reducedMotion`.
-   - **Dynamic reactive metrics**:
-     - Line 80: `doneCount` computed via `tasks.filter((t) => t.status === 'done').length`.
-     - Lines 87–92: Monitors `doneCount` transition to trigger upward particle burst in `<FloatingBlocks3D burstTrigger={burstCount} />`.
-     - Lines 95–98: `uncompletedTasks = tasks.filter((t) => t.status !== 'done')`.
-     - Lines 100–103: `hasOverdue` computed dynamically via `getTaskDateGroup(t, new Date()) === 'overdue'`.
-     - Lines 108–116: Dynamic Vietnamese subtitle adjusts adaptively:
-       - Overdue: `"Trễ rồi bro, làm nhanh còn kịp 🫠"`
-       - Remaining > 0: `"Còn ${remainingCount} việc, cân được 💪"`
-       - Complete (0 remaining): `"Sạch bách, đi chơi được rồi 🎉"`
-     - Lines 119–139: Computes `mostUrgentTask` dynamically by priority weighting (`high: 3, medium: 2, low: 1`) and ISO due date.
-   - **Containment & Aesthetics**:
-     - Line 152: Height strictly bounded (`lg:max-h-[28vh]`), `min-w-0`, `overflow-hidden`, Neo-brutal hard border `shadow-[8px_8px_0px_#000000]`.
-     - Lines 170–182: Character reveal animation on `"NHIỆM VỤ."` (`animationDelay: index * 35ms`).
-     - Lines 26–65: `MagneticButton` provides pointer-reactive offset physics with reduced motion bypass.
-
-2. **`web/src/components/tasks/header/floating-blocks-3d.tsx`** (400 lines):
-   - **Vanilla Three.js authenticity**:
-     - Line 4: `import * as THREE from 'three';` (no heavy wrapper libraries like `@react-three/fiber`).
-     - Lines 96–113: Genuine WebGL context instantiation:
-       ```typescript
-       const scene = new THREE.Scene();
-       const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 30);
-       const renderer = new THREE.WebGLRenderer({
-         alpha: true,
-         antialias: true,
-         powerPreference: 'high-performance',
-         precision: 'mediump',
-         stencil: false,
-         depth: true,
-       });
-       renderer.setSize(width, height);
-       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
-       container.appendChild(renderer.domElement);
-       ```
-     - Lines 116–126: Key and fill lighting (`THREE.AmbientLight`, `THREE.DirectionalLight`).
-     - Lines 128–147: `THREE.InstancedMesh(cubeGeo, cubeMat, 40)` using single `BoxGeometry` and `MeshLambertMaterial` (1 draw call).
-     - Lines 139–145: Applies neon color palette across instances via `instancedMesh.setColorAt(i, new THREE.Color(colHex))`.
-     - Lines 190–209: Instantiates a 30-particle point pool using `THREE.BufferGeometry` and `THREE.PointsMaterial` with additive blending for upward burst FX.
-     - Lines 276–346: Real animation loop (`requestAnimationFrame`) with:
-       - Tab hidden throttling (`if (document.hidden) return;`).
-       - Damped mouse parallax: `camera.position.x = currentMouseX * 0.65; camera.position.y = currentMouseY * 0.35;`.
-       - Harmonic drift kinematics: `item.currentY = item.baseY + Math.sin(elapsed * item.driftSpeed + item.phase) * item.driftAmp;`.
-       - Cube upward launch: `item.currentY += item.burstVy; item.burstVy -= 0.007;`.
-       - Particle radial velocity & gravity integration: `burstVelocities[idx + 1] -= 0.003`.
-     - Lines 350–363: Strict lifecycle disposal:
-       - `cancelAnimationFrame(animId);`
-       - Window event listener removal (`mousemove`, `resize`).
-       - `cubeGeo.dispose(); cubeMat.dispose(); burstGeo.dispose(); burstMat.dispose(); renderer.dispose();`
-       - Removes renderer DOM element from container.
-     - Lines 367–390: Accessible fallback when `reducedMotion || isMobile`: renders lightweight CSS radial aurora gradient and completely skips WebGL context creation.
-
-3. **`web/src/components/tasks/header/stat-stickers.tsx`** (256 lines):
-   - **Dynamic calculation**:
-     - Lines 68–74: Calculates `totalCount`, `doingCount`, `highPriorityCount`, and `doneCount` directly from `tasks`.
-     - Lines 76–79: `hasOverdue` checks for overdue uncompleted tasks.
-     - Lines 81–83: `completionPercentage = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0` (safely guards division by zero).
-   - **Neo-Brutal Aesthetics**:
-     - Sticker 1 (Tổng số): Tilt `-1.5deg`, `#C6FF3D` acid lime accent.
-     - Sticker 2 (Đang làm): Tilt `+1.2deg`, `#3DE8FF` cyan accent.
-     - Sticker 3 (Ưu tiên cao): Tilt `-1.2deg`, `#FF3D6E` pink accent with active red ping indicator (`animate-ping`) when `hasOverdue` is true.
-     - Sticker 4 (Hoàn thành): Tilt `+1.5deg`, `#3DFFB0` emerald accent, embedding `<ProgressRing />`.
-   - Lines 98, 130, 161, 208: Interactive filter switching via `onSelectFilter` prop.
-
-4. **`web/src/components/tasks/header/progress-ring.tsx`** (253 lines):
-   - **SVG Liquid Ring**:
-     - Lines 48–51: Radius, circumference, and `strokeDashoffset = circumference - (displayPercent / 100) * circumference`.
-     - Lines 193–202: Multi-stop linear gradient (`#3DFFB0` -> `#3DE8FF` -> `#C6FF3D`) and `feDropShadow` glow filter.
-   - **Count-Up Animation**:
-     - Lines 144–163: Cubic ease-out count-up animation (`1 - Math.pow(1 - progress, 3)`).
-   - **Canvas2D Confetti Particle Simulation**:
-     - Lines 54–125: Self-contained Canvas2D particle physics engine:
-       - 32 particles initialized with radial velocities (`vx, vy`), upward boost (`-1.2`), rotation velocities (`vRot`), random sizes, and palette colors.
-       - Euler integration on each frame: `p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.rotation += p.vRot; p.alpha = Math.max(0, 1 - elapsed / duration);`.
-       - Renders transformed boxes via `ctx.translate`, `ctx.rotate`, `ctx.fillRect`.
-       - Resets canvas and clears animation ref on 750ms duration expiration.
-       - Disposes animation frame on unmount (`cancelAnimationFrame`).
+### Phase Results
+- **Check 1: Hardcoded Test Results**: **PASS** — Không tìm thấy bất kỳ chuỗi kết quả kiểm thử hardcode, giá trị mock tĩnh bypass, hoặc cờ kiểm thử giả mạo nào trong `extension/content.js`.
+- **Check 2: Facade Implementations**: **PASS** — Toàn bộ các hàm nghiệp vụ (`showLockoutHud`, `speakScold`, `startCountdown`, `triggerCloseTab`, `setupCampusOsWebRelay`, `safeSendMessage`) đều triển khai logic thật với đầy đủ DOM manipulation, SpeechSynthesis/Audio fallback, Web Relay hai chiều và xử lý lỗi chặt chẽ.
+- **Check 3: Fabricated Verification Outputs**: **PASS** — Không phát hiện tệp log dựng sẵn hay báo cáo kết quả giả mạo trước khi chạy test.
+- **Check 4: Self-certifying Tests**: **PASS** — Bộ kiểm thử `verify_hud.test.js` và bộ kiểm thử độc lập `adversarial_forensic_m2.test.mjs` kiểm tra trực tiếp hành vi runtime (Shadow DOM, CSS classes, message dispatching, countdown tick, exemption denial logic).
+- **Check 5: External Execution Delegation**: **PASS** — Logic cốt lõi được xây dựng hoàn toàn từ mã nguồn nội bộ, không ủy thác cho thư viện bên ngoài trái quy định.
+- **Check 6: Behavioral Test Suite**: **PASS** — `node --test ../.agents/teamwork/worker_m2_1/verify_hud.test.js` đạt 4/4 tests PASS (100%).
+- **Check 7: Full Web Regression Test Suite**: **PASS** — `npm test` trong `web/` đạt 453/453 tests PASS (100%) trên 18 test suites.
+- **Check 8: TypeScript Compilation**: **PASS** — `npm run typecheck` trong `web/` thoát với mã lỗi 0 (0 errors).
+- **Check 9: Independent Adversarial Forensic Suite**: **PASS** — `node --test .agents/teamwork/auditor_m2_1/adversarial_forensic_m2.test.mjs` đạt 4/4 tests PASS (100%).
 
 ---
 
-### 1.2 Verification Tool Outputs
+### 1. Quan sát Thực nghiệm (Observation)
 
-1. **`npm run typecheck`**:
+1. **Phân tích Mã nguồn Tĩnh (`extension/content.js`)**:
+   - **Shadow DOM Injection**:
+     - Dòng 21: `const HOST_ELEMENT_ID = 'campusos-lockout-hud-root';`
+     - Dòng 272-284: Kiểm tra chống inject lặp: `let host = document.getElementById(HOST_ELEMENT_ID); if (host && host.shadowRoot) { ... return; }`
+     - Dòng 287-297: Khởi tạo host element gắn vào `rootTarget = document.documentElement || document.body`, với thuộc tính `z-index: 2147483647 !important;`.
+     - Dòng 300: `const shadow = host.attachShadow({ mode: 'open' });` đảm bảo 100% cách ly CSS với trang web bên ngoài.
+   - **Cyber-Glass Visual Styling**:
+     - Dòng 327-330: `.overlay { background: rgba(10, 10, 18, 0.88) !important; backdrop-filter: blur(25px) !important; -webkit-backdrop-filter: blur(25px) !important; z-index: 2147483647 !important; ... }`
+     - Dòng 352-355: `.hud-card { background: linear-gradient(135deg, rgba(25, 20, 35, 0.95), rgba(10, 10, 18, 0.98)); border: 1px solid rgba(255, 61, 110, 0.4); border-radius: 28px; box-shadow: 0 0 60px rgba(255, 61, 110, 0.25), 0 30px 80px rgba(0, 0, 0, 0.9); ... }`
+     - Dòng 377-392: `.sticker-badge { background: linear-gradient(135deg, #ff3d6e, #ff8a3d); transform: rotate(-2deg); ... }` với nội dung `"⚠️ PHÁT HIỆN VI PHẠM KỶ LUẬT"`.
+   - **Screen Shake Animation**:
+     - Dòng 361: `animation: screen-shake 0.65s cubic-bezier(.36, .07, .19, .97) both;`
+     - Dòng 363-367: `@keyframes screen-shake { 0%, 100% { transform: translate(0, 0) rotate(0deg); } 10%, 30%, 50%, 70%, 90% { transform: translate(-8px, 4px) rotate(-1.5deg); } 20%, 40%, 60%, 80% { transform: translate(8px, -4px) rotate(1.5deg); } }`
+     - Dòng 368-375: `@media (prefers-reduced-motion: reduce)` vô hiệu hóa animation khi người dùng bật giảm chuyển động.
+   - **Vietnamese TTS & Hộp thoại Tương phản cao**:
+     - Dòng 24-30: Danh sách 5 câu thoại trách mắng bằng tiếng Việt.
+     - Dòng 69-80: Tùy biến câu thoại theo domain vi phạm: `Lại lướt ${domain} đấy à?...`.
+     - Dòng 119-212: `speakScold(quote, catImg)` thử nghiệm `/api/tts` (với timeout 1.2s), và fallback sang Web Speech API (`SpeechSynthesisUtterance`, `lang = 'vi-VN'`, `rate = 1.12`, `pitch = 1.05`), đồng thời kích hoạt class `.talking` trên ảnh mèo.
+     - Dòng 423-448: Speech bubble nổi bật (`rgba(255, 255, 255, 0.98)`, border 2px solid `#ff3d6e`) đảm bảo người dùng luôn đọc được cảnh báo ngay cả khi trình duyệt chặn autoplay.
+   - **5s Countdown & Tab Closure**:
+     - Dòng 22: `const TOTAL_COUNTDOWN_MS = 5000;`
+     - Dòng 217-236: `startCountdown(onTick, onComplete)` cập nhật mỗi 50ms, tính toán chính xác `progressPercent` và số giây còn lại.
+     - Dòng 248-252: Khi đếm ngược về 0ms (hoặc khi bấm nút `#campusos-btn-close-now`), kích hoạt `triggerCloseTab()` dừng âm thanh, timer và gửi message `{ action: 'CLOSE_TAB_AND_FOCUS_CAMPUS' }`.
+   - **Nút Ân hạn ("Tôi đang tra tài liệu")**:
+     - Dòng 672-720: Xử lý click nút `#campusos-btn-exemption`, khóa nút (`disabled = true`), gửi `{ action: 'REQUEST_EXEMPTION', durationSeconds: 180 }`.
+     - Nếu nhận `EXEMPTION_GRANTED`, gỡ bỏ HUD ngay lập tức bằng `removeLockoutHud()`.
+     - Nếu nhận `EXEMPTION_DENIED`, giữ nút khóa, hiển thị nhãn đếm ngược cooldown `🚫 Đang hồi phục (${waitSec}s)`, hiển thị cảnh báo đỏ và Mèo Cam phát giọng mắng răn đe.
+   - **Web Relay trên CampusOS (`localhost:3000` / `campusos.vn`)**:
+     - Dòng 41-50: `isCampusOsHost` nhận diện `localhost`, `127.0.0.1`, `campusos.vn`, `*.campusos.vn`.
+     - Dòng 747-802: `setupCampusOsWebRelay()` lắng nghe `CAMPUSOS_EXTENSION_REQUEST` qua `window.postMessage`, chuyển tiếp đến `chrome.runtime.sendMessage`, trả về `CAMPUSOS_EXTENSION_RESPONSE`; chuyển tiếp các custom DOM event (`campusos:pomodoro-start`, `campusos:pomodoro-pause`, `campusos:pomodoro-stop`, `campusos:request-exemption`); chuyển tiếp `EXTENSION_VIOLATION` thành custom event `campusos:extension-violation` và `campusos:store-update`; phát tín hiệu sẵn sàng `CAMPUSOS_EXTENSION_BRIDGE_READY`.
+
+2. **Kết quả Thực thi Test Suite của Worker**:
+   - Lệnh: `node --test ../.agents/teamwork/worker_m2_1/verify_hud.test.js` (từ thư mục `web/`)
+   - Kết quả:
+     ```
+     ▶ Milestone 2: Cyber-Glass Lockout HUD & Vietnamese TTS Verification Suite
+       ✔ Requirement 1 & Source Code Verification: content.js exists and contains core MV3 HUD logic (1.3622ms)
+       ✔ Mock DOM Simulation: Full Execution on Distraction Page (youtube.com) (2.2847ms)
+       ✔ Mock DOM Simulation: Exemption Denied Cooldown Enforcement (1.3204ms)
+       ✔ Mock DOM Simulation: Web Relay Bridge on CampusOS Origin (localhost:3000) (0.7019ms)
+     ✔ Milestone 2: Cyber-Glass Lockout HUD & Vietnamese TTS Verification Suite (6.4384ms)
+     ℹ tests 4, suites 1, pass 4, fail 0
+     ```
+
+3. **Kết quả Thực thi Kiểm thử Hồi quy Web App**:
+   - Lệnh: `npm test` (từ thư mục `web/`)
+   - Kết quả: `453/453 test suites PASS (100%)`, 0 failures, 18 suites.
+   - Lệnh: `npm run typecheck` (từ thư mục `web/`)
+   - Kết quả: `tsc --noEmit` hoàn thành với mã thoát 0 (0 errors).
+
+4. **Kết quả Bộ Kiểm thử Độc lập của Auditor**:
+   - Tệp kiểm thử độc lập: `.agents/teamwork/auditor_m2_1/adversarial_forensic_m2.test.mjs`
+   - Lệnh: `node --test .agents/teamwork/auditor_m2_1/adversarial_forensic_m2.test.mjs`
+   - Kết quả:
+     ```
+     ▶ Auditor M2 Forensic & Adversarial Test Suite
+       ✔ Static Check: content.js contains genuine implementation without facades or dummy mocks (1.8888ms)
+       ✔ Adversarial Check: Host URL matching precision and subdomain injection attacks (0.8573ms)
+       ✔ Adversarial Check: Duplicate Modal Prevention & DOM Stability (38.6932ms)
+       ✔ Adversarial Check: Close Tab & Message Dispatch upon violation handling (0.6773ms)
+     ✔ Auditor M2 Forensic & Adversarial Test Suite (42.916ms)
+     ℹ tests 4, suites 1, pass 4, fail 0
+     ```
+
+5. **Phạm vi Thay đổi Git**:
+   - Lệnh: `git status --porcelain`
+   - Xác nhận: Tệp triển khai sản phẩm duy nhất được cập nhật cho Milestone 2 là `extension/content.js`. Không có thay đổi ngoài ý muốn ở các module khác.
+
+---
+
+### 2. Chuỗi Suy luận (Logic Chain)
+
+1. Từ **Quan sát 1**: Tệp `extension/content.js` triển khai đầy đủ và chính xác tất cả các đặc tả kiến trúc được đặt ra trong `ORIGINAL_REQUEST.md` (§ 2026-10-17T00:51:59Z, R2) và `PROJECT.md`:
+   - Shadow DOM Injection với `mode: "open"` và `z-index: 2147483647`.
+   - Cyber-Glass styling với `backdrop-filter: blur(25px)`, viền neon `rgba(255, 61, 110, 0.4)`, và sticker badge `-2deg`.
+   - Screen shake animation `0.65s` với hỗ trợ `prefers-reduced-motion`.
+   - Giọng đọc scolding TTS tiếng Việt kèm fallback Web Speech API (`vi-VN`) và speech bubble trực quan.
+   - Đếm ngược 5 giây thời gian thực với thanh tiến trình neon và gửi lệnh đóng tab `CLOSE_TAB_AND_FOCUS_CAMPUS`.
+   - Nút ân hạn 180s ("Tôi đang tra tài liệu") có xử lý từ chối cooldown và khóa nút chống spam.
+   - Web Relay hai chiều hoàn chỉnh cho CampusOS Web App.
+2. Từ **Quan sát 2 & 4**: Cả bộ kiểm thử của worker (`verify_hud.test.js`) và bộ kiểm thử độc lập của auditor (`adversarial_forensic_m2.test.mjs`) đều thực thi trực tiếp trên mã nguồn `content.js` và vượt qua 100% các kịch bản kiểm tra:
+   - Cơ chế chống tạo node DOM trùng lặp (duplicate injection guard) hoạt động chính xác khi gọi `showLockoutHud` nhiều lần liên tiếp.
+   - Nhận diện chính xác tên miền CampusOS và từ chối các tấn công subdomain spoofing (`campusos.vn.attacker.com`).
+   - Xử lý chính xác cả hai trường hợp cấp quyền và từ chối ân hạn (cooldown).
+   - Kiểm tra `CHECK_URL` và lắng nghe `SHOW_LOCKOUT_HUD` phản hồi trong môi trường giả lập.
+3. Từ **Quan sát 3**: Toàn bộ 453 unit tests của Web App và kiểm tra kiểu TypeScript (`npm run typecheck`) đều PASS 100%, chứng minh việc triển khai `extension/content.js` không gây bất kỳ tác động tiêu cực hoặc hồi quy nào lên hệ thống hiện có.
+4. Từ đối chiếu **Integrity Forensics Guidelines**: Không phát hiện bất kỳ mẫu hình cấm nào (Hardcoded test results, dummy facades, fabricated outputs, self-certifying tautologies).
+5. **Suy luận Kết luận**: Sản phẩm `extension/content.js` của Milestone 2 đạt độ toàn vẹn cao, hoàn thành toàn diện các yêu cầu nghiệp vụ, xứng đáng nhận phán quyết **CLEAN**.
+
+---
+
+### 3. Vấn đề Tồn tại & Lưu ý (Caveats)
+
+- **No caveats**: Tất cả các yêu cầu kiểm thử và phân tích pháp chứng đối với Milestone 2 đều đã được thực thi và xác nhận thực nghiệm.
+
+---
+
+### 4. Kết luận (Conclusion)
+
+- **Phán quyết**: **`CLEAN`**
+- Milestone 2 (`extension/content.js`) đã hoàn thành toàn diện, bảo đảm tính toàn vẹn kỹ thuật và sẵn sàng chuyển giao để tiếp tục triển khai các milestone tiếp theo (Milestone 3 & 4).
+
+---
+
+### 5. Phương pháp Kiểm chứng Độc lập (Verification Method)
+
+Bất kỳ kiểm thử viên hoặc giám sát viên nào đều có thể kiểm chứng độc lập báo cáo này bằng các lệnh sau:
+
+1. **Chạy kiểm thử pháp chứng độc lập của Auditor**:
    ```powershell
-   > campusos-web@0.1.0 typecheck
-   > tsc --noEmit
+   node --test .agents/teamwork/auditor_m2_1/adversarial_forensic_m2.test.mjs
    ```
-   *Result*: Exited with code 0. Zero TypeScript compiler errors.
+   *Kỳ vọng*: 4/4 tests pass (100%).
 
-2. **`npm test`**:
+2. **Chạy kiểm thử chuyên biệt Milestone 2 của Worker**:
    ```powershell
-   ✔ Tier 1 - NLP Parser (1/6): parses homework with tomorrow, 23h, 90min, high priority (7.8247ms)
-   ...
-   ✔ Tier 1 - Store Tasks (1/7): createDefaultSharedState includes seeded tasks anchored to system date (0.6409ms)
-   ...
-   ✔ Tier 4 - Real-World (5/6): "Clear the Board" streak bonus (+50 XP) awarded when all today tasks are completed (0.3629ms)
-   ✔ OWNER has every workspace permission (1.1572ms)
-   ℹ tests 102
-   ℹ suites 0
-   ℹ pass 102
-   ℹ fail 0
-   ℹ duration_ms 2479.2376
+   cd web
+   node --test ../.agents/teamwork/worker_m2_1/verify_hud.test.js
    ```
-   *Result*: Exited with code 0. All 102 tests passed, 0 failures.
+   *Kỳ vọng*: 4/4 tests pass (100%).
 
-3. **`npm run build`**:
+3. **Chạy bộ kiểm thử hồi quy toàn dự án**:
    ```powershell
-   > campusos-web@0.1.0 build
-   > next build
-     ▲ Next.js 14.2.5
-     - Environments: .env.local
-
-      Creating an optimized production build ...
-    ✓ Compiled successfully
-      Linting and checking validity of types ...
-      Generating static pages (34/34)
-      Finalizing page optimization ...
-   Route (app)                               Size     First Load JS
-   ├ ƒ /tasks                                9.79 kB         106 kB
-   ...
-   ```
-   *Result*: Exited with code 0. All 34 routes compiled and generated successfully.
-
-4. **Pre-populated File Scan**:
-   PowerShell query scanning `web/` for `.log`, `*result*`, `*output*` files outside `node_modules` and `.next` returned **0 files**.
-
----
-
-## 2. Logic Chain
-
-1. **Premise**: Integrity violations occur if an implementation hardcodes fake stats, mocks dynamic behavior with static strings, bypasses WebGL rendering with a dummy canvas, or fakes particle physics.
-2. **Observation A**: Static code inspection of `quest-board-header.tsx` and `stat-stickers.tsx` shows all 4 sticker metrics (`totalCount`, `doingCount`, `highPriorityCount`, `doneCount`), the subtitle text, and the most urgent task are derived dynamically from `useCampusStore` and `tasks-engine.ts`. Zero hardcoded constants or fake stats exist.
-3. **Observation B**: Static code inspection of `floating-blocks-3d.tsx` proves authentic Three.js WebGL rendering: `THREE.Scene`, `THREE.PerspectiveCamera`, `THREE.WebGLRenderer`, `THREE.InstancedMesh` with 40 instances, dynamic transform matrices, directional/ambient lighting, pointer parallax, upward completion burst, background tab throttling, and strict disposal of GPU buffers.
-4. **Observation C**: Static code inspection of `progress-ring.tsx` confirms genuine Canvas2D particle physics simulation (gravity, velocity, angular velocity, opacity decay over 750ms) firing on 100% completion.
-5. **Observation D**: Verification commands (`npm run typecheck`, `npm test`, `npm run build`) execute cleanly with code 0. Zero pre-populated test artifacts exist.
-6. **Inference**: Milestone 2 satisfies all architectural decisions, design system specifications, and integrity constraints without any shortcuts or facades.
-7. **Conclusion**: The work product is authentic, robust, and clean.
-
----
-
-## 3. Caveats
-
-1. **Non-blocking ESLint Warning**:
-   During `npm run build`, Next.js emitted an ESLint warning:
-   `./src/components/tasks/header/stat-stickers.tsx: 52:6 Warning: React Hook useEffect has a missing dependency: 'current'. Either include it or remove the dependency array. react-hooks/exhaustive-deps`
-   This occurs in the `useCountUp` helper where the author deliberately animates from `startVal = current` to `endVal = target` without re-triggering the effect on every intermediate tick of `current`. While standard in count-up animations, wrapping `current` in a `useRef` or adding an `eslint-disable-next-line` comment would eliminate the linter warning. This does not block compilation (exit code 0) and is not an integrity violation.
-
----
-
-## 4. Conclusion
-
-**Verdict**: **CLEAN**
-
-The Milestone 2 work product genuinely and authentically implements all required features:
-1. Dynamic Quest Board Header with reactive Vietnamese subtitles and magnetic CTAs.
-2. Lightweight vanilla Three.js 40-cube `InstancedMesh` canvas with capped DPR, pointer parallax, completion burst, and mobile/reduced-motion fallback.
-3. 4 tilted neo-brutal stat stickers with real-time store metrics and overdue red ping alerts.
-4. Liquid SVG circular progress ring with smooth count-up and genuine Canvas2D confetti particle burst.
-5. Zero integrity violations, zero facades, and full compilation/test suite pass.
-
----
-
-## 5. Verification Method
-
-To independently reproduce this verification:
-
-1. **Verify TypeScript compilation**:
-   ```powershell
-   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
-   npm run typecheck
-   ```
-   *Expected*: Exit code 0, 0 errors.
-
-2. **Run full unit test suite**:
-   ```powershell
-   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   cd web
    npm test
    ```
-   *Expected*: 102 passed tests, 0 failed, exit code 0.
+   *Kỳ vọng*: 453/453 tests pass (100%).
 
-3. **Verify production Next.js build**:
+4. **Chạy kiểm tra kiểu TypeScript**:
    ```powershell
-   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
-   npm run build
+   cd web
+   npm run typecheck
    ```
-   *Expected*: Exit code 0, 34/34 pages generated successfully.
-
-4. **Inspect source code files**:
-   - `web/src/components/tasks/header/quest-board-header.tsx`
-   - `web/src/components/tasks/header/floating-blocks-3d.tsx`
-   - `web/src/components/tasks/header/stat-stickers.tsx`
-   - `web/src/components/tasks/header/progress-ring.tsx`
+   *Kỳ vọng*: Thoát với mã lỗi 0 (0 errors).

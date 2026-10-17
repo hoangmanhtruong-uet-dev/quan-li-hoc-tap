@@ -1,19 +1,18 @@
-# Progress Tracker - worker_m4_1
+# Progress Tracker — Milestone 4 (worker_m4_1)
 
-Last visited: 2026-10-13T11:58:00Z
+Last visited: 2026-10-17T02:12:00Z
+Status: Completed
 
-## Current Status
-- Milestone 4 implementation COMPLETE.
-- Deliverables implemented:
-  1. `web/src/components/tasks/drawer/unselected-hero.tsx`
-  2. `web/src/components/tasks/drawer/subtask-checklist.tsx`
-  3. `web/src/components/tasks/drawer/task-detail-drawer.tsx`
-  4. `web/src/components/tasks/create/quick-add-modal.tsx`
-  5. `web/src/components/tasks/create/ai-breakdown-modal.tsx`
-  6. `web/src/app/(main)/tasks/page.tsx`
-- Added Tier 5 unit and integration tests to `web/tests/tasks-redesign.test.ts`.
-- Verification passed:
-  - `npm run typecheck`: 0 errors
-  - `npm test`: 109/109 tests passed
-  - `npm run build`: Exit code 0, all 34 routes compiled
-- Handoff report being generated at `handoff.md`.
+## Tasks Checklist
+- [x] Step 1: Read dispatch, original request, PROJECT.md, and upstream handoff reports.
+- [x] Step 2: Inspect existing files in target write set (`database.ts`, `campus-store.ts`, `supabase-sync.ts`, existing migrations, existing tests).
+- [x] Step 3: Implement `supabase/migrations/004_extension_focus_violations.sql`.
+- [x] Step 4: Update `web/src/types/database.ts` with `violation_count?: number` and convenience type aliases.
+- [x] Step 5: Implement `penalizeViolation` and `setSharedState` in `web/src/lib/campus-store.ts`.
+- [x] Step 6: Implement `recordFocusViolationToSupabase` in `web/src/lib/supabase-sync.ts`.
+- [x] Step 7: Implement `use-extension-bridge.ts` in `web/src/features/pomodoro/`.
+- [x] Step 8: Implement `web/src/app/api/focus/violation/route.ts`.
+- [x] Step 9: Implement `extension/popup/` (`popup.html`, `popup.js`, `popup.css`).
+- [x] Step 10: Implement `web/tests/extension-sync-penalty.test.ts`.
+- [x] Step 11: Run test suite, typecheck, and build verification (`npm test`: PASS 505/505, `typecheck`: PASS 0 errors, `npm run build`: PASS exit code 0).
+- [x] Step 12: Write 5-component handoff report `handoff.md` and message orchestrator.

@@ -10,6 +10,7 @@ import {
   pullFromSupabaseCloud,
   pushToSupabaseCloudDebounced,
   logFocusSessionToSupabase,
+  recordFocusViolationToSupabase,
 } from './supabase-sync.ts';
 export type EventType = 'class' | 'study' | 'exam' | 'club' | 'personal';
 
@@ -159,6 +160,8 @@ export interface CampusOSSharedState {
   weeklyStudyMinutesCurrent: number;
   lastStudyDate: string; // YYYY-MM-DD
   badges: string[];
+  violationCount?: number;
+  totalShameCount?: number;
 
   // Mood
   dailyMood: DailyMood | null;
@@ -656,6 +659,8 @@ export function createDefaultSharedState(referenceDate: Date = new Date()): Camp
     weeklyStudyMinutesCurrent: 510, // 8.5 giờ (71%)
     lastStudyDate: today,
     badges: ['streak-7', 'early-bird', 'night-owl', 'focus-master'],
+    violationCount: 0,
+    totalShameCount: 0,
 
     dailyMood: 'cool',
     moodTimestamp: new Date().toISOString(),
@@ -720,13 +725,13 @@ export function getSharedState(): CampusOSSharedState {
 }
 
 /**
- * Updates shared state, writes to localStorage, and dispatches CustomEvent + notify subscribers.
+ * Sets or updates shared state, writes to localStorage, dispatches campusos-store-update, and notifies subscribers.
  */
-export function updateSharedState(
-  updater: (prev: CampusOSSharedState) => Partial<CampusOSSharedState>
+export function setSharedState(
+  nextOrUpdater: CampusOSSharedState | ((prev: CampusOSSharedState) => Partial<CampusOSSharedState>)
 ): CampusOSSharedState {
   const current = getSharedState();
-  const patch = updater(current);
+  const patch = typeof nextOrUpdater === 'function' ? nextOrUpdater(current) : nextOrUpdater;
   const next: CampusOSSharedState = { ...current, ...patch };
   memoryState = next;
 
@@ -747,6 +752,83 @@ export function updateSharedState(
 
   notifySubscribers();
   return next;
+}
+
+/**
+ * Updates shared state, writes to localStorage, and dispatches CustomEvent + notify subscribers.
+ */
+export function updateSharedState(
+  updater: (prev: CampusOSSharedState) => Partial<CampusOSSharedState>
+): CampusOSSharedState {
+  return setSharedState(updater);
+}
+
+export interface PenaltyResult {
+  xpDeducted: number;
+  nextXp: number;
+  level: number;
+  rankTitle: string;
+}
+
+/**
+ * Deducts XP and increments violationCount / totalShameCount when Chrome Extension
+ * detects a study discipline violation. Recalculates level/rank, updates store,
+ * dispatches campusos-store-update event, pushes debounced to Supabase profiles
+ * and logs focus violation into student_focus_sessions.
+ */
+export function penalizeViolation(
+  amount = 50,
+  reason?: string
+): PenaltyResult {
+  const prev = getSharedState();
+  const safeAmount = Math.max(0, amount);
+  const nextXp = Math.max(0, prev.xp - safeAmount);
+  const xpDeducted = prev.xp - nextXp;
+  const { level, rankTitle } = calculateLevelAndRank(nextXp);
+
+  const nextViolationCount = (prev.violationCount || 0) + 1;
+  const nextTotalShameCount = (prev.totalShameCount || 0) + 1;
+
+  setSharedState((current) => ({
+    ...current,
+    xp: nextXp,
+    level,
+    rankTitle,
+    violationCount: nextViolationCount,
+    totalShameCount: nextTotalShameCount,
+  }));
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('campusos:violation-penalized', {
+        detail: {
+          penaltyAmount: amount,
+          xpDeducted,
+          nextXp,
+          level,
+          rankTitle,
+          violationCount: nextViolationCount,
+          reason,
+        },
+      })
+    );
+  }
+
+  const updatedState = getSharedState();
+  pushToSupabaseCloudDebounced(updatedState);
+  void recordFocusViolationToSupabase({
+    penaltyXp: safeAmount,
+    domain: reason,
+    reason: reason || 'blacklist_url',
+    violationCount: nextViolationCount,
+  });
+
+  return {
+    xpDeducted,
+    nextXp,
+    level,
+    rankTitle,
+  };
 }
 
 /**

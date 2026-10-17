@@ -1,22 +1,22 @@
-## 2026-10-13T08:36:06Z
-You are Challenger 1 for Milestone 1 (Store, Types & Tasks Engine) of CampusOS /tasks page rebuild project.
+## 2026-10-17T01:09:24Z
+You are challenger_m1_1.
+Your working directory is: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\challenger_m1_1
 
-Your assigned working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\challenger_m1_1\
-Your parent conversation ID: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
+MANDATORY FIRST STEP:
+Read the authoritative user request at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md (specifically header ## 2026-10-17T00:51:59Z).
+Also read:
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\TEST_READY.md
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m1_1\handoff.md
 
-Input files to read FIRST:
-1. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp ## 2026-10-13T07:48:15Z)
-2. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md
-3. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\TEST_READY.md
-4. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web\src\lib\tasks-engine.ts
-
-Objective:
-Empirically stress-test the algorithmic engine in `web/src/lib/tasks-engine.ts`:
-1. Check date grouping boundary conditions: leap years, month transitions, Sunday midnight boundaries, negative differences.
-2. Check Vietnamese NLP regex parser edge cases: malformed inputs, multi-line prompts, exotic accents, emojis, conflicting duration units.
-3. Check Eisenhower quadrant classification: tasks with manual overrides, tasks with boundary due dates (48h), keyword detection robustness.
-4. Run commands in `web/` to test edge cases or execute test runner.
-
-Deliverable:
-Write report to `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\challenger_m1_1\handoff.md` with explicit Verdict: APPROVE or REQUEST_CHANGES.
-Send completion message to parent (`d87bbdd2-41e0-4e96-8205-9ea9461c7df0`).
+Mission:
+Empirically stress-test Milestone 1 implementation (`extension/manifest.json` and `extension/background.js`).
+1. Write and execute an adversarial stress test script (e.g. in your working directory) testing:
+   - Obscure URL formats (IPv4/IPv6, internationalized domain names, ports, query strings, userinfo, trailing slashes, encoded characters).
+   - Rapid state switching (spamming start/pause/stop/break across sub-millisecond intervals).
+   - High volume concurrent message dispatching.
+2. Run project tests:
+   `cd web && npm test`
+3. Document empirical test cases, results, and findings in `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\challenger_m1_1\handoff.md`.
+   State your explicit verdict: `APPROVE` or `REQUEST_CHANGES`.
+4. Send completion message to parent orchestrator.

@@ -1,13 +1,11 @@
-# Progress - Challenger 2 (Milestone 1)
+# Progress — challenger_m1_2
 
-Last visited: 2026-10-13T08:45:00Z
+Last visited: 2026-10-17T01:13:00Z
 
-## Status
-- [x] Initialized DISPATCH.md and BRIEFING.md
-- [x] Read input files: ORIGINAL_REQUEST.md, PROJECT.md, TEST_READY.md, campus-store.ts
-- [x] Run existing tests and build baseline
-- [x] Write and execute adversarial test harness for XP awarding, "Clear the Board" bonus (`challenger-m1-tasks-reactivity.test.ts`)
-- [x] Write and execute adversarial test harness for streak calculation
-- [x] Write and execute adversarial test harness for store immutability and subscriber dispatch
-- [x] Compile findings and verdict: APPROVE
-- [x] Write handoff.md and report to parent
+- [x] Initialized DISPATCH.md, BRIEFING.md, progress.md
+- [x] Read required documents: ORIGINAL_REQUEST.md, PROJECT.md, TEST_READY.md, worker_m1_1/handoff.md
+- [x] Inspect implementation in `extension/` and test suites
+- [x] Write and run empirical stress test harness for handleCloseTabAndFocusCampus, cooldown boundary, and concurrent violation counter (`web/tests/challenger-m1-extension-stress.test.ts`)
+- [x] Run project tests `cd web && npm test` (453/453 PASS) and `npm run typecheck` (0 errors)
+- [x] Produce handoff.md with verdict (APPROVE)
+- [ ] Send message to orchestrator

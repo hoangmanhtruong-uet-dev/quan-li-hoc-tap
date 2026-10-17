@@ -1,54 +1,61 @@
-# BRIEFING — 2026-10-13T09:20:00Z
+# BRIEFING — 2026-10-17T01:22:00Z
 
 ## Mission
-Fix timezone skew, Unicode boundary matching in Eisenhower classification, and Vietnamese NLP parser defects in `web/src/lib/tasks-engine.ts` for Milestone 1.
+Remediate MV3 Service Worker Dormancy Rehydration and tabs.onUpdated Multi-Penalty in `extension/background.js`.
 
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
-- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m1_2\
-- Original parent: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Milestone: Milestone 1 (Iteration 2)
+- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m1_2
+- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Milestone: milestone_1
 
 ## 🔒 Key Constraints
-- Exclusively own and modify: `web/src/lib/tasks-engine.ts` only.
-- Do NOT modify other files.
-- DO NOT CHEAT: Genuine implementations only, no hardcoded test outputs or facade implementations.
-- Verify using `npm test` and `npm run typecheck` in `web/`.
+- Exclusive write ownership: `extension/background.js` and `.agents/teamwork/worker_m1_2/*`. Do NOT touch any other files.
+- DO NOT CHEAT: Genuine implementations only, no hardcoded test results, no dummy facades.
+- Ensure all tests pass 100% with 0 errors (`node --experimental-strip-types --test tests/extension-manifest.test.ts tests/extension-bridge.test.ts`, `npm test`, `npm run typecheck`).
 
 ## Current Parent
-- Conversation ID: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Updated: 2026-10-13T09:20:00Z
+- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Updated: 2026-10-17T01:22:00Z
 
 ## Task Summary
-- **What to build**: Fix defects in `web/src/lib/tasks-engine.ts`:
-  1. Timezone skew in `parseSafeIsoTime`
-  2. Unicode boundary matching in `computeEisenhowerQuadrant`
-  3. Vietnamese NLP parser defects in `parseVietnameseTaskInput` (NFC normalization, standalone hours like `20h`, Sunday `cn` boundary)
-- **Success criteria**: Genuine implementation without cheating, typecheck passes with 0 errors, full documentation of adversarial test suite behavior in handoff report.
-- **Interface contracts**: `web/src/lib/tasks-engine.ts`
-- **Code layout**: `web/src/lib/tasks-engine.ts`
-
-## Key Decisions Made
-- Implemented local time components parsing in `parseSafeIsoTime` for naive ISO timestamps (`new Date(y, m - 1, d, h, min, s).getTime()`) and date-only strings (`new Date(y, m - 1, d, 23, 59, 59).getTime()`). Strings with explicit timezone offsets (`Z`, `+`, `-`) use `new Date(dueAt).getTime()`.
-- Implemented Unicode-aware boundary matching in `computeEisenhowerQuadrant` using `/(?:^|[^\p{L}\p{N}])(thi|bài tập lớn|btl|khóa luận|báo cáo|đồ án|chuyên đề|giữa kỳ|cuối kỳ)(?=$|[^\p{L}\p{N}])/ui`.
-- Added NFC normalization (`rawInput.normalize('NFC')`) across `parseVietnameseTaskInput` entry, course matching, and fallback title generation.
-- Updated `dowRegex` with non-alphanumeric boundaries to protect IT acronyms like `cntt` and `cnpm` from matching `cn` (Sunday).
-- Supported standalone hour expressions (e.g. `20h`) as due times when preceded by action/deadline verbs (`nộp`, `báo cáo`, `deadline`, etc.), accompanied by minute durations, or within the 13–23h afternoon/evening range, while preserving multi-hour work durations like `cày đồ án 12h`.
-- Respected exclusive write ownership strictly: zero edits to any test files or other source files.
-
-## Artifact Index
-- `.agents/teamwork/worker_m1_2/DISPATCH.md` — Assigned dispatch prompt
-- `.agents/teamwork/worker_m1_2/BRIEFING.md` — Agent briefing & situational memory
-- `.agents/teamwork/worker_m1_2/progress.md` — Heartbeat & execution log
-- `.agents/teamwork/worker_m1_2/handoff.md` — 5-component handoff report
+- **What to build**:
+  1. Fix Service Worker Dormancy Rehydration in `extension/background.js`:
+     Restore active session and blacklist domains from `chrome.storage.local` upon service worker wakeup using top-level initialization and an `ensureInitialized()` guard before processing tab events and message handlers.
+  2. Fix Multi-penalty on `tabs.onUpdated`:
+     Filter by `if (!changeInfo.url) return;` so non-URL changes (title, status, favicon) don't trigger violation checks.
+     Maintain a per-tab violation timestamp map (`lastViolationTimeByTab`) to debounce duplicate penalties within 2000ms.
+- **Success criteria**:
+  - Service worker correctly rehydrates on dormancy wakeup.
+  - No duplicate penalties on non-URL changes or rapid successive events within 2s debounce window.
+  - All tests pass cleanly (`npm test`, `npm run typecheck`).
+- **Interface contracts**: PROJECT.md and reviewer reports.
+- **Code layout**: `extension/background.js`.
 
 ## Change Tracker
-- **Files modified**: `web/src/lib/tasks-engine.ts` — fixed timezone skew, Eisenhower Unicode word boundaries, and Vietnamese NLP parsing.
-- **Build status**: `npm run typecheck` passed (0 errors).
-- **Pending issues**: None.
+- **Files modified**:
+  - `extension/background.js`: Added `ensureInitialized(forceRefresh)`, top-level rehydration invocation on service worker start, `ensureInitialized` guards in `checkAndHandleTabViolation` and `handleMessageRequest`, `changeInfo.url` filter in `chrome.tabs.onUpdated`, `VIOLATION_DEBOUNCE_MS = 2000`, `lastViolationTimeByTab` Map with `isTabDebounced` & `recordTabViolationTime`, and `chrome.tabs.onRemoved` cleanup.
+  - `.agents/teamwork/worker_m1_2/test_m1_2_verification.mjs`: Independent unit tests for dormancy rehydration, 2000ms debounce, onUpdated filtering, and tab cleanup.
+- **Build status**: Pass (0 errors, 453/453 web tests, 55/55 extension tests, 6/6 worker verification tests, 8/8 M1 verification tests)
+- **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: `npm run typecheck` passed cleanly (exit code 0).
-- **Lint status**: 0 TypeScript errors.
-- **Tests added/modified**: Exclusively modified `web/src/lib/tasks-engine.ts` per strict boundary ownership.
+- **Build/test result**: Pass
+- **Lint status**: Clean (tsc --noEmit 0 errors)
+- **Tests added/modified**: `test_m1_2_verification.mjs` (6 tests covering dormancy rehydration & debounce)
+
+## Loaded Skills
+- None required beyond standard workflow
+
+## Key Decisions Made
+- `ensureInitialized()` caches the initialization promise to avoid redundant storage I/O on successive calls, while allowing forced refresh when explicitly requested.
+- `lastViolationTimeByTab` debounces within 2000ms (`VIOLATION_DEBOUNCE_MS`) per tab ID and is cleaned up on `chrome.tabs.onRemoved`.
+- `chrome.tabs.onUpdated` filters out any event without `changeInfo.url`, preventing title, status, or favicon mutations from triggering violation checks.
+
+## Artifact Index
+- `.agents/teamwork/worker_m1_2/DISPATCH.md` — Initial dispatch instructions
+- `.agents/teamwork/worker_m1_2/BRIEFING.md` — Agent briefing and persistent memory
+- `.agents/teamwork/worker_m1_2/progress.md` — Liveness and progress tracker
+- `.agents/teamwork/worker_m1_2/test_m1_2_verification.mjs` — Independent verification test suite
+- `.agents/teamwork/worker_m1_2/handoff.md` — Final handoff report

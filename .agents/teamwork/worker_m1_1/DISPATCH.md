@@ -1,55 +1,44 @@
-## 2026-10-13T08:13:48Z
-You are the Worker for Milestone 1 (Store, Types & Tasks Engine) of the CampusOS /tasks page rebuild project.
+## 2026-10-17T01:01:39Z
+You are worker_m1_1.
+Your working directory is: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m1_1
 
-Your assigned working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m1_1\
-Your parent conversation ID: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-
-Input files to read FIRST:
-1. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp ## 2026-10-13T07:48:15Z)
-2. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md
-3. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\spec_miner_survey_1\handoff.md
-4. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\explorer_code_survey_2\handoff.md
-5. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web\src\lib\campus-store.ts
-
-EXCLUSIVE WRITE OWNERSHIP:
-You exclusively own and may modify:
-- web/src/types/tasks.ts (create)
-- web/src/lib/tasks-engine.ts (create)
-- web/src/lib/campus-store.ts (extend)
-DO NOT touch any test files or other UI components in this milestone.
+MANDATORY FIRST STEP:
+Read the authoritative user request at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md (specifically header ## 2026-10-17T00:51:59Z).
+Also read:
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\spec_miner_survey_3\handoff.md
 
 MANDATORY INTEGRITY WARNING:
 DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
 
-Objective & Implementation Details:
-1. `web/src/types/tasks.ts`:
-   - Define and export `TaskStatus` ('todo' | 'doing' | 'done'), `TaskPriority` ('high' | 'medium' | 'low'), `EisenhowerQuadrant` ('do_first' | 'schedule' | 'delegate' | 'eliminate'), `TaskDateGroupKey` ('overdue' | 'today' | 'tomorrow' | 'this_week' | 'later' | 'done').
-   - Define and export `TaskStep`, `TaskPomodoroInfo`, `TaskAttachment`, `TaskActivityLog`, and full `TaskItem` interface matching specifications in PROJECT.md and spec miner handoff.
-2. `web/src/lib/tasks-engine.ts`:
-   - Implement deterministic, pure helper functions with optional `referenceDate: Date = new Date()` parameter:
-     - `getTaskDateGroup(task: TaskItem, referenceDate?: Date): TaskDateGroupKey`
-     - `computeEisenhowerQuadrant(task: TaskItem, referenceDate?: Date): EisenhowerQuadrant`
-     - `parseVietnameseTaskInput(rawInput: string, referenceDate?: Date): ParsedTaskResult`
-     - `getUrgencyLevel(dueAt: string, referenceDate?: Date): { isOverdue: boolean; hoursRemaining: number; color: 'lime' | 'orange' | 'red'; isPanic: boolean; displayCountdown: string }`
-     - `formatCountdown(dueAt: string, referenceDate?: Date): string`
-   - Use deterministic multi-pass regex for Vietnamese NLP (duration: 90p/1.5h/45m, priority: cao/vừa/thấp, dates: hôm nay/ngày mai/thứ X/DD-MM, time: 23h/14h30, course detection, title cleanup).
-3. `web/src/lib/campus-store.ts`:
-   - Extend `CampusOSSharedState` with `tasks: TaskItem[]`.
-   - Seed default tasks dynamically anchored to the current system date (due today, tomorrow, this week, overdue, done) so that `/tasks` always starts with realistic, active tasks.
-   - Implement exported reactive store actions:
-     - `addTask(taskData)`
-     - `completeTask(id, xp = 20)`: marks task done, awards XP, triggers streak progression, checks badges, checks "Clear the Board" bonus (+50 XP if all today's tasks completed), debounces sync to Supabase.
-     - `updateTask(id, patch)`
-     - `deleteTask(id)`
-     - `bulkUpdateTasks(ids, patch)`
-     - `toggleTaskStep(taskId, stepId)`
-     - `reorderTasks(taskId, targetQuadrantOrGroup, newOrder)`
+Exclusive Write Ownership:
+You exclusively own and may create/modify:
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\extension\manifest.json
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\extension\background.js
+Do NOT touch or modify any other files.
 
-Verification Requirement:
-- Run `npm test` in `web/` to verify all existing 33 tests still pass without regressions.
-- Run `npm run typecheck` in `web/` to verify 0 TypeScript errors.
-- Document exact verification commands and outputs in your handoff report.
-
-Deliverable:
-Write report to `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m1_1\handoff.md`.
-Send completion message to parent (`d87bbdd2-41e0-4e96-8205-9ea9461c7df0`).
+Mission:
+Implement Milestone 1: Manifest V3 Configuration & Background Service Worker architecture.
+1. `extension/manifest.json`:
+   - Valid Manifest V3 standard.
+   - Name: "AI Giám Sát Học Tập Cực Đoan (CampusOS)"
+   - Permissions: `["tabs", "storage", "activeTab", "scripting", "declarativeNetRequest"]`
+   - `host_permissions: ["<all_urls>"]`
+   - `externally_connectable: { "matches": ["http://localhost:3000/*", "http://127.0.0.1:3000/*", "https://*.campusos.vn/*", "https://campusos.vn/*"] }`
+   - Background service worker: `{"service_worker": "background.js", "type": "module"}`
+   - Action popup: `{"default_popup": "popup/popup.html"}`
+   - Content scripts: `[{"matches": ["<all_urls>"], "js": ["content.js"], "run_at": "document_end"}]`
+   - Web accessible resources for `assets/*`.
+2. `extension/background.js`:
+   - Session state FSM: `'idle' | 'focusing' | 'break'`.
+   - 14 default blacklist domains: `facebook.com`, `youtube.com`, `tiktok.com`, `twitter.com`, `x.com`, `instagram.com`, `netflix.com`, `bilibili.com`, `shopee.vn`, `reddit.com`, `threads.net`, `twitch.tv`, `discord.com`, `lazada.vn`.
+   - Storage sync with `chrome.storage.sync` / `chrome.storage.local` (`campusos_blacklist_domains`, `campusos_session_state`).
+   - Clean, robust URL blacklist matcher `isUrlBlacklisted(url, blacklist)` supporting exact domain and subdomains (e.g. `m.facebook.com`), while exempting localhost/127.0.0.1/campusos.vn and system URLs.
+   - `chrome.tabs.onActivated` and `chrome.tabs.onUpdated` listeners detecting visits to blacklisted URLs when `sessionState === 'focusing'` and not exempt.
+   - Tab closure and focus switching: `CLOSE_TAB_AND_FOCUS_CAMPUS` handler that searches for or opens CampusOS tab, then closes the distracting tab via `chrome.tabs.remove`.
+   - Exemption management: Cooldown enforcement (1 use per 3 minutes: 180 seconds).
+   - Message routers for `chrome.runtime.onMessageExternal` (Web App communication: `PING`, `START_FOCUS`, `PAUSE_FOCUS`, `STOP_FOCUS`, `REQUEST_EXEMPTION`, `SYNC_STATE`) and `chrome.runtime.onMessage` (internal communication with content script and popup).
+3. Verification:
+   - Validate JSON syntax of `manifest.json`.
+   - Ensure `background.js` has no syntax errors and exports/functions work cleanly.
+4. Document all changes, verification commands, and results in `handoff.md` in your working directory. Update `progress.md`. Send completion message to parent orchestrator.

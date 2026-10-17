@@ -1,67 +1,78 @@
-# BRIEFING — 2026-10-13T10:08:00Z
+# BRIEFING — 2026-10-17T01:57:35Z
 
 ## Mission
-Build Milestone 3: Smart Controls Bar & 4 Views (List, Kanban, Matrix, Today Plan) + Task Card + Bulk Action Bar for the rebuilt CampusOS /tasks page with zero horizontal overflow and strict neo-brutal styling.
+Implement Milestone 3: AI Webcam Face Tracking (MediaPipe Face Mesh algorithms, EAR, Head Pose, settings toggle, React hook, Cyber-Glass modal, and unit tests).
 
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
 - Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m3_1
-- Original parent: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Milestone: Milestone 3 (Smart Controls Bar & 4 Views)
+- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Milestone: Milestone 3 - AI Webcam Face Tracking
 
 ## 🔒 Key Constraints
-- Exclusively own and modify:
-  - `web/src/components/tasks/controls/controls-bar.tsx`
-  - `web/src/components/tasks/controls/bulk-action-bar.tsx`
-  - `web/src/components/tasks/views/task-card.tsx`
-  - `web/src/components/tasks/views/list-view.tsx`
-  - `web/src/components/tasks/views/kanban-view.tsx`
-  - `web/src/components/tasks/views/matrix-view.tsx`
-  - `web/src/components/tasks/views/today-view.tsx`
-- DO NOT hardcode test results or create dummy/facade implementations.
-- Zero horizontal overflow: `min-w-0`, `overflow-x-hidden`, grid columns `minmax(0, 1fr)`.
-- Verification: `npm run typecheck` passes with 0 errors, `npm test` passes all tests.
+- Exclusive write ownership:
+  - extension/ai/webcam-tracker.js
+  - web/src/features/pomodoro/ai-webcam-modal.tsx
+  - web/src/features/pomodoro/use-webcam-tracking.ts
+  - web/tests/ai-webcam-tracking.test.ts
+  - .agents/teamwork/worker_m3_1/*
+- DO NOT touch or modify any other files.
+- Integrity Mandate: genuine implementations only, no dummy/facade implementations, no hardcoding.
+- Verification commands in web/:
+  - `node --experimental-strip-types --test tests/ai-webcam-tracking.test.ts`
+  - `npm test`
+  - `npm run typecheck`
+- In-memory local processing guarantee (zero video upload).
+- Throttled loop (10-15fps) keeping CPU usage minimal.
 
 ## Current Parent
-- Conversation ID: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Updated: 2026-10-13T10:08:00Z
+- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Updated: 2026-10-17T01:57:35Z
 
 ## Task Summary
-- **What to build**: Complete Smart Controls Bar, Bulk Action Bar, Reusable Task Ticket Card, and all 4 Views (List View, Kanban View, Eisenhower Matrix View, Today Plan View).
-- **Success criteria**: 100% interactive, responsive, store integration via `useCampusStore`, zero horizontal scrollbars, TypeScript 0 errors, all 102 tests passing cleanly.
-- **Interface contracts**: `PROJECT.md`, `spec_miner_survey_1/handoff.md`, `explorer_ui_survey_3/handoff.md`.
-
-## Key Decisions Made
-- Built 1-draw-call Canvas2D mini confetti burst directly in `task-card.tsx` + procedural Web Audio chime for instant delightful gamification feedback without external assets.
-- Integrated keyboard shortcuts `/` for search, `1/2/3/4` for view switching, with guard against inputs.
-- Used HTML5 Native Drag & Drop across List groups, Kanban columns, and Matrix quadrants with Undo toasts providing 5s reversible actions.
-- Used `useCampusStore` in `today-view.tsx` to automatically schedule non-conflicting study block events directly into the store's `events` collection upon clicking `Chấp nhận kế hoạch`.
-
-## Artifact Index
-- DISPATCH.md — Initial assignment
-- BRIEFING.md — Situational awareness
-- progress.md — Liveness & task execution tracking
-- handoff.md — Final deliverable report
+- **What to build**: AI Webcam Face Tracking engine (`webcam-tracker.js`), React hook (`use-webcam-tracking.ts`), Cyber-Glass UI modal (`ai-webcam-modal.tsx`), and automated test suite (`ai-webcam-tracking.test.ts`).
+- **Success criteria**:
+  - `calculateEyeAspectRatio` Euclidean distance ratio formula.
+  - `detectDrowsiness` (>10s eyes closed threshold 0.20).
+  - `estimateHeadPose` yaw, pitch, roll angles.
+  - `detectLookingAway` (yaw > 30° or pitch < -25° continuously > 10s).
+  - `WebcamFaceMonitor` engine class managing frame processing, duration accumulator, event callbacks, toggle flags.
+  - React hook integrating with media stream and SupervisorArbiter / characters-data Vietnamese TTS.
+  - Cyber-Glass modal with video preview, telemetry gauges, toggle, privacy banner.
+  - Comprehensive unit tests passing 100%.
+- **Interface contracts**: PROJECT.md & spec_miner_survey_3/handoff.md
+- **Code layout**: extension/ai/ and web/src/features/pomodoro/
 
 ## Change Tracker
-- **Files created**:
-  - `web/src/components/tasks/controls/controls-bar.tsx` — Smart Controls Bar with view switcher, search, filters, sort dropdown
-  - `web/src/components/tasks/controls/bulk-action-bar.tsx` — Floating multi-select bulk action bar
-  - `web/src/components/tasks/views/task-card.tsx` — Reusable Neo-Brutal task ticket card
-  - `web/src/components/tasks/views/list-view.tsx` — View 1: List View with 6 sticky date groups and DnD
-  - `web/src/components/tasks/views/kanban-view.tsx` — View 2: Kanban View with 3 columns, WIP limit, and DnD
-  - `web/src/components/tasks/views/matrix-view.tsx` — View 3: Eisenhower Matrix View with 2x2 grid and DnD
-  - `web/src/components/tasks/views/today-view.tsx` — View 4: Today Plan View with AI curate, capacity bar, and calendar event creation
-- **Build status**: `npm run typecheck` PASSED (0 errors), `next lint` PASSED (0 errors), `npm test` PASSED (102/102 tests pass)
-- **Pending issues**: None
+- **Files modified/created**:
+  - `extension/ai/webcam-tracker.js`: Pure mathematical algorithms for EAR, Head Pose, Drowsiness & Looking away evaluators, and WebcamFaceMonitor engine.
+  - `web/src/features/pomodoro/use-webcam-tracking.ts`: React hook managing media stream, camera permissions, monitoring lifecycle, and Vietnamese TTS scolding integration with SupervisorArbiter.
+  - `web/src/features/pomodoro/ai-webcam-modal.tsx`: Cyber-Glass Neo-Brutal Aurora modal with live video preview, real-time EAR and Head Pose telemetry meters, and privacy assurance banner.
+  - `web/tests/ai-webcam-tracking.test.ts`: Comprehensive test suite (37 tests across 4 tiers) validating math, edge cases, lifecycle, and student scenarios.
+- **Build status**: PASS
+  - `node --experimental-strip-types --test tests/ai-webcam-tracking.test.ts`: 37/37 pass
+  - `npm test`: 490/490 pass
+  - `npm run typecheck`: 0 errors
+- **Pending issues**: None. Milestone 3 completely implemented and verified.
 
 ## Quality Status
-- **Build/test result**: Pass (0 errors, 102/102 tests passing)
-- **Lint status**: 0 violations in Milestone 3 code
-- **Tests added/modified**: Existing 102 tests verified; components verified against store and engine contracts
+- **Build/test result**: PASS (490/490 tests passing)
+- **Lint status**: 0 errors
+- **Tests added/modified**: `web/tests/ai-webcam-tracking.test.ts` (37 new tests)
 
 ## Loaded Skills
-- **design-taste-frontend**: Anti-slop frontend styling, Neo-Brutal Aurora design tokens
-- **vercel-react-best-practices**: Fast render, React 18 hooks, zero layout thrashing
-- **verification-before-completion**: Strict verification via typecheck and test before claiming completion
+- None explicitly requested via skill paths; followed teamwork and verification protocols.
+
+## Key Decisions Made
+- Implemented pure Soukupová & Čech (2016) EAR formula handling 6-point eye contours with degenerate protection.
+- Designed dual 2D/3D head pose estimation using facial symmetry ratios and depth parallax.
+- Enforced 100% in-memory local processing (`localProcessingOnly: true`) ensuring user privacy.
+- Standardized target FPS throttle at 12fps (~83ms interval) for CPU < 5%.
+- Synced webcam toggle setting via `localStorage` with `campusos_webcam_enabled` to maintain parity between Web App and Chrome Extension.
+
+## Artifact Index
+- .agents/teamwork/worker_m3_1/DISPATCH.md
+- .agents/teamwork/worker_m3_1/BRIEFING.md
+- .agents/teamwork/worker_m3_1/progress.md
+- .agents/teamwork/worker_m3_1/handoff.md

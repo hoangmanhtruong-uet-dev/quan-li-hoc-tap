@@ -1,55 +1,58 @@
-# BRIEFING — 2026-10-13T08:33:00Z
+# BRIEFING — 2026-10-17T01:05:00Z
 
 ## Mission
-Implement Milestone 1 (Store, Types & Tasks Engine) for the CampusOS /tasks page rebuild project.
+Implement Milestone 1: Manifest V3 Configuration & Background Service Worker architecture.
 
 ## 🔒 My Identity
 - Archetype: worker
-- Roles: implementer, qa, specialist
-- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m1_1\
-- Original parent: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Milestone: Milestone 1 - Store, Types & Tasks Engine
+- Roles: implementer, qa
+- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m1_1
+- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Milestone: Milestone 1 - Manifest V3 Configuration & Background Service Worker
 
 ## 🔒 Key Constraints
-- EXCLUSIVE WRITE OWNERSHIP: Only modify web/src/types/tasks.ts, web/src/lib/tasks-engine.ts, web/src/lib/campus-store.ts
-- DO NOT touch any test files or other UI components in this milestone
-- Zero regression: All 33 existing tests must pass, 0 typecheck errors
-- Honest implementation: Real logic, pure deterministic functions, no hardcoding or dummy facades
+- Exclusive write ownership: `extension/manifest.json` and `extension/background.js`.
+- Do NOT touch or modify any other project files.
+- Manifest V3 standard with module type service worker.
+- FSM state machine: 'idle' | 'focusing' | 'break'.
+- 14 default blacklist domains.
+- Exemption cooldown: 180s (1 use per 3 min).
+- URL blacklist matcher with subdomain support and local/campusos exemption.
+- Message handling for external web app & internal extension communication.
+- No dummy/facade implementations, genuine logic only.
 
 ## Current Parent
-- Conversation ID: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Updated: 2026-10-13T08:33:00Z
+- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Updated: 2026-10-17T01:05:00Z
 
 ## Task Summary
-- **What to build**: Task data model (`tasks.ts`), Pure calculation and NLP parsing engine (`tasks-engine.ts`), Extended CampusOS state store with task actions, XP/streak/gamification integration (`campus-store.ts`).
-- **Success criteria**: Strict TypeScript typing, complete engine functions with referenceDate support, reactive store actions with state persistence and gamification bonuses, `npm test` (73/73 pass) and `npm run typecheck` (0 errors) passing.
-- **Interface contracts**: PROJECT.md, spec_miner handoff, explorer handoff.
-- **Code layout**: web/src/types/tasks.ts, web/src/lib/tasks-engine.ts, web/src/lib/campus-store.ts
-
-## Key Decisions Made
-- `web/src/types/tasks.ts`: Fully defined `TaskStatus`, `TaskPriority`, `EisenhowerQuadrant`, `TaskDateGroupKey`, `TaskStep`, `TaskPomodoroInfo`, `TaskAttachment`, `TaskActivityLog`, `TaskItem`, `ParsedTaskResult`, `UrgencyLevel`.
-- `web/src/lib/tasks-engine.ts`: Pure functions implemented with deterministic referenceDate parameter. Time-parsing handles explicit hours (e.g. 23h -> 23:00, 19h -> 19:00, 0h -> 00:00, 2h chiều -> 14:00) before duration matching, avoiding false duration collisions. Timezone consistency ensured by parsing timestamps with UTC anchor.
-- `web/src/lib/campus-store.ts`: Extended `CampusOSSharedState` with `tasks: TaskItem[]`. Default seed tasks anchored around `referenceDate`. Actions `addTask`, `completeTask` (+20 XP, Clear the Board +50 XP bonus, streak check, badge awards), `updateTask`, `deleteTask`, `bulkUpdateTasks`, `toggleTaskStep`, `reorderTasks` implemented and exposed in `useCampusStore` hook.
+- **What to build**: `extension/manifest.json` & `extension/background.js`
+- **Success criteria**: Valid MV3 manifest, comprehensive service worker handling state, tabs, storage, exemptions, messaging, passes syntax and unit testing.
+- **Interface contracts**: PROJECT.md, ORIGINAL_REQUEST.md, spec_miner handoff.
 
 ## Change Tracker
 - **Files modified**:
-  - `web/src/types/tasks.ts` (created): Task data types and interfaces.
-  - `web/src/lib/tasks-engine.ts` (created): Pure date grouping, Eisenhower quadrant heuristic, urgency/countdown metrics, Vietnamese NLP parser.
-  - `web/src/lib/campus-store.ts` (extended): tasks collection, dynamic seed data, reactive store actions, useCampusStore hook methods.
-- **Build status**: Pass (`npm run typecheck` exits 0, `npm test` passes 73/73 tests).
-- **Pending issues**: None.
+  - `extension/manifest.json`: Full Manifest V3 standard with module service worker, permissions, externally_connectable, action popup, and content scripts.
+  - `extension/background.js`: Complete Background Service Worker with FSM session state, 14 default blacklist domains, storage sync, URL matching, tab listeners, tab close & CampusOS focus switching, exemption cooldown, and message routers.
+- **Build status**: PASS (8/8 M1 verification tests pass, 380/380 web unit tests pass, typecheck 0 errors)
+- **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: Pass (73/73 tests pass in 344ms).
-- **Lint status**: 0 TypeScript errors.
-- **Tests added/modified**: None touched by M1 (tests/tasks-redesign.test.ts created by TEST worker passed 40/40 tests).
+- **Build/test result**: All 8 M1 verification tests passed; 380 web tests passed; `npm run typecheck` passed with 0 errors.
+- **Lint status**: Clean
+- **Tests added/modified**: `test_m1_verification.mjs` verifying MV3 manifest, 14 default domains, normalization, URL blacklist matcher, FSM lifecycle, 180s exemption cooldown, and message protocol.
 
 ## Loaded Skills
-- **verification-before-completion**: Verified tests and typecheck before handoff report.
-- **systematic-debugging**: Diagnosed time vs duration NLP regex precedence and UTC timezone normalization.
+- verification-before-completion
+
+## Key Decisions Made
+- Implemented modular ES module background service worker compatible with browser Service Worker and Node.js testing environments.
+- Enforced strict 180s cooldown calculation and tab close & focus switching logic.
+- Excluded localhost, 127.0.0.1, and CampusOS domains from blacklist detection.
 
 ## Artifact Index
-- DISPATCH.md — Task dispatch from orchestrator
-- BRIEFING.md — Situational awareness
-- progress.md — Liveness & progress tracking
-- handoff.md — Milestone 1 handoff report
+- `DISPATCH.md` — Dispatch instructions
+- `BRIEFING.md` — Situational awareness
+- `progress.md` — Heartbeat & progress log
+- `test_m1_verification.mjs` — Comprehensive unit test suite for Milestone 1
+- `handoff.md` — 5-component handoff report

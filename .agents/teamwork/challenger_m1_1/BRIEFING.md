@@ -1,60 +1,59 @@
-# BRIEFING — 2026-10-13T08:55:00Z
+# BRIEFING — 2026-10-17T01:14:00Z
 
 ## Mission
-Empirically stress-test the algorithmic engine in `web/src/lib/tasks-engine.ts` for Milestone 1 (Store, Types & Tasks Engine) of CampusOS /tasks page rebuild project.
+Adversarial stress-testing and empirical verification of Milestone 1 extension background worker (`extension/manifest.json`, `extension/background.js`).
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
-- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\challenger_m1_1\
-- Original parent: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Milestone: Milestone 1 (Store, Types & Tasks Engine)
+- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\challenger_m1_1
+- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Milestone: Milestone 1
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code (report findings, do NOT fix them directly)
-- Do NOT trust claims or logs blindly; empirical proof required for all findings
-- Verify with tests, fuzzing scripts, and test runner executions
+- Review-only — do NOT modify implementation code (`extension/background.js`, `extension/manifest.json`).
+- Empirical challenge: write and execute tests, generators, oracles, stress harnesses.
+- Must reproduce any bugs empirically with evidence.
+- Verdict must be explicitly `APPROVE` or `REQUEST_CHANGES`.
 
 ## Current Parent
-- Conversation ID: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Updated: 2026-10-13T08:55:00Z
+- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Updated: 2026-10-17T01:14:00Z
 
 ## Review Scope
-- **Files to review**: `web/src/lib/tasks-engine.ts`, `web/src/types/tasks.ts`, `web/tests/tasks-redesign.test.ts`
+- **Files to review**: `extension/manifest.json`, `extension/background.js`, `web/tests/extension-bridge.test.ts`, `web/tests/extension-manifest.test.ts`
 - **Interface contracts**: `PROJECT.md`, `TEST_READY.md`, `ORIGINAL_REQUEST.md`
-- **Review criteria**: Date grouping boundary conditions, Vietnamese NLP regex parser edge cases, Eisenhower classification robustness, test suite thoroughness
+- **Review criteria**: Correctness, concurrency resilience, URL parsing/matching edge cases, state machine integrity under rapid transitions.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. Timezone offset parsing in `parseSafeIsoTime` when evaluated against local time.
-  2. ASCII `\b` boundary failure on non-ASCII Vietnamese letters in academic keyword regex for Eisenhower classification.
-  3. Decomposed Unicode (NFD) normalization failure in NLP quickadd parsing.
-  4. Missing word boundaries on day-of-week abbreviations (`cn`) matching inside words like `cntt` and `cnpm`.
-  5. Standalone hour expressions (`20h`) misclassified as duration instead of due time.
-  6. Leap year, month-end, and Sunday midnight week boundary transitions.
+  1. Obscure URL formats (IPv4/IPv6, IDN homoglyphs, ports, query strings, userinfo, trailing slashes, encoded characters).
+  2. Rapid state switching (1,000 sequential and concurrent transitions across sub-millisecond intervals).
+  3. High volume concurrent message dispatching (1,000 asynchronous messages via Promise.all).
+  4. Tab event listener redundant penalization & event storming.
+  5. Manifest V3 schema and permission boundary checks.
 - **Vulnerabilities found**:
-  1. **CRITICAL**: Forced `'Z'` in `parseSafeIsoTime` causes 7-hour timezone skew in UTC+7 (Vietnam), creating a 7-hour ghost extension, preventing red panic alerts, and causing direct contradiction between `getTaskDateGroup` (overdue) and `getUrgencyLevel` (active).
-  2. **CRITICAL**: ASCII `\b` word boundary in `computeEisenhowerQuadrant` fails for Vietnamese keywords starting or ending with non-ASCII letters (`cuối kỳ`, `giữa kỳ`, `đồ án`, `chuyên đề`), incorrectly demoting urgent academic tasks to Q3 or Q4.
-  3. **HIGH**: Lack of `rawInput.normalize('NFC')` causes complete failure to extract course, priority, and cleaned title on NFD Unicode strings.
-  4. **MEDIUM**: Lack of word boundary on `"cn"` in `dowRegex` matches substrings of major abbreviations like `cntt` (Công nghệ thông tin) and `cnpm` (Công nghệ phần mềm), rescheduling tasks to Sunday and truncating titles.
-  5. **MEDIUM**: Standalone hour patterns like `"nộp bài 20h"` misclassified as 1200 minutes study duration rather than 20:00 due time.
+  1. [High Architectural Notice]: Chromium tab event storming — `onActivated` + multi-stage `onUpdated` without per-tab debounce can trigger repeated -50 XP penalties for a single page load. Advisory provided for M2/M4.
+  2. [Medium Notice]: Unicode IDN domain in custom blacklist requires Punycode conversion to match parsed WHATWG URL hostnames.
+  3. [Low Notice]: IPv6 bracketed address parsing in `normalizeDomain` splits on colons.
 - **Untested angles**:
-  1. Long-term browser localStorage quota limits under 10,000+ completed tasks.
-  2. Live Supabase edge network latency during debounced remote sync.
+  - Real browser DOM rendering for `content.js` (deferred to Milestone 2).
+  - Web Worker MediaPipe face tracking runtime (deferred to Milestone 3).
 
 ## Loaded Skills
-- Source: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\verification-before-completion\SKILL.md
-- Core methodology: Evidence before assertions always, run verification commands and confirm output
+- **Source**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\verification-before-completion\SKILL.md
+  - **Local copy**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\challenger_m1_1\skills\verification-before-completion.md
+  - **Core methodology**: Verify claims empirically with executable proof before drawing conclusions.
 
 ## Key Decisions Made
-- Authored empirical challenge test suite in `web/tests/challenger-m1-1-tasks-engine.test.ts` with 14 stress tests covering all 4 objective areas.
-- Confirmed baseline of 102 tests passing across `web/tests/`.
-- Issued formal verdict of **REQUEST_CHANGES** due to two critical algorithmic bugs (Timezone countdown desynchronization and ASCII boundary Vietnamese keyword failure).
+- Executed 21 adversarial stress tests covering all parent requirements with 0 runtime exceptions.
+- Executed project regression suite (`npm test`): 453/453 tests PASS.
+- Executed static typecheck (`npm run typecheck`): 0 errors.
+- Rendered final verdict: **`APPROVE`** with actionable implementation guidelines for M2 & M4.
 
 ## Artifact Index
-- `DISPATCH.md` — Inbound task dispatch
-- `BRIEFING.md` — Persistent identity and situational awareness
-- `progress.md` — Heartbeat and step tracking
-- `handoff.md` — Final handoff report with verdict
-- `web/tests/challenger-m1-1-tasks-engine.test.ts` — Empirical challenge test suite
+- `DISPATCH.md` — Inbound instruction log
+- `progress.md` — Step-by-step progress heartbeat
+- `adversarial_stress_test.mjs` — Executable adversarial test harness (21 test cases)
+- `handoff.md` — 5-component adversarial review report with explicit APPROVE verdict

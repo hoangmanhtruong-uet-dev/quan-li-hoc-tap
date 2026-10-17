@@ -1,12 +1,15 @@
-# Progress Tracker - Milestone 1: Store, Types & Tasks Engine
+# Progress — worker_m1_1
 
-Last visited: 2026-10-13T08:32:00Z
+Last visited: 2026-10-17T01:05:15Z
 
-- [x] Initialized DISPATCH.md and BRIEFING.md
-- [x] Read survey reports and existing codebase files
-- [x] Implement `web/src/types/tasks.ts` (TaskStatus, TaskPriority, EisenhowerQuadrant, TaskDateGroupKey, TaskStep, TaskPomodoroInfo, TaskAttachment, TaskActivityLog, TaskItem, ParsedTaskResult, UrgencyLevel)
-- [x] Implement `web/src/lib/tasks-engine.ts` (daysDifference, getTaskDateGroup, groupTasksByDate, computeEisenhowerQuadrant, formatCountdown, getUrgencyLevel, parseVietnameseTaskInput)
-- [x] Extend `web/src/lib/campus-store.ts` (tasks in CampusOSSharedState, dynamic date anchoring in createDefaultSharedState, addTask, completeTask with Clear the Board bonus, updateTask, deleteTask, bulkUpdateTasks, toggleTaskStep, reorderTasks, hook exposure)
-- [x] Verify TypeScript typecheck (`npm run typecheck` passes with 0 errors)
-- [x] Verify test suite (`npm test` passes all 73 tests: 33 existing tests + 40 tasks tests with 0 failures)
-- [x] Write handoff.md and notify parent
+## Status
+Milestone 1 Implementation COMPLETE and 100% verified.
+
+## Steps
+- [x] Received dispatch and initialized BRIEFING.md
+- [x] Read ORIGINAL_REQUEST.md, PROJECT.md, and spec_miner handoff
+- [x] Inspected existing extension directory
+- [x] Implemented `extension/manifest.json` (Valid Manifest V3, permissions, externally_connectable, service worker, action popup)
+- [x] Implemented `extension/background.js` (FSM session states, 14 default blacklist domains, storage sync, URL matching, tab listeners, tab close & CampusOS focus switching, exemption cooldown, message routers)
+- [x] Verified syntax and functionality (Node test suite with 8 passed suites, 380 web tests pass, typecheck 0 errors)
+- [x] Generated handoff report and notified orchestrator

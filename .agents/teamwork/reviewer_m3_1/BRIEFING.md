@@ -1,66 +1,64 @@
-# BRIEFING — 2026-10-13T11:38:00Z
+# BRIEFING — 2026-10-17T02:05:00Z
 
 ## Mission
-Objective review and adversarial stress-testing of Milestone 3 deliverables (Controls Bar & 4 Views: List, Kanban, Matrix, Today) for CampusOS Tasks redesign.
+Objectively review and verify Milestone 3: AI Webcam Face Tracking (EAR, Head Pose, WebcamFaceMonitor, useWebcamTracking hook, AIWebcamModal component, TTS alerts, tests).
 
 ## 🔒 My Identity
-- Archetype: reviewer, critic
+- Archetype: reviewer_m3_1
 - Roles: reviewer, critic
-- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m3_1\
-- Original parent: 36a9e4bd-9a99-49d5-9abb-fdf329e0082d
-- Milestone: Milestone 3 (Controls Bar & 4 Views)
+- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m3_1
+- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Milestone: M3 (AI Webcam Face Tracking)
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Check integrity violations (hardcoding, facades, shortcuts, fake tests)
-- Verify zero TS errors, all tests pass
-- Verify Neo-brutal Aurora design language, 120FPS zero-lag constraints
-- Verify zero horizontal overflow, reversible operations, dynamic countdown badges, WIP limit warnings, calendar sync
-- Issue explicit verdict (APPROVE or REQUEST_CHANGES) in handoff report
+- Actively check for integrity violations (hardcoded test results, facade implementations, bypassed tasks, fabricated logs)
+- Verify tests and types directly
+- Issue clear verdict: APPROVE or REQUEST_CHANGES
 
 ## Current Parent
-- Conversation ID: 36a9e4bd-9a99-49d5-9abb-fdf329e0082d
-- Updated: 2026-10-13T11:38:00Z
+- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Updated: not yet
 
 ## Review Scope
 - **Files to review**:
-  - web/src/components/tasks/controls/controls-bar.tsx
-  - web/src/components/tasks/controls/bulk-action-bar.tsx
-  - web/src/components/tasks/views/task-card.tsx
-  - web/src/components/tasks/views/list-view.tsx
-  - web/src/components/tasks/views/kanban-view.tsx
-  - web/src/components/tasks/views/matrix-view.tsx
-  - web/src/components/tasks/views/today-view.tsx
-- **Interface contracts**: PROJECT.md, docs/CampusOS_Tasks_Redesign_Plan.md, .agents/teamwork/ORIGINAL_REQUEST.md
-- **Review criteria**: Correctness, completeness, neo-brutal aurora design, performance (120fps/no heavy libs), zero horizontal scrollbar, reversible operations, integrity violations
+  - `extension/ai/webcam-tracker.js`
+  - `web/src/features/pomodoro/use-webcam-tracking.ts`
+  - `web/src/features/pomodoro/ai-webcam-modal.tsx`
+  - `web/tests/ai-webcam-tracking.test.ts`
+- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md` (header ## 2026-10-17T00:51:59Z)
+- **Review criteria**: mathematical validity of EAR & Head Pose, continuous 10s state transitions, throttling, local RAM guarantee, clean hook lifecycle, TTS integration, Cyber-Glass UX, test integrity & execution.
 
 ## Review Checklist
 - **Items reviewed**:
-  - controls-bar.tsx: Verified sliding pill, keyboard shortcuts (/ and 1-4), live counts, filter chips, custom sort dropdown.
-  - bulk-action-bar.tsx: Verified floating pill, complete, priority dropdown, postpone dropdown (+1d, +3d, +1w), delete, clear.
-  - task-card.tsx: Verified Canvas2D confetti (28 particles, 700ms), procedural Web Audio chime, ±0.8° hover tilt, SVG animated checkmark, +20 XP float, countdown badge (lime/orange/red/panic shake/🫠), course chip, subtask segments, HTML5 DnD.
-  - list-view.tsx: Verified 6 sticky date groups, collapse toggles, HTML5 DnD with drop highlight, Undo toast with state restoration.
-  - kanban-view.tsx: Verified 3 columns, tilted sticker headers, WIP limit warning (>3 in Đang làm), HTML5 DnD with done XP drop, Undo toast.
-  - matrix-view.tsx: Verified 2x2 grid, glowing neon Q1 border, AI placement heuristic integration, HTML5 DnD, Undo toast.
-  - today-view.tsx: Verified AI curation scoring, capacity ratio bar (lime/orange/red), overload warning, calendar sync pushing study events into campus-store.
+  - `extension/ai/webcam-tracker.js` (reviewed & mathematically validated)
+  - `web/src/features/pomodoro/use-webcam-tracking.ts` (reviewed & lifecycle verified)
+  - `web/src/features/pomodoro/ai-webcam-modal.tsx` (reviewed & Cyber-Glass verified)
+  - `web/tests/ai-webcam-tracking.test.ts` (executed & verified 37/37 pass)
 - **Verdict**: APPROVE
-- **Unverified claims**: All verified via in-depth static code analysis and test suite inspection.
+- **Unverified claims**: none
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Shortcut hijacking: Confirmed guarded against HTMLInputElement, textarea, select, contentEditable, and meta/ctrl/alt modifiers.
-  - HTML5 DnD cross-browser safety: Confirmed dual-fallback pattern using dataTransfer + React state.
-  - Web Audio autoplay / mobile restrictions: Confirmed guarded in try/catch and reducedMotion check.
-  - Toast timer race conditions: Confirmed timestamp ID check prevents stale timeouts from dismissing newer toasts.
-  - Horizontal viewport overflow: Confirmed all containers enforce min-w-0, max-w-full, overflow-x-hidden, break-words.
-  - Integrity violation checks: Zero hardcoded test outputs or dummy facades found.
-- **Vulnerabilities found**: None. Minor edge-case note regarding past-midnight clamping in Today plan study blocks.
-- **Untested angles**: Runtime browser render (permission for terminal commands denied in environment).
+  - Degenerate landmark geometry (p1=p4, zero faceHeight) -> handled safely, no NaN
+  - Natural blinking (200ms close every 3s) -> filtered out, no false sleep alerts
+  - Glance away / note-taking (< 10s) -> filtered out, no false alerts
+  - Disconnect / face leaves camera -> resets accumulators to 0, transitions to no_face
+  - Double scolding -> throttled by SupervisorArbiter 20s cooldown
+- **Vulnerabilities found**: none
+- **Untested angles**: physical low-light webcam hardware variations (covered via safe fallback to no_face)
 
 ## Key Decisions Made
-- Issued verdict: APPROVE
+- Performed full code inspection on all 4 files
+- Ran dedicated M3 test suite (37 tests, 100% pass)
+- Ran complete web test suite (490 tests, 100% pass)
+- Ran typecheck (0 errors)
+- Verified zero integrity violations
+- Issued official verdict: APPROVE
 
 ## Artifact Index
-- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m3_1\progress.md — liveness heartbeat
-- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m3_1\handoff.md — final review report
+- DISPATCH.md — incoming dispatch instructions
+- BRIEFING.md — persistent memory
+- progress.md — liveness heartbeat
+- handoff.md — final review & adversarial report

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Giám Sát Học Tập Cực Đoan</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="brand">
+        <img src="../assets/fat-orange-cat.png" alt="Mèo Cam" class="mascot-avatar" id="mascot-img">
+        <div class="brand-text">
+          <div class="title-row">
+            <span class="brand-title">CAMPUS<span class="accent">OS</span></span>
+            <span class="version-badge">v1.0</span>
+          </div>
+          <span class="brand-subtitle">AI Giám Thị Cực Đoan</span>
+        </div>
+      </div>
+      <div class="status-pill" id="session-status-badge">
+        <span class="status-dot" id="status-dot"></span>
+        <span class="status-text" id="status-text">IDLE</span>
+      </div>
+    </header>
+
+    <!-- Pomodoro Timer Card -->
+    <section class="cyber-card timer-card">
+      <div class="timer-display" id="timer-display">25:00</div>
+      <div class="timer-progress-track">
+        <div class="timer-progress-bar" id="timer-progress-bar" style="width: 100%;"></div>
+      </div>
+      <div class="timer-controls">
+        <button type="button" class="btn btn-primary" id="btn-start-focus">▶ Bắt đầu</button>
+        <button type="button" class="btn btn-secondary" id="btn-pause-focus" disabled>⏸ Tạm dừng</button>
+        <button type="button" class="btn btn-ghost" id="btn-stop-focus" disabled>⏹ Dừng</button>
+      </div>
+    </section>
+
+    <!-- Violation Stats Bar -->
+    <section class="violation-bar">
+      <div class="violation-info">
+        <span class="violation-icon">🚨</span>
+        <span class="violation-label">Bị bắt quả tang hôm nay:</span>
+      </div>
+      <span class="violation-count" id="violation-count">0 lần</span>
+    </section>
+
+    <!-- AI Webcam Face Tracking Toggle -->
+    <section class="cyber-card toggle-card">
+      <div class="toggle-content">
+        <div class="toggle-label-row">
+          <span class="toggle-icon">👁️</span>
+          <span class="toggle-title">AI Webcam Giám Sát</span>
+        </div>
+        <p class="toggle-desc">Phát hiện quay mặt > 10s hoặc ngủ gục (MediaPipe)</p>
+      </div>
+      <label class="switch" for="toggle-webcam">
+        <input type="checkbox" id="toggle-webcam" checked>
+        <span class="slider"></span>
+      </label>
+    </section>
+
+    <!-- Blacklist Manager Section -->
+    <section class="cyber-card blacklist-section">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-title">Danh sách Blacklist</span>
+          <span class="count-badge" id="blacklist-count">14</span>
+        </div>
+        <button type="button" class="btn-text-link" id="btn-reset-blacklist" title="Khôi phục 14 tên miền mặc định">
+          ↺ Mặc định
+        </button>
+      </div>
+
+      <!-- Add Domain Form -->
+      <form class="add-domain-form" id="add-domain-form">
+        <input
+          type="text"
+          id="input-new-domain"
+          placeholder="Thêm domain (vd: shopee.vn)..."
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <button type="submit" class="btn btn-add" id="btn-add-domain">+ Thêm</button>
+      </form>
+
+      <!-- Blacklist Scrollable Container -->
+      <div class="blacklist-list-container" id="blacklist-list">
+        <!-- Dynamically injected domain items -->
+      </div>
+    </section>
+
+    <!-- Quick Footer Actions -->
+    <footer class="popup-footer">
+      <button type="button" class="btn-campus-link" id="btn-open-campus">
+        <span>Mở CampusOS Dashboard</span>
+        <span class="arrow">↗</span>
+      </button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

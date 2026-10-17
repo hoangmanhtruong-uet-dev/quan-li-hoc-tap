@@ -1,69 +1,68 @@
-# BRIEFING — 2026-10-13T12:05:00Z
+# BRIEFING — 2026-10-17T02:16:30Z
 
 ## Mission
-Objective and adversarial review of Milestone 4 (Detail Drawer, NLP QuickAdd, AI Breakdown, /tasks Page Assembly) of CampusOS Tasks redesign.
+Objectively review and stress-test Milestone 4: Web App Bridge, Supabase -50 XP Penalty & Realtime Popup.
 
 ## 🔒 My Identity
-- Archetype: teamwork_preview_reviewer
+- Archetype: reviewer
 - Roles: reviewer, critic
-- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m4_1\
-- Original parent: 36a9e4bd-9a99-49d5-9abb-fdf329e0082d
-- Milestone: Milestone 4
+- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m4_1
+- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Milestone: Milestone 4: Web App Bridge, Supabase -50 XP Penalty & Realtime Popup
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Check for integrity violations (hardcoded outputs, facade implementations, shortcuts, fabricated verification, self-certifying work)
-- Verify TS checks, test suite (109+ tests), and next build
-- Review Neo-Brutal Aurora styling, 120FPS constraints, responsive slide-over/bottom sheet, zero horizontal scrollbar, full keyboard shortcuts wiring
-- All artifacts strictly in own agent directory (.agents/teamwork/reviewer_m4_1/)
-- Output handoff.md with 5-section format and send message to parent orchestrator
+- Check for integrity violations (dummy implementations, hardcoded tests, shortcuts)
+- Evidence-based review with independent verification
 
 ## Current Parent
-- Conversation ID: 36a9e4bd-9a99-49d5-9abb-fdf329e0082d
-- Updated: 2026-10-13T12:05:00Z
+- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Updated: 2026-10-17T02:13:00Z
 
 ## Review Scope
 - **Files to review**:
-  - `web/src/components/tasks/drawer/unselected-hero.tsx`
-  - `web/src/components/tasks/drawer/subtask-checklist.tsx`
-  - `web/src/components/tasks/drawer/task-detail-drawer.tsx`
-  - `web/src/components/tasks/create/quick-add-modal.tsx`
-  - `web/src/components/tasks/create/ai-breakdown-modal.tsx`
-  - `web/src/app/(main)/tasks/page.tsx`
-- **Interface contracts**: PROJECT.md, docs/CampusOS_Tasks_Redesign_Plan.md, ORIGINAL_REQUEST.md
-- **Review criteria**: correctness, integrity, completeness, UX/accessibility, Neo-Brutal styling, 120FPS constraints, responsive layouts, keyboard shortcuts wiring, build/test passes
-
-## Key Decisions Made
-- Confirmed zero integrity violations: no facades, no hardcoded test shortcuts, pure real implementation logic.
-- Verified all 4 core milestone criteria: Neo-Brutal Aurora styling, 120FPS zero-lag constraints, responsive slide-over desktop (>=1024px) / bottom sheet mobile (<1024px), zero horizontal overflow, and complete keyboard shortcuts wiring (N, /, 1-4, J/K, X, E, F, Del, ?, Cmd/Ctrl+K, Escape).
-- Verdict: APPROVE.
-
-## Artifact Index
-- `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m4_1\DISPATCH.md` — Initial dispatch message
-- `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m4_1\BRIEFING.md` — Persistent situational memory
-- `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m4_1\progress.md` — Liveness and heartbeat
-- `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m4_1\handoff.md` — Final review report
+  - `supabase/migrations/004_extension_focus_violations.sql`
+  - `web/src/types/database.ts`
+  - `web/src/lib/campus-store.ts`
+  - `web/src/lib/supabase-sync.ts`
+  - `web/src/features/pomodoro/use-extension-bridge.ts`
+  - `web/src/app/api/focus/violation/route.ts`
+  - `extension/popup/` (`popup.html`, `popup.js`, `popup.css`)
+  - `web/tests/extension-sync-penalty.test.ts`
+- **Interface contracts**: PROJECT.md, ORIGINAL_REQUEST.md
+- **Review criteria**: correctness, integrity, edge cases, type-safety, build/test passes
 
 ## Review Checklist
 - **Items reviewed**:
-  - `web/src/components/tasks/drawer/unselected-hero.tsx`: PASS
-  - `web/src/components/tasks/drawer/subtask-checklist.tsx`: PASS
-  - `web/src/components/tasks/drawer/task-detail-drawer.tsx`: PASS
-  - `web/src/components/tasks/create/quick-add-modal.tsx`: PASS
-  - `web/src/components/tasks/create/ai-breakdown-modal.tsx`: PASS
-  - `web/src/app/(main)/tasks/page.tsx`: PASS
-  - `web/tests/tasks-redesign.test.ts` (109 tests): PASS
-  - Next.js build manifests (`.next`): PASS
+  - `004_extension_focus_violations.sql`: Verified DDL syntax and indexes.
+  - `web/src/types/database.ts`: Verified `violation_count` across profiles, student_profiles, student_focus_sessions.
+  - `web/src/lib/campus-store.ts`: Verified `penalizeViolation` logic, clamping, demotion, custom event, and sync.
+  - `web/src/lib/supabase-sync.ts`: Verified `recordFocusViolationToSupabase` and offline queue handling.
+  - `web/src/features/pomodoro/use-extension-bridge.ts`: Verified dual postMessage/runtime messaging bridge.
+  - `web/src/app/api/focus/violation/route.ts`: Verified POST and GET endpoints.
+  - `extension/popup/`: Verified `popup.html`, `popup.js`, `popup.css` matching Cyber-Glass, real-time timer sync, blacklist CRUD, webcam toggle.
+  - `web/tests/extension-sync-penalty.test.ts`: Verified 15 unit tests covering all M4 deliverables.
+  - Next.js production build (`npm run build`): Verified 33/33 static pages + dynamic `/api/focus/violation` endpoint compiled successfully with code 0.
 - **Verdict**: APPROVE
-- **Unverified claims**: None; all claims cross-checked against source code and build artifacts.
+- **Unverified claims**: None. All claims independently verified.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Empty task list boundary: PASS (graceful Gen Z empty state rendered, no runtime exceptions)
-  - Non-standard due date / time parsing: PASS (handled by safe ISO timestamp utilities and fallbacks)
-  - Keyboard shortcut collision with text entry: PASS (protected by `isInput` guard across both `page.tsx` and `controls-bar.tsx`)
-  - Mobile touch vs drag-and-drop: PASS (subtasks have accessible up/down chevron buttons in addition to DnD)
-  - Viewport overflow: PASS (strictly bounded with `overflow-x-hidden`, `min-w-0`, `max-w-full`, `truncate`)
-- **Vulnerabilities found**: None critical/major; minor edge case of empty task restore was handled cleanly by `addTask` reconstruction.
-- **Untested angles**: Live browser Playwright session (due to headless environment restrictions), verified statically.
+  - XP underflow test: `penalizeViolation` on 30 XP drops to 0 without going negative. Confirmed passed.
+  - Demotion test: Level 2 demotes to Level 1 and updates rankTitle to 'Tân sinh viên ngơ ngác'. Confirmed passed.
+  - Offline fallback test: without cloud, mutation enqueues to `campusos_sync_queue_v1`. Confirmed passed.
+  - Extension timeout: `sendExtensionMessage` gracefully returns null. Confirmed passed.
+  - Domain sanitization: strips protocol, port, wildcards, query params. Confirmed passed.
+  - Missing body validation on API route: 400 returned when domain and reason missing. Confirmed passed.
+- **Vulnerabilities found**: None.
+- **Untested angles**: None.
+
+## Key Decisions Made
+- Milestone 4 meets all specifications, constraints, quality gates, and architectural contracts. Issued APPROVE verdict.
+
+## Artifact Index
+- DISPATCH.md — incoming dispatch instructions
+- BRIEFING.md — persistent agent state
+- progress.md — liveness heartbeat
+- handoff.md — final review report and verdict

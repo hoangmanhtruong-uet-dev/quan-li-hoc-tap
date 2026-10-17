@@ -1,19 +1,26 @@
-## 2026-10-13T01:13:53Z
-You are explorer_survey_2, working in metadata directory d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\explorer_survey_2.
-Your parent orchestrator is orchestrator_7 (conversation ID: 5bd8e140-4c1e-4580-b966-e8064ec8f7d3).
+## 2026-10-17T00:54:03Z
+From: 051c51ec-d4c0-431c-b685-75179c16a0da
+Content:
+You are explorer_2.
+Your working directory is: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\explorer_survey_2
+Read the authoritative user request at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md (especially header ## 2026-10-17T00:51:59Z).
 
-MANDATORY FIRST STEP:
-Read the authoritative user request at d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md.
+Mission:
+Survey the Supabase database migrations, sync engine, and test infrastructure.
 
-YOUR TASK:
-Examine the existing Pomodoro Supervisor and audio/interactive features:
-1. Inspect `src/features/pomodoro/strict-pomodoro-modal.tsx` and `src/features/pomodoro/meme-cat-stage.tsx`.
-2. Inspect how the supervisor tracks session time, triggers TTS (Northern Vietnamese cat voice), PiP mode, meme stages, and sounds.
-3. Determine how to integrate the required in-modal mode switcher between:
-   - Mode A: Mèo Mập Giám Thị Cực Đoan (existing cat cutout + 0:52 grey countdown + TTS + PiP)
-   - Mode B: Chill Breathing 4-7-8 + Lo-fi Mode (breathing orb 4s inhale - 7s hold - 8s exhale + procedural Web Audio lo-fi ambient synth)
-4. Determine how completing a session awards study minutes, +XP, streak updates, and syncs with the shared store across both `/dashboard` and `/calendar`.
+Specifically investigate:
+1. `web/supabase/migrations/`:
+   - Inspect table schemas for `profiles` and `student_focus_sessions`.
+   - Check columns related to XP, violations (`violation_count`), focus sessions, and penalties.
+   - Check Row Level Security (RLS) policies and functions.
+2. `web/src/lib/supabase-client.ts`, `web/src/lib/supabase-sync.ts`, and any relevant API routes in `web/src/app/api/`.
+   - How XP is deducted and synced to Supabase (e.g., -50 XP penalty on violation).
+3. Test infrastructure:
+   - Check `web/package.json` scripts (`npm test`, `npm run typecheck`, `npm run build`).
+   - Inspect `web/tests/` to see how tests are executed (Node test runner, strip-types, vitest, etc.) and what is currently covered (380+ tests).
+   - What new unit tests are needed for the Chrome extension bridge, XP penalty, blacklist matching, and session sync.
 
-OUTPUT:
-Write your full findings and recommended architecture to d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\explorer_survey_2\handoff.md.
-Then send a brief completion message to your parent orchestrator with the summary and path.
+Do not write or modify source code files.
+Write your comprehensive report and findings to `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\explorer_survey_2\handoff.md`.
+Update `progress.md` in your working directory.
+When finished, send a message to the caller (parent) reporting completion and the path to your handoff.md.

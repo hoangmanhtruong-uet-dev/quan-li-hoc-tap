@@ -1,187 +1,165 @@
-# Forensic Audit Report: Milestone 3 — Smart Controls Bar & 4 Views
+# BÁO CÁO KIỂM TOÁN TÍNH CHÍNH TRỰC (FORENSIC INTEGRITY AUDIT REPORT) — MILESTONE 3
 
-**Work Product**: Milestone 3 Implementation Files (`web/src/components/tasks/controls/` & `web/src/components/tasks/views/`)  
-**Auditor**: Forensic Auditor (`auditor_m3_1`)  
-**Parent Conversation ID**: `36a9e4bd-9a99-49d5-9abb-fdf329e0082d`  
-**Timestamp**: 2026-10-13T11:42:30Z  
+**Work Product**: Milestone 3: AI Webcam Face Tracking (`extension/ai/webcam-tracker.js`, `web/src/features/pomodoro/use-webcam-tracking.ts`, `web/src/features/pomodoro/ai-webcam-modal.tsx`, `web/tests/ai-webcam-tracking.test.ts`)  
 **Profile**: General Project  
-**Integrity Mode**: Development  
+**Integrity Mode**: `development` (xác định trực tiếp từ `ORIGINAL_REQUEST.md` header `## 2026-10-17T00:51:59Z`)  
+**Auditor**: `auditor_m3_1`  
+**Working Directory**: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\auditor_m3_1`  
 **Verdict**: **CLEAN**
 
 ---
 
-## 1. Observation
+## 1. Forensic Audit Phase Results
 
-### 1.1 Direct File Observations
-The 7 implementation files assigned under Milestone 3 were inspected in full:
-
-1. **`web/src/components/tasks/controls/controls-bar.tsx` (428 lines)**:
-   - Contains segmented sliding pill view switcher (`list`, `kanban`, `matrix`, `today`) with accessibility attributes (`role="tablist"`, `role="tab"`, `aria-selected`).
-   - Window keyboard event listener captures `/` (focusing search without entering the slash character) and `1, 2, 3, 4` (switching views when not actively typing inside input/textarea).
-   - Computes live counts (`total`, `todo`, `doing`, `done`, `high`, `medium`, `low`) reactively from props using `useMemo`. Note: `high`, `medium`, `low` filter counts accurately exclude already completed (`status === 'done'`) tasks.
-   - Renders 4 status filter chips with distinct status badge colors and 3 priority filter chips (`#FF3D6E`, `#FFB020`, `#3DE8FF`).
-   - Custom Neo-Brutal sort dropdown with outside-click handling, `Escape` key dismissal, and 5 sort criteria (`dueAt`, `priority`, `course`, `createdAt`, `ai`).
-   - Strict containment styling: `w-full min-w-0 max-w-full overflow-x-hidden`.
-
-2. **`web/src/components/tasks/controls/bulk-action-bar.tsx` (212 lines)**:
-   - Renders a floating Neo-Brutal bottom pill dock with `aria-label="Thao tác hàng loạt"` and `role="region"`.
-   - Conditionally unmounts (`if (selectedCount < 1) return null;`) when no tasks are selected.
-   - Dispatches authentic parent callbacks: `onCompleteSelected`, `onChangePriority(priority)`, `onPostponeSelected(days)`, `onDeleteSelected`, and `onClearSelection`.
-   - Responsive multi-level dropdowns for priority selection (High/Medium/Low) and postponement (+1d, +3d, +1w).
-
-3. **`web/src/components/tasks/views/task-card.tsx` (460 lines)**:
-   - Direct integration with pure algorithmic urgency calculation via `getUrgencyLevel(task.dueAt)`.
-   - Authentic Web Audio API synthesis:
-     ```typescript
-     const AudioCtx = window.AudioContext || window.webkitAudioContext;
-     const ctx = new AudioCtx();
-     const osc = ctx.createOscillator();
-     const gain = ctx.createGain();
-     osc.type = 'triangle';
-     osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-     osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.12); // G5
-     gain.gain.setValueAtTime(0.09, ctx.currentTime);
-     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
-     osc.connect(gain);
-     gain.connect(ctx.destination);
-     osc.start();
-     osc.stop(ctx.currentTime + 0.22);
-     ```
-   - Authentic Canvas2D procedural particle confetti system:
-     - 28 particles with randomized radial velocity vectors (`Math.cos(angle) * speed`, `Math.sin(angle) * speed - 2`).
-     - Animated via `requestAnimationFrame` loop with real gravity acceleration (`dot.vy += 0.15`) and linear alpha decay over 700ms.
-     - Arc rendering with `ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2)` and 6 neon colors (`#C6FF3D`, `#FF3DA5`, `#7C5CFF`, `#3DE8FF`, `#FF8A3D`, `#3DFFB0`).
-   - 3D hover tilt: calculates relative pointer coordinates `(x, y)` from card bounding rect, applying `rotateX` / `rotateY` bounded at ±0.8°.
-   - Both audio, confetti, and tilt strictly respect `reducedMotion`.
-   - Native HTML5 Drag and Drop handlers: `draggable={draggable}`, `onDragStart`, `onDragEnd`.
-
-4. **`web/src/components/tasks/views/list-view.tsx` (363 lines)**:
-   - Partitions tasks into 6 sticky date groups (`overdue`, `today`, `tomorrow`, `this_week`, `later`, `done`) via `groupTasksByDate(tasks)`.
-   - Collapsible sticky headers with count badges, defaulting `done` group to collapsed.
-   - Native HTML5 Drag and Drop across date groups:
-     - `onDragOver` with `e.preventDefault()` and `e.dataTransfer.dropEffect = 'move'`.
-     - `onDrop` calculates the new target ISO due date via `formatIsoDateOnly(now, ...)` or triggers `onCompleteTask`.
-   - Reversible state with interactive Undo toast (`5.5s` auto-dismissal) restoring `previousDueAt` and `previousStatus` upon clicking `Hoàn tác`.
-
-5. **`web/src/components/tasks/views/kanban-view.tsx` (293 lines)**:
-   - 3 columns: `todo` ('Cần làm'), `doing` ('Đang làm'), `done` ('Hoàn thành').
-   - Tilted sticker headers (`-rotate-1`, `rotate-1`, `-rotate-1`), disabled when `reducedMotion` is true.
-   - Dynamic WIP limit warning: when `doingCount > 3`, renders a pulsing amber warning sticker: `⚠️ Đang ôm quá nhiều việc (${doingCount} > 3)! Tập trung giải quyết bớt đi bro.`.
-   - Native HTML5 Drag and Drop between columns. Dropping into `done` triggers `onCompleteTask` (which awards XP in the store).
-   - Reversible state with interactive Undo toast.
-
-6. **`web/src/components/tasks/views/matrix-view.tsx` (310 lines)**:
-   - 2x2 grid representing Eisenhower quadrants: `do_first` (Q1: Làm ngay), `schedule` (Q2: Lên lịch), `delegate` (Q3: Giao / Dời), `eliminate` (Q4: Bỏ bớt).
-   - Q1 is highlighted with a prominent neon red border (`border-2 border-[#FF3D6E] shadow-[0_0_20px_rgba(255,61,110,0.22)]`).
-   - Dynamic task placement: respects explicit `task.quadrant` or falls back to pure heuristic `computeEisenhowerQuadrant(task, refDate)`. Excludes completed tasks from the active matrix.
-   - Native HTML5 Drag and Drop across quadrants with reversible Undo toast.
-
-7. **`web/src/components/tasks/views/today-view.tsx` (319 lines)**:
-   - Directly connects to reactive state via `useCampusStore()`.
-   - Algorithmic AI Curated Top 5 ranking: calculates urgency priority scores (overdue +1000, today +500, in-progress +200, high priority +150, medium +50, difficulty * 10) and takes the top 5 uncompleted tasks.
-   - Real capacity calculation: aggregates `totalTaskMinutes` and compares against `availableFreeMinutes` (computed from existing events scheduled for today in `state.events`).
-   - Overload warning banner displayed when `capacityRatio > 100%`.
-   - Authentic Calendar Event Creation:
-     - `handleAcceptPlan` generates sequential `CalendarEvent` items of type `'study'` starting at 14:00 with 15-minute intervals.
-     - Directly appends to store: `update((prev) => ({ events: [...prev.events, ...newStudyEvents] }))`.
-     - Scheduled study sessions immediately register in CampusOS's shared persistent state.
-
-### 1.2 Programmatic Build & Verification Output
-- **TypeScript Typecheck (`npm run typecheck`)**:
-  ```
-  > campusos-web@0.1.0 typecheck
-  > tsc --noEmit
-  Exited with code 0 (0 errors).
-  ```
-- **Next.js Linter (`npm run lint`)**:
-  ```
-  > campusos-web@0.1.0 lint
-  > next lint
-  Exited with code 0 (0 errors, 0 warnings in M3 files).
-  ```
-- **Unit & Integration Test Suite (`npm test`)**:
-  ```
-  ℹ tests 102
-  ℹ suites 0
-  ℹ pass 102
-  ℹ fail 0
-  ℹ duration_ms 2451.6201
-  Exited with code 0.
-  ```
+| # | Kiểm tra (Check Name) | Trạng thái | Chi tiết đối chiếu thực nghiệm |
+|---|---|:---:|---|
+| 1 | **Hardcoded output detection** | **PASS** | Không phát hiện kết quả hardcode, không có chuỗi kết quả đóng hộp (`canned outputs`) để vượt qua test. Hàm tính toán động trên mọi tập tọa độ. |
+| 2 | **Facade detection** | **PASS** | Không có hàm rỗng, không có phương thức trả về hằng số giả tạo (`dummy facades`). Thuật toán toán học và bộ điều phối `WebcamFaceMonitor` chứa logic thật 100%. |
+| 3 | **Pre-populated artifact detection** | **PASS** | Không phát hiện tệp log/chứng thực hay kết quả tạo sẵn trước khi kiểm toán. |
+| 4 | **Mathematical formula verification** | **PASS** | Công thức khoảng cách Euclid, tỷ lệ mở mắt EAR Soukupová & Čech (2016), và lượng giác tư thế đầu (Yaw/Pitch/Roll) chuẩn xác về mặt giải tích. |
+| 5 | **State machine & Duration accumulator** | **PASS** | Bộ tích lũy thời gian `drowsyDurationMs` và `awayDurationMs` đo chính xác float delta, reset tức thì khi mắt mở hoặc quay đầu về, kích hoạt sự kiện đúng mốc $\ge 10.000\text{ ms}$. |
+| 6 | **Unit Test Suite Execution** | **PASS** | `node --experimental-strip-types --test tests/ai-webcam-tracking.test.ts`: **37/37 PASS** (143ms, 0 failures, 0 errors). |
+| 7 | **Full Regression Test Suite** | **PASS** | `npm test` trong `web/`: **490/490 PASS** trên 27 suites (2879ms, 0 failures, 0 errors). |
+| 8 | **TypeScript Type Safety** | **PASS** | `npm run typecheck` (`tsc --noEmit`): **0 errors**. |
+| 9 | **Adversarial Stress Test** | **PASS** | Kịch bản tấn công kiểm toán độc lập (`adversarial_forensic_m3.test.mjs`): **6/6 PASS** (không phân kỳ, không chia cho 0, không trôi tích lũy). |
 
 ---
 
-## 2. Logic Chain
+## 2. Observation (Quan sát thực nghiệm)
 
-1. **Absence of Facades or Stubs (Phase 1 Check 1 & 2)**:
-   - *Observation*: AST inspection revealed zero functions returning fixed mock constants, zero dummy arrays, zero `NotImplementedError` or unfinished TODO stubs.
-   - *Logic*: All components derive state from incoming props or `useCampusStore()`. Count badges, filter toggles, sort options, and urgency indicators recalculate live from user actions.
+### 2.1 Mã nguồn thuật toán: `extension/ai/webcam-tracker.js`
+- **Công thức khoảng cách Euclid `euclideanDistance(p1, p2)` (dòng 77–92)**:
+  Sử dụng `Math.hypot(dx, dy, dz)` hỗ trợ đầy đủ không gian 2D và 3D, phòng thủ lỗi tọa độ `null/undefined/non-number` bằng fallback về 0.
+- **Công thức tính tỷ lệ mở mắt EAR `calculateEyeAspectRatio(eyePoints)` (dòng 102–126)**:
+  Thực hiện trung thực công thức chuẩn của Soukupová & Čech (2016):
+  $$\text{EAR} = \frac{\|p_2 - p_6\| + \|p_3 - p_5\|}{2 \cdot \|p_1 - p_4\|}$$
+  Kiểm tra kích thước mảng $\ge 6$, kiểm tra các điểm mí mắt trên $p_2, p_3$, mí mắt dưới $p_6, p_5$ và hai khóe mắt $p_1, p_4$. Có cơ chế bảo vệ chia cho 0: `if (distC <= 0 || !Number.isFinite(distC)) return 0;`.
+- **Chỉ số mốc giải phẫu MediaPipe Face Mesh (dòng 39–50)**:
+  - Mắt trái: `LEFT_EYE_LANDMARKS = [33, 160, 158, 133, 153, 144]`.
+  - Mắt phải: `RIGHT_EYE_LANDMARKS = [362, 385, 387, 263, 373, 380]`.
+  Khớp chính xác 100% với tài liệu đặc tả MediaPipe Face Mesh 468 landmarks.
+- **Thuật toán ước lượng góc đầu Head Pose `estimateHeadPose(landmarks)` (dòng 195–280)**:
+  - Roll: Tính góc xoay mặt dựa trên độ nghiêng của đoạn thẳng nối hai khóe mắt ngoài `Math.atan2(eyeDy, eyeDx) * (180 / Math.PI)`.
+  - Yaw: Tính góc quay trái/phải dựa trên tỷ số độ lệch hoành độ đỉnh mũi so với trung điểm hai mắt `Math.asin(offsetRatio) * (180 / Math.PI)` kèm hiệu chỉnh thị sai trục Z nếu có.
+  - Pitch: Tính góc gục đầu/ngửa đầu dựa trên tỷ số khoảng cách từ trục mắt đến mũi so với chiều cao khuôn mặt `(neutralRatio - currentRatio) * 160.0` kèm hiệu chỉnh độ sâu Z giữa trán và cằm.
+- **Lớp điều phối `WebcamFaceMonitor` (dòng 333–596)**:
+  Quản lý trạng thái (`idle`, `normal`, `drowsy`, `looking_away`, `no_face`), bộ đếm thời gian liên tục (`drowsyDurationMs`, `awayDurationMs`), điều tiết tần số 12fps (khoảng 83ms/frame), cam kết 100% xử lý trên RAM máy khách (`this.localProcessingOnly = true`).
 
-2. **Genuine Store Reactivity (Phase 1 Check 2)**:
-   - *Observation*: `today-view.tsx` directly calls `useCampusStore()`, reading `state.events` to calculate free study capacity and calling `update(...)` to append events. Other views define typed callback signatures (`onCompleteTask`, `onUpdateTask`, `onDeleteTask`, `onReorderTasks`, `onToggleMultiSelect`) that bind to the exported actions in `campus-store.ts`.
-   - *Logic*: The components are structurally wired for bi-directional reactivity with CampusOS's `useSyncExternalStore` persistent store.
+### 2.2 Hook tích hợp: `web/src/features/pomodoro/use-webcam-tracking.ts`
+- Quản lý vòng đời `navigator.mediaDevices.getUserMedia` với độ phân giải tiêu chuẩn 640x480 và `facingMode: 'user'`.
+- Quản lý trạng thái phân quyền camera: `'idle' | 'prompt' | 'granted' | 'denied' | 'unsupported'`.
+- Giải phóng tài nguyên phần cứng sạch sẽ khi tắt camera hoặc unmount: `stream.getTracks().forEach(track => track.stop())`.
+- Kết nối hai chiều với `SupervisorArbiter` (tôn trọng thời gian ân hạn `isExempt()` và cooldown 20s giữa các lần mắng), kích hoạt âm thanh cảnh báo và giọng mắng tiếng Việt thông qua `pomodoroAudio`.
+- Lưu trữ tùy chọn bật/tắt vào `localStorage` (`campusos_webcam_enabled`) và phát sự kiện `campusos:webcam-toggle`.
 
-3. **Authenticity of HTML5 Drag-and-Drop (Check 3)**:
-   - *Observation*: Source inspection of `list-view.tsx`, `kanban-view.tsx`, `matrix-view.tsx`, and `task-card.tsx` verified `draggable={true}`, `e.dataTransfer.setData('text/plain', task.id)`, `e.dataTransfer.dropEffect = 'move'`, `onDragOver={(e) => e.preventDefault()}`, and `onDrop`.
-   - *Logic*: Native browser DnD is implemented correctly and cleanly without bloated external wrapper libraries, fulfilling the spec's zero-dependency lightweight requirement.
-
-4. **Authenticity of Web Audio API & Canvas2D (Check 4)**:
-   - *Observation*: `task-card.tsx` instantiates native `AudioContext`, an `OscillatorNode` (`triangle`), and a `GainNode` with exponential ramps; it also renders an animated particle loop on a Canvas2D element with Newtonian physics (velocity + gravity + alpha decay).
-   - *Logic*: This constitutes genuine browser API utilization rather than simulated CSS hacks or static assets.
-
-5. **Authenticity of Calendar Event Scheduling (Check 5)**:
-   - *Observation*: `today-view.tsx` parses today's existing events, computes available free minutes, and upon accepting the plan, synthesizes structured `CalendarEvent` items with non-overlapping start/end times and appends them to `state.events`.
-   - *Logic*: Clicking `Chấp nhận kế hoạch` immediately persists real study events into `campus-store.ts`, making them visible on `/calendar`.
+### 2.3 Giao diện người dùng: `web/src/features/pomodoro/ai-webcam-modal.tsx`
+- Thiết kế Cyber-Glass Neo-Brutal Aurora đồng bộ (`bg-gradient-to-b from-[#121220]/95 to-[#090912]/98`, viền neon `white/15`, màu nhấn acid lime `#C6FF3D`, cyan `#3DE8FF`, neon pink `#FF3DA5`).
+- Banner cam kết bảo mật 100% In-Memory Local Processing, không lưu trữ ảnh, không upload máy chủ.
+- Khung video preview lật gương tự nhiên (`-scale-x-100`) kèm HUD hiển thị trạng thái và huy hiệu 12.5 FPS LOCAL.
+- Đồng hồ đo Bento:
+  - Thanh đo EAR kèm vạch đỏ đánh dấu ngưỡng nhắm mắt 0.20.
+  - Tâm ngắm trực quan Crosshair 2 chiều biểu diễn góc quay Yaw và gục đầu Pitch kèm vùng an toàn $\pm 30^\circ$.
+- Thẻ phản hồi nhân vật giám thị hiển thị câu thoại tiếng Việt theo ngữ cảnh vi phạm.
+- Nút bật/tắt `role="switch"`, `aria-checked`, đóng mở an toàn qua `createPortal`.
 
 ---
 
-## 3. Caveats
+## 3. Logic Chain (Chuỗi suy luận kiểm toán)
 
-- **No Caveats**: The Milestone 3 deliverables strictly satisfy all architectural constraints, pass all 102 project tests, have zero TypeScript compilation errors, produce zero linter warnings, and enforce strict horizontal containment without horizontal scrollbars.
+1. **Kiểm tra tính chân thực của thuật toán (Authentic vs Facade)**:
+   - Trong bài kiểm toán độc lập `adversarial_forensic_m3.test.mjs`, kiểm toán viên đưa vào các bộ tọa độ mắt nhân tạo với độ cao mí mắt $h$ biến thiên liên tục từ $0.5$ đến $5.0$. Kết quả trả về của hàm `calculateEyeAspectRatio` khớp hoàn toàn với phương trình giải tích $EAR = h / 10.0$ với sai số tuyệt đối $< 10^{-6}$.
+   - Điều này bác bỏ hoàn toàn giả thuyết "hardcoded test output" hay "canned return values". Thuật toán thực sự tính toán động dựa trên khoảng cách Euclidean.
+
+2. **Kiểm tra độ chính xác và tính chịu lỗi (Fault-Tolerance & Edge Cases)**:
+   - Khi đưa vào các tập điểm suy biến (tất cả các điểm mí mắt trùng nhau tại $(5, 5)$, hoặc khoảng cách hai khóe mắt $distC = 0$), hàm trả về giá trị an toàn `0` thay vì ném ra ngoại lệ `DivideByZero`, `NaN` hay `Infinity`.
+   - Khi đưa vào tọa độ âm, tọa độ không gian 3 chiều lớn ($10^5$), hoặc các trường thuộc tính không hợp lệ, hàm `euclideanDistance` đều xử lý trơn tru và trả về khoảng cách chuẩn xác.
+
+3. **Kiểm tra độ chính xác của bộ tích lũy thời gian (Accumulator Precision)**:
+   - Bài test kiểm tra mô phỏng 50 chu kỳ khung hình với bước thời gian thực tế không đều ($16.6\text{ms}, 33.3\text{ms}, 83.3\text{ms}, 45.2\text{ms}, 70.1\text{ms}, 80.5\text{ms}$). Bộ đếm `drowsyDurationMs` tích lũy chính xác tổng thời gian $2681.90\text{ms}$ với độ trôi sai số float $< 10^{-4}\text{ms}$.
+   - Khi có 1 khung hình mắt mở xen kẽ (mô phỏng chớp mắt tự nhiên), bộ đếm lập tức reset về 0, chứng minh cơ chế chống báo động giả (False-Positive Suppression) hoạt động hoàn hảo.
+
+4. **Kiểm tra tuân thủ Integrity Mode (Development Mode)**:
+   - Dự án vận hành ở chế độ `development` theo `ORIGINAL_REQUEST.md`.
+   - Toàn bộ module `extension/ai/webcam-tracker.js` được viết từ đầu bằng mã JavaScript thuần túy không phụ thuộc thư viện bên ngoài nặng nề.
+   - Các bài kiểm tra unit test độc lập xác thực tính hoạt động trọn vẹn của hệ thống.
 
 ---
 
-## 4. Conclusion
+## 4. Caveats (Các vùng khảo sát & Giới hạn môi trường)
 
-**Verdict**: **CLEAN**
-
-Milestone 3 (Controls Bar & 4 Views) has successfully passed all forensic integrity checks. No cheating, facade, or dummy implementations were detected. All components exhibit genuine reactivity, authentic native HTML5 DnD, authentic Web Audio API synthesis, authentic Canvas2D particle physics, and authentic calendar event creation.
-
-Milestone 3 is certified and ready for page integration in Milestone 4.
+- Trình duyệt yêu cầu môi trường an toàn (`localhost` hoặc `https://`) để cấp quyền `getUserMedia`. Trong môi trường Node.js testing, các API này được mock/kiểm thử qua luồng frame dữ liệu `processFrame(landmarks, deltaTimeMs)`.
+- Khi người dùng đeo kính mắt phản quang mạnh hoặc trong điều kiện ánh sáng cực tối, độ nhạy của các mốc MediaPipe Face Mesh có thể giảm. Thuật toán đã có fallback an toàn chuyển sang trạng thái `no_face` và reset bộ đếm vi phạm để tránh phạt oan sinh viên.
 
 ---
 
-## 5. Verification Method
+## 5. Conclusion (Kết luận)
 
-To independently verify this audit:
+- Phân hệ **Milestone 3: AI Webcam Face Tracking** đáp ứng 100% các tiêu chí kỹ thuật, toán học và bảo mật được đề ra trong `ORIGINAL_REQUEST.md` (§ R3) và `PROJECT.md` (F13–F16).
+- Mã nguồn sạch sẽ, thuật toán toán học chân thực, bộ tích lũy thời gian chính xác, kiểm thử độc lập đạt tỉ lệ thành công 100%.
+- **Verdict chính thức**: **CLEAN**. Không phát hiện bất kỳ dấu hiệu vi phạm tính chính trực nào.
 
-1. **Verify TypeScript compilation**:
-   ```bash
-   cd web
-   npm run typecheck
-   ```
-   *Expected outcome*: Exits with code 0 and 0 errors.
+---
 
-2. **Verify unit test suite**:
-   ```bash
-   cd web
-   npm test
-   ```
-   *Expected outcome*: All 102 tests pass cleanly with 0 failures.
+## 6. Verification Method (Phương pháp tái kiểm chứng độc lập)
 
-3. **Verify Next.js linter**:
-   ```bash
-   cd web
-   npm run lint
-   ```
-   *Expected outcome*: Exits with code 0 and 0 errors.
+Bất kỳ kiểm định viên hoặc giám sát viên nào đều có thể tái kiểm chứng toàn bộ kết quả trên bằng các lệnh sau:
 
-4. **Verify Milestone 3 component exports**:
-   Inspect the files in `web/src/components/tasks/`:
-   - `controls/controls-bar.tsx`
-   - `controls/bulk-action-bar.tsx`
-   - `views/task-card.tsx`
-   - `views/list-view.tsx`
-   - `views/kanban-view.tsx`
-   - `views/matrix-view.tsx`
-   - `views/today-view.tsx`
+### Lệnh 1: Kiểm thử chuyên biệt Milestone 3
+```powershell
+cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+node --experimental-strip-types --test tests/ai-webcam-tracking.test.ts
+```
+**Kết quả thực tế ghi nhận**:
+```
+✔ AI Webcam Face Tracking Suite (ai-webcam-tracking.test.ts) (10.5804ms)
+ℹ tests 37
+ℹ suites 9
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+```
+
+### Lệnh 2: Kiểm thử tấn công độc lập (Adversarial Forensic Stress Test)
+```powershell
+cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap
+node .agents/teamwork/auditor_m3_1/adversarial_forensic_m3.test.mjs
+```
+**Kết quả thực tế ghi nhận**:
+```
+--- STARTING ADVERSARIAL FORENSIC STRESS TEST FOR M3 ---
+Test 1: Dynamic calculation & formula integrity verification
+✔ Test 1 PASSED: calculateEyeAspectRatio strictly computes genuine formula (no canned returns)
+Test 2: Euclidean distance precision & robustness
+✔ Test 2 PASSED: euclideanDistance handles 3D, negative coordinates, and type fallbacks
+Test 3: Division-by-zero resilience
+✔ Test 3 PASSED: Zero-width eye geometry gracefully returns 0 without NaN/Infinity
+Test 4: Accumulator precision under variable frame rates & micro-stutters
+✔ Test 4 PASSED: Accumulator accumulated exact float sum (2681.90ms) without drift
+Test 5: Rapid flicker & face loss recovery
+✔ Test 5 PASSED: Instant recovery on blink completion and face absence
+Test 6: Head pose dynamic angular extraction
+✔ Test 6 PASSED: Head pose trigonometry precisely computes genuine yaw and roll angles
+--- ALL ADVERSARIAL FORENSIC CHECKS PASSED EMPIRICALLY ---
+```
+
+### Lệnh 3: Toàn bộ kiểm thử hồi quy dự án
+```powershell
+cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+npm test
+```
+**Kết quả thực tế ghi nhận**:
+```
+ℹ tests 490
+ℹ suites 27
+ℹ pass 490
+ℹ fail 0
+```
+
+### Lệnh 4: Kiểm tra tính an toàn kiểu dữ liệu TypeScript
+```powershell
+cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+npm run typecheck
+```
+**Kết quả thực tế ghi nhận**: `tsc --noEmit` hoàn tất với **0 lỗi**.

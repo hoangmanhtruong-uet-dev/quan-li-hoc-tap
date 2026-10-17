@@ -1,28 +1,65 @@
 {
   "manifest_version": 3,
-  "name": "Mèo Mập Giám Thị Cực Đoan (CampusOS)",
+  "name": "AI Giám Sát Học Tập Cực Đoan (CampusOS)",
   "version": "1.0.0",
-  "description": "Hiện Mèo Mập Cam + Đồng hồ đếm ngược 0:52 lườm nguýt và mắng bằng giọng Bắc khi bạn lướt Reddit, Facebook, YouTube, TikTok trong giờ học.",
-  "permissions": ["storage"],
+  "description": "Giám sát học tập kỷ luật thép phong cách Cyber-Glass: phát hiện URL giải trí & AI Webcam Face Tracking, cưỡng chế đóng tab và đồng bộ trừ -50 XP với CampusOS.",
+  "icons": {
+    "16": "assets/fat-orange-cat.png",
+    "48": "assets/fat-orange-cat.png",
+    "128": "assets/fat-orange-cat.png"
+  },
+  "permissions": [
+    "tabs",
+    "storage",
+    "activeTab",
+    "scripting",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:3000/*",
+      "http://127.0.0.1:3000/*",
+      "https://*.campusos.vn/*",
+      "https://campusos.vn/*"
+    ]
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "content_scripts": [
     {
       "matches": [
-        "*://*.reddit.com/*",
-        "*://*.facebook.com/*",
-        "*://*.youtube.com/*",
-        "*://*.tiktok.com/*",
-        "*://*.instagram.com/*",
-        "*://*.x.com/*",
-        "*://*.twitter.com/*"
+        "<all_urls>"
       ],
-      "js": ["content.js"],
-      "run_at": "document_end"
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_end",
+      "all_frames": false
     }
   ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "AI Giám Sát Học Tập Cực Đoan",
+    "default_icon": {
+      "16": "assets/fat-orange-cat.png",
+      "48": "assets/fat-orange-cat.png",
+      "128": "assets/fat-orange-cat.png"
+    }
+  },
   "web_accessible_resources": [
     {
-      "resources": ["assets/fat-orange-cat.png"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "assets/fat-orange-cat.png",
+        "assets/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }

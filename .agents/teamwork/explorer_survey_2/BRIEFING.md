@@ -1,48 +1,50 @@
-# BRIEFING — 2026-10-13T08:18:50Z
+# BRIEFING — 2026-10-17T00:58:45Z
 
 ## Mission
-Investigate the Pomodoro Supervisor, audio, interactive features, mode switching (Mèo Mập vs Chill Breathing 4-7-8 + Lo-fi), XP/minutes/streak reward pipeline, and store synchronization across /dashboard and /calendar.
+Survey Supabase database migrations, sync engine, and test infrastructure for Chrome extension bridge, XP penalties, blacklist matching, and session sync.
 
 ## 🔒 My Identity
 - Archetype: explorer
-- Roles: investigator, synthesis
+- Roles: investigator, reporter
 - Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\explorer_survey_2
-- Original parent: 5bd8e140-4c1e-4580-b966-e8064ec8f7d3
-- Milestone: milestone_1_architecture_investigation
+- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Milestone: M1_SURVEY
 
 ## 🔒 Key Constraints
 - Read-only investigation — do NOT implement
-- Base findings strictly on codebase verification
-- Must follow 5-component handoff report
+- Do not write or modify source code files
+- Deliver findings in handoff.md and report to caller
 
 ## Current Parent
-- Conversation ID: 5bd8e140-4c1e-4580-b966-e8064ec8f7d3
-- Updated: 2026-10-13T08:18:50Z
+- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Updated: 2026-10-17T00:58:45Z
 
 ## Investigation State
 - **Explored paths**:
-  - `src/features/pomodoro/strict-pomodoro-modal.tsx`
-  - `src/features/pomodoro/meme-cat-stage.tsx`
-  - `src/features/pomodoro/audio-engine.ts`
-  - `src/features/pomodoro/characters-data.ts`
-  - `src/features/pomodoro/supervisor-arbiter.ts`
-  - `src/features/pomodoro/use-tab-detection.ts`
-  - `src/app/api/tts/route.ts`
-  - `src/app/(main)/dashboard/page.tsx`
-  - `src/app/(main)/calendar/page.tsx`
-  - `src/app/(main)/study/page.tsx`
-  - `tests/supervisor-arbiter.test.ts`
-  - `tailwind.config.js`
+  - `supabase/migrations/` (`001_pomodoro_schema.sql`, `002_dashboard_calendar_sync.sql`, `003_complete_campusos_schema.sql`)
+  - `web/src/lib/` (`supabase.ts`, `supabase-sync.ts`, `campus-store.ts`, `gamification.ts`)
+  - `web/src/features/pomodoro/` (`supervisor-arbiter.ts`, `strict-pomodoro-modal.tsx`, `pomodoro-settings-store.ts`)
+  - `web/src/types/database.ts`
+  - `web/src/app/api/`
+  - `extension/` (`manifest.json`, `content.js`)
+  - `web/tests/` (all 27 test files, 380 tests)
+  - `web/package.json`
 - **Key findings**:
-  - Pomodoro modal is currently implemented in `strict-pomodoro-modal.tsx` with `MemeCatStage` and `TalkingTom3D`.
-  - Mode A is fully operational with cutout PNG `/images/fat-orange-cat.png`, Document PiP / video PiP, Web Audio alerts, and Northern Vietnamese TTS (`msedge-tts` with `vi-VN-NamMinhNeural` / `vi-VN-HoaiMyNeural`).
-  - Mode B (Chill Breathing 4-7-8 + procedural Lo-fi synth) can be seamlessly integrated via a new stage component `chill-breathing-stage.tsx` and a Web Audio synth without any external audio asset dependencies.
-  - The shared store across `/dashboard` and `/calendar` is currently fragmented in separate `localStorage` keys; a unified store (`campus-store.ts`) + pure gamification calculations (`gamification.ts`) will synchronize study minutes, +XP, streak, and goal ring upon session completion.
-  - Tailwind config is missing `./src/features/**/*.{js,ts,jsx,tsx,mdx}` in its content array.
-- **Unexplored areas**: None for survey scope.
+  1. Migration location is repository root `supabase/migrations/`, NOT `web/supabase/migrations/`.
+  2. `profiles` schema in `003_complete_campusos_schema.sql` has `xp`, `level`, `rank_title`, `streak`, but lacks `violation_count`.
+  3. `student_focus_sessions` in `002_dashboard_calendar_sync.sql` has `shame_count`, but lacks `violation_count` and penalty column.
+  4. `campus-store.ts` and `supabase-sync.ts` only add XP via `recordCompletedSession`; no penalty deduction (-50 XP) or violation recording currently exists.
+  5. No API route exists under `web/src/app/api/` for focus violation or extension bridge.
+  6. Existing test suite uses Node 20 built-in test runner (`node --experimental-strip-types --test tests/*.test.ts`). 380 tests pass 100% in ~2.7s.
+  7. 4 new unit test suites needed: extension bridge protocol, blacklist matching, XP penalty & clamp, focus session violation sync.
+- **Unexplored areas**: None. Build completed cleanly with 33 routes and 0 errors.
 
 ## Key Decisions Made
-- Architecture design: Mode switcher in `StrictPomodoroModal` header; shared countdown timer across modes; pure Web Audio synth for Lo-fi (0KB asset overhead); unified `gamification.ts` with test suite matching `node --test` runner.
+- Document migration directory path discrepancy so implementers create `004_extension_focus_violations.sql` in `supabase/migrations/`.
+- Specify both HTTP API route and client-side bridge for robust extension communication.
 
 ## Artifact Index
-- `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\explorer_survey_2\handoff.md` — Comprehensive findings and proposed architecture report
+- DISPATCH.md — incoming dispatch instructions
+- BRIEFING.md — persistent situational awareness
+- progress.md — liveness and progress tracking
+- handoff.md — final comprehensive report

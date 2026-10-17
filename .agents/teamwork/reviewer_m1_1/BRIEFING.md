@@ -1,66 +1,59 @@
-# BRIEFING — 2026-10-13T08:42:00Z
+# BRIEFING — 2026-10-17T01:12:00Z
 
 ## Mission
-Independently review and adversarially stress-test Milestone 1 (Store, Types & Tasks Engine) of CampusOS /tasks page rebuild project.
+Objectively review, verify, and stress-test Milestone 1: Manifest V3 Configuration & Background Service Worker.
 
 ## 🔒 My Identity
-- Archetype: reviewer_critic
+- Archetype: reviewer-critic
 - Roles: reviewer, critic
 - Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m1_1
-- Original parent: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Milestone: Milestone 1 (Store, Types & Tasks Engine)
+- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Milestone: Milestone 1: Manifest V3 Configuration & Background Service Worker
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Check for integrity violations (hardcoded test results, facade implementations, shortcuts, fabricated outputs, self-certifying work)
-- Independent verification via test & typecheck execution and code inspection
+- Check for integrity violations (hardcoded test results, facade logic, bypassed work)
+- Adhere strictly to the 5-component handoff protocol
+- Test independently before issuing verdict
 
 ## Current Parent
-- Conversation ID: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Updated: 2026-10-13T08:42:00Z
+- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Updated: 2026-10-17T01:10:00Z
 
 ## Review Scope
-- **Files to review**:
-  - `web/src/types/tasks.ts`
-  - `web/src/lib/tasks-engine.ts`
-  - `web/src/lib/campus-store.ts`
-  - `web/tests/tasks-redesign.test.ts`
-  - `.agents/teamwork/worker_m1_1/handoff.md`
-  - `PROJECT.md`
-  - `TEST_READY.md`
-- **Interface contracts**: PROJECT.md, TEST_READY.md, ORIGINAL_REQUEST.md
-- **Review criteria**: correctness, completeness, robustness, TypeScript interface conformance, 0 errors, 73/73 tests pass, no `any`, pure helper functions
+- **Files to review**: `extension/manifest.json`, `extension/background.js`, `web/tests/extension-manifest.test.ts`, `web/tests/extension-bridge.test.ts`
+- **Interface contracts**: `PROJECT.md`, `TEST_READY.md`, `ORIGINAL_REQUEST.md`
+- **Review criteria**: Correctness, MV3 compliance, FSM logic, URL matching & exemptions, security/externally_connectable, test authenticity, test pass status.
 
 ## Review Checklist
 - **Items reviewed**:
-  - `web/src/types/tasks.ts` (100% compliant, rich types, 0 `any`)
-  - `web/src/lib/tasks-engine.ts` (deterministic, pure functions, 0 `any`, multi-pass NLP, Eisenhower matrix, date grouping, countdown urgency)
-  - `web/src/lib/campus-store.ts` (reactive task actions, immutable state transitions, dynamic seed data, gamification integration, Clear the Board bonus)
-  - `web/tests/tasks-redesign.test.ts` (40 tests, all passing, no cheating/hardcoding)
-  - Full test suite: 73 tests passing cleanly
-  - TypeScript typecheck: 0 errors
-  - Production build: Next.js build succeeds cleanly across 34 routes
+  - `extension/manifest.json` (Valid MV3, permissions, externally_connectable, background worker)
+  - `extension/background.js` (FSM, 14 domains, normalizeDomain, URL matcher, message routing, tab handlers)
+  - `web/tests/extension-manifest.test.ts` (11 tests pass)
+  - `web/tests/extension-bridge.test.ts` (44 tests pass)
+  - `worker_m1_1/test_m1_verification.mjs` (8 tests pass)
+  - Full suite `web/tests/*.test.ts` (435 tests pass)
+  - `npm run typecheck` (0 errors)
 - **Verdict**: APPROVE
-- **Unverified claims**: none remaining; all independently verified
+- **Unverified claims**: None. All claims independently verified.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Hardcoded test strings in NLP parser -> Rejected (genuine multi-pass regex engine with Unicode support)
-  - Timezone parsing variance -> Verified (safe ISO UTC handling via `parseSafeIsoTime` & `Date.UTC`)
-  - Mutation of shared state in `campus-store.ts` -> Rejected (immutable updates with spread operator)
-  - Double XP award on already completed task -> Rejected (guarded by `if (task.status === 'done') return {}`)
-  - Edge cases on Eisenhower matrix (overdue tasks, missing dates, manual user overrides) -> Passed
-  - Missing or malformed date inputs in date grouping and countdowns -> Passed (graceful fallbacks)
-- **Vulnerabilities found**: None blocking. Minor advisory note on UI timestamp serialization for M4.
-- **Untested angles**: Downstream UI components (deferred to M2, M3, M4).
+  - Hypothesis: Service worker memory state survives browser inactivity in MV3. (Result: Fails under dormancy — Major finding on wake-up rehydration).
+  - Hypothesis: Malformed, multi-level subdomain, auth-credentialed, or FQDN URLs trigger bypasses. (Result: Handled correctly by URL parser).
+  - Hypothesis: Exemption cooldown can be spammed in rapid succession. (Result: Gracefully throttled, 1 grant / 9 rejections).
+  - Hypothesis: Localhost and internal CampusOS subdomains might be blocked accidentally. (Result: Accurately exempted).
+- **Vulnerabilities found**:
+  - Major: Service Worker wake-up lacks top-level `initializeExtension()` call on dormant startup.
+  - Minor: Fallback URL on tab close defaults to `http://localhost:3000/dashboard` even in production.
+- **Untested angles**:
+  - Live Chrome Web Store unpacked installation in real GUI browser (dependent on manual or automated Playwright extension testing in M5).
 
 ## Key Decisions Made
-- Confirmed full compliance with PROJECT.md and TEST_READY.md
-- Verified 73/73 passing tests and 0 TypeScript errors
-- Verdict: APPROVE
+- Confirmed zero integrity violations: implementation is genuine and complete.
+- Issued verdict: APPROVE with 1 Major finding (SW wake-up rehydration) and 2 Minor recommendations for M2/M4.
 
 ## Artifact Index
-- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m1_1\handoff.md — Final review and challenge report
-- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m1_1\DISPATCH.md — Incoming messages
-- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m1_1\progress.md — Liveness & progress tracker
+- `handoff.md` — Final review and challenge report with verdict.
+- `progress.md` — Liveness heartbeat.

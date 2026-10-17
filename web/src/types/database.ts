@@ -45,6 +45,7 @@ export interface Database {
           reduced_motion: boolean;
           gpa: number;
           badges: Json;
+          violation_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -78,6 +79,7 @@ export interface Database {
           reduced_motion?: boolean;
           gpa?: number;
           badges?: Json;
+          violation_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -111,6 +113,7 @@ export interface Database {
           reduced_motion?: boolean;
           gpa?: number;
           badges?: Json;
+          violation_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -1134,6 +1137,7 @@ export interface Database {
           daily_mood: string | null;
           vibe_theme: string;
           reduced_motion: boolean;
+          violation_count: number;
           updated_at: string;
         };
         Insert: {
@@ -1151,6 +1155,7 @@ export interface Database {
           daily_mood?: string | null;
           vibe_theme?: string;
           reduced_motion?: boolean;
+          violation_count?: number;
           updated_at?: string;
         };
         Update: {
@@ -1168,6 +1173,7 @@ export interface Database {
           daily_mood?: string | null;
           vibe_theme?: string;
           reduced_motion?: boolean;
+          violation_count?: number;
           updated_at?: string;
         };
         Relationships: [];
@@ -1276,6 +1282,7 @@ export interface Database {
           mode: string;
           discipline_score: number;
           shame_count: number;
+          violation_count: number;
           xp_gained: number;
           completed_at: string;
         };
@@ -1286,6 +1293,7 @@ export interface Database {
           mode?: string;
           discipline_score?: number;
           shame_count?: number;
+          violation_count?: number;
           xp_gained?: number;
           completed_at?: string;
         };
@@ -1296,6 +1304,7 @@ export interface Database {
           mode?: string;
           discipline_score?: number;
           shame_count?: number;
+          violation_count?: number;
           xp_gained?: number;
           completed_at?: string;
         };
@@ -1413,3 +1422,11 @@ export type DormExpenseUpdate = Database['public']['Tables']['dorm_expenses']['U
 export type StudentNotificationRow = Database['public']['Tables']['student_notifications']['Row'];
 export type StudentNotificationInsert = Database['public']['Tables']['student_notifications']['Insert'];
 export type StudentNotificationUpdate = Database['public']['Tables']['student_notifications']['Update'];
+
+export type StudentFocusSessionRow = Database['public']['Tables']['student_focus_sessions']['Row'];
+export type StudentFocusSessionInsert = Database['public']['Tables']['student_focus_sessions']['Insert'];
+export type StudentFocusSessionUpdate = Database['public']['Tables']['student_focus_sessions']['Update'];
+
+export type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row'];
+export type StudentProfileInsert = Database['public']['Tables']['student_profiles']['Insert'];
+export type StudentProfileUpdate = Database['public']['Tables']['student_profiles']['Update'];

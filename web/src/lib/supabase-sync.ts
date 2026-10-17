@@ -315,6 +315,11 @@ export async function flushOfflineQueue(
             .from('student_profiles')
             .upsert(mutation.payload, { onConflict: 'user_id' });
           success = !error;
+        } else if (mutation.entity === 'student_focus_sessions') {
+          const { error } = await supabase
+            .from('student_focus_sessions')
+            .insert(mutation.payload);
+          success = !error;
         } else {
           const { error } = await supabase.from(mutation.entity).upsert(mutation.payload);
           success = !error;
@@ -521,6 +526,9 @@ export async function pullFromSupabaseCloud(): Promise<Partial<CampusOSSharedSta
       partialState.dailyMood = profile.daily_mood || null;
       partialState.vibeTheme = profile.vibe_theme || 'aurora';
       partialState.reducedMotion = profile.reduced_motion || false;
+      if (typeof profile.violation_count === 'number') {
+        partialState.violationCount = profile.violation_count;
+      }
     }
 
     if (deadlinesData && deadlinesData.length > 0) {
@@ -599,6 +607,7 @@ export async function pushToSupabaseCloud(state: CampusOSSharedState): Promise<b
         daily_mood: state.dailyMood,
         vibe_theme: state.vibeTheme,
         reduced_motion: state.reducedMotion,
+        violation_count: state.violationCount ?? 0,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'user_id' }
@@ -712,3 +721,95 @@ export async function logFocusSessionToSupabase(session: {
     console.warn('[Supabase Sync] Log focus session skipped:', err);
   }
 }
+
+/**
+ * Records a Chrome Extension focus violation into student_focus_sessions and updates profiles.
+ * Supports optimistic sync with fallback to persistent offline mutation queue.
+ */
+export async function recordFocusViolationToSupabase(payload: {
+  penaltyXp: number;
+  domain?: string;
+  reason?: string;
+  violationCount?: number;
+}): Promise<boolean> {
+  const penalty = typeof payload.penaltyXp === 'number' ? Math.max(0, payload.penaltyXp) : 50;
+  const nowIso = new Date().toISOString();
+
+  const violationRecord = {
+    user_id: DEFAULT_USER_ID,
+    focus_minutes: 0,
+    mode: 'extreme_cat',
+    discipline_score: Math.max(0, 100 - penalty),
+    shame_count: 1,
+    violation_count: payload.violationCount ?? 1,
+    xp_gained: -penalty,
+    completed_at: nowIso,
+  };
+
+  const isOnline = typeof navigator === 'undefined' || navigator.onLine;
+
+  if (!isOnline || !isSupabaseConfigured()) {
+    enqueueOfflineMutation({
+      entity: 'student_focus_sessions',
+      action: 'INSERT',
+      payload: violationRecord,
+    });
+    enqueueOfflineMutation({
+      entity: 'student_profiles',
+      action: 'INCREMENT_VIOLATION',
+      payload: {
+        user_id: DEFAULT_USER_ID,
+        penaltyXp: penalty,
+        domain: payload.domain,
+        reason: payload.reason,
+      },
+    });
+    return false;
+  }
+
+  try {
+    // 1. Insert violation entry in student_focus_sessions
+    const { error: sessionErr } = await supabase
+      .from('student_focus_sessions')
+      .insert(violationRecord);
+
+    if (sessionErr) {
+      throw sessionErr;
+    }
+
+    // 2. Also attempt updating violation_count on student_profiles if present
+    try {
+      const { data: currentProfile } = await supabase
+        .from('student_profiles')
+        .select('violation_count, xp')
+        .eq('user_id', DEFAULT_USER_ID)
+        .maybeSingle();
+
+      if (currentProfile) {
+        const nextCount = (currentProfile.violation_count || 0) + 1;
+        const nextXp = Math.max(0, (currentProfile.xp || 0) - penalty);
+        await supabase
+          .from('student_profiles')
+          .update({
+            violation_count: nextCount,
+            xp: nextXp,
+            updated_at: nowIso,
+          })
+          .eq('user_id', DEFAULT_USER_ID);
+      }
+    } catch {
+      // Non-fatal if student_profiles table or row not yet populated
+    }
+
+    return true;
+  } catch (err) {
+    console.warn('[Supabase Sync] Record focus violation failed, queuing offline:', err);
+    enqueueOfflineMutation({
+      entity: 'student_focus_sessions',
+      action: 'INSERT',
+      payload: violationRecord,
+    });
+    return false;
+  }
+}
+

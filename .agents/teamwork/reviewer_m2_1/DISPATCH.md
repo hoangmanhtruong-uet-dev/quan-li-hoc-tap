@@ -1,30 +1,28 @@
-## 2026-10-13T09:43:23Z
-You are Reviewer 1 for Milestone 2 (Quest Board Header & 3D Blocks) of the CampusOS /tasks page rebuild project.
+## 2026-10-17T01:38:56Z
+You are reviewer_m2_1.
+Your working directory is: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m2_1
 
-Your assigned working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m2_1\
-Your parent conversation ID: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
+MANDATORY FIRST STEP:
+Read the authoritative user request at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md (specifically header ## 2026-10-17T00:51:59Z).
+Also read:
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m2_1\handoff.md
 
-Input files to read FIRST:
-1. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md (specifically timestamp ## 2026-10-13T07:48:15Z)
-2. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md
-3. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\TEST_READY.md
-4. d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m2_1\handoff.md
-5. Components to review:
-   - `web/src/components/tasks/header/quest-board-header.tsx`
-   - `web/src/components/tasks/header/floating-blocks-3d.tsx`
-   - `web/src/components/tasks/header/stat-stickers.tsx`
-   - `web/src/components/tasks/header/progress-ring.tsx`
-
-Objective:
-Independently review the Milestone 2 implementation:
-1. Height containment: Verify header height is bounded (<= 28vh), containers enforce `min-w-0`, and zero horizontal scrollbar occurs.
-2. Three.js canvas: Verify vanilla Three.js InstancedMesh with 40 cubes, pointer parallax, task burst animation, DPR <= 1.25, reduced-motion & mobile (<768px) static fallback, and proper WebGL cleanup on unmount.
-3. Stat stickers & SVG progress ring: Verify 4 asymmetric tilted badges with liquid SVG gradient ring and 100% confetti burst.
-4. Run verification commands in `web/`:
-   - `npm run typecheck`
-   - `npm test`
-5. Verify 0 TypeScript errors and 102/102 passing tests.
-
-Deliverable:
-Write report to `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m2_1\handoff.md` with explicit Verdict: APPROVE or REQUEST_CHANGES.
-Send completion message to parent (`d87bbdd2-41e0-4e96-8205-9ea9461c7df0`).
+Mission:
+Objectively review and verify Milestone 2: Cyber-Glass Lockout HUD & Vietnamese TTS in `extension/content.js`.
+1. Inspect `extension/content.js`:
+   - Shadow DOM injection on `document.documentElement` with host `#campusos-lockout-hud-root`, avoiding duplicate injection and isolating styles.
+   - Cyber-Glass styling: `backdrop-filter: blur(25px)`, full-screen overlay, 1px neon border (`rgba(255, 61, 110, 0.4)`), sticker badge "PHÁT HIỆN VI PHẠM KỶ LUẬT".
+   - Screen shake animation (`@keyframes screen-shake 0.65s`).
+   - Fat Orange Cat supervisor image (`assets/fat-orange-cat.png`), Vietnamese TTS scolding phrases with speech bubble, and audio fallback.
+   - 5-second countdown progress bar sending `CLOSE_TAB_AND_FOCUS_CAMPUS` when hitting 0.
+   - Exemption button ("Tôi đang tra tài liệu") with cooldown enforcement (1 use per 3 min).
+   - Web relay on `localhost:3000` / `campusos.vn` for two-way communication.
+2. Verification:
+   Run in `web/`:
+   `node --test ../.agents/teamwork/worker_m2_1/verify_hud.test.js`
+   `npm test`
+   `npm run typecheck`
+3. Formulate an objective review report in `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m2_1\handoff.md`.
+   State your explicit verdict: `APPROVE` or `REQUEST_CHANGES`.
+4. Send completion message to parent orchestrator.

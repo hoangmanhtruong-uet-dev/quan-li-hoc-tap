@@ -1,71 +1,56 @@
-# BRIEFING — 2026-10-13T09:48:30Z
+# BRIEFING — 2026-10-17T01:42:00Z
 
 ## Mission
-Independently review and adversarial critic Milestone 2 (Quest Board Header & 3D Blocks) implementation of CampusOS /tasks page rebuild.
+Review and adversarially stress-test Milestone 2: Cyber-Glass Lockout HUD & Vietnamese TTS in `extension/content.js`.
 
 ## 🔒 My Identity
-- Archetype: reviewer-critic
+- Archetype: reviewer
 - Roles: reviewer, critic
-- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m2_1\
-- Original parent: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Milestone: Milestone 2 - Quest Board Header & 3D Blocks
+- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m2_1
+- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Milestone: Milestone 2: Cyber-Glass Lockout HUD & Vietnamese TTS
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Active integrity checking: verify no hardcoded test results, facade implementations, shortcut bypasses, fabricated logs, or self-certifying work
-- Run verification independently (`npm run typecheck`, `npm test` in `web/`)
-- Adhere strictly to file workspace convention and handoff protocol
+- Integrity check: actively check for hardcoded test results, facade implementations, bypassed tasks, fabricated logs, self-certifying work without genuine verification
+- Verdict must be explicit APPROVE or REQUEST_CHANGES
 
 ## Current Parent
-- Conversation ID: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Updated: 2026-10-13T09:48:30Z
+- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Updated: 2026-10-17T01:42:00Z
 
 ## Review Scope
-- **Files to review**:
-  - `web/src/components/tasks/header/quest-board-header.tsx`
-  - `web/src/components/tasks/header/floating-blocks-3d.tsx`
-  - `web/src/components/tasks/header/stat-stickers.tsx`
-  - `web/src/components/tasks/header/progress-ring.tsx`
-  - Supporting tests, types, and hooks
-- **Interface contracts**: `PROJECT.md`, `TEST_READY.md`, `ORIGINAL_REQUEST.md` (## 2026-10-13T07:48:15Z), `worker_m2_1/handoff.md`
-- **Review criteria**:
-  - Height containment (<= 28vh, min-w-0, no horizontal overflow)
-  - Three.js canvas (InstancedMesh with 40 cubes, pointer parallax, task burst, DPR <= 1.25, fallback for reduced-motion / mobile <768px, WebGL disposal cleanup)
-  - Stat stickers (4 asymmetric tilted badges) & SVG progress ring (liquid gradient, 100% confetti)
-  - 0 TS errors, 102/102 passing tests
-  - Integrity violation checks
-
-## Key Decisions Made
-- Executed `npm run typecheck` (0 errors), `npm test` (102/102 passing tests), and `npm run build` (all 34 routes compiled cleanly).
-- Verified zero integrity violations: no hardcoding, no facades, no bypassed logic.
-- Conducted adversarial stress testing on memory management, viewport extremes, and reduced-motion states.
-- Issued verdict: APPROVE with 2 minor advisory findings.
-
-## Artifact Index
-- `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m2_1\DISPATCH.md` — Inbound instructions
-- `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m2_1\progress.md` — Liveness heartbeat
-- `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m2_1\BRIEFING.md` — Working memory
-- `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m2_1\handoff.md` — Final review report
+- **Files to review**: `extension/content.js`, `extension/manifest.json`, `extension/background.js`, `.agents/teamwork/worker_m2_1/verify_hud.test.js`, `extension/assets/fat-orange-cat.png`
+- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md` (header `## 2026-10-17T00:51:59Z`)
+- **Review criteria**: Shadow DOM isolation, cyber-glass styling, shake animation, Fat Orange Cat & speech bubble, Vietnamese TTS scolding + audio fallback, countdown progress bar, exemption cooldown logic, web relay, test passing, adversarial resilience
 
 ## Review Checklist
 - **Items reviewed**:
-  - `web/src/components/tasks/header/quest-board-header.tsx`
-  - `web/src/components/tasks/header/floating-blocks-3d.tsx`
-  - `web/src/components/tasks/header/stat-stickers.tsx`
-  - `web/src/components/tasks/header/progress-ring.tsx`
-  - `web/tests/tasks-redesign.test.ts`
+  - `extension/content.js` (859 lines)
+  - `extension/manifest.json`
+  - `extension/background.js`
+  - `.agents/teamwork/worker_m2_1/verify_hud.test.js`
+  - `extension/assets/fat-orange-cat.png`
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All claims independently verified via test runs and static analysis.
+- **Unverified claims**: None. All claims independently verified through tests and code inspection.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Empty tasks / 100% completed tasks / overdue tasks (passed)
-  - WebGL context cleanup & RAF cancelation (passed)
-  - Reduced-motion & mobile (<768px) static aurora fallback (passed)
-  - DPR <= 1.25 cap enforcement (passed)
-  - Viewport height containment <= 28vh (passed desktop, responsive on mobile)
-- **Vulnerabilities found**:
-  - `useCountUp` hook missing dependency warning in ESLint (Minor)
-  - Potential bottom content clipping if desktop viewport height < 750px under strict 28vh constraint (Minor advisory)
-- **Untested angles**: Hardware GPU WebGL driver crash simulation (covered by try-catch/fallback design).
+  - Autoplay audio block resilience -> Verified (high-contrast bubble + cat click gesture fallback)
+  - Duplicate injection prevention -> Verified (checks host ID and updates in-place)
+  - Background tab throttle timer drift -> Verified (uses wall-clock delta `Date.now() - startTime`)
+  - Exemption button spamming -> Verified (synchronous disabling, cooldown error notice)
+  - Cross-origin message hijacking on Web Relay -> Verified (origin filter + `event.source === window`)
+  - Reduced motion accessibility -> Verified (`@media (prefers-reduced-motion)` disables shake & breathing)
+- **Vulnerabilities found**: None.
+- **Untested angles**: Hardware-accelerated GPU blur performance on ultra-low-end embedded devices (mitigated by single modal layer and pure CSS filters).
+
+## Key Decisions Made
+- Confirmed zero integrity violations: no hardcoded cheats, genuine DOM logic, real TTS fallback, correct MV3 service worker messaging.
+- Verified test suite: `verify_hud.test.js` (4/4 PASS), `npm test` (453/453 PASS), `npm run typecheck` (0 errors), `npm run build` (33/33 static pages compiled successfully).
+- Issued unconditional `APPROVE` verdict.
+
+## Artifact Index
+- handoff.md — Final comprehensive review report
+- progress.md — Heartbeat progress tracking

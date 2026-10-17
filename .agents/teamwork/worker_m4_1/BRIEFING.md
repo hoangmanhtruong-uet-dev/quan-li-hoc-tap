@@ -1,70 +1,79 @@
-# BRIEFING — 2026-10-13T11:57:00Z
+# BRIEFING — 2026-10-17T02:12:00Z
 
 ## Mission
-Implement Milestone 4: Task Detail Drawer (dual-state desktop slide-over & mobile bottom sheet), Vietnamese NLP QuickAdd Modal, AI Breakdown Modal, and full /tasks Page Assembly with all views, modals, drawers, and global keyboard shortcuts.
+Implement Milestone 4: Web App Bridge, Supabase -50 XP Penalty & Realtime Popup for CampusOS.
 
 ## 🔒 My Identity
-- Archetype: teamwork_preview_worker
+- Archetype: worker
 - Roles: implementer, qa, specialist
-- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m4_1\
-- Original parent: 36a9e4bd-9a99-49d5-9abb-fdf329e0082d
-- Milestone: Milestone 4 (Detail Drawer, NLP QuickAdd, AI Breakdown, /tasks Page Assembly)
+- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m4_1
+- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Milestone: M4 (Web App Bridge, Supabase -50 XP & Realtime Popup)
 
 ## 🔒 Key Constraints
-- EXCLUSIVE WRITE OWNERSHIP:
-  - web/src/components/tasks/drawer/task-detail-drawer.tsx
-  - web/src/components/tasks/drawer/unselected-hero.tsx
-  - web/src/components/tasks/drawer/subtask-checklist.tsx
-  - web/src/components/tasks/create/quick-add-modal.tsx
-  - web/src/components/tasks/create/ai-breakdown-modal.tsx
-  - web/src/app/(main)/tasks/page.tsx
-- Genuine implementations only: no hardcoding, no mock facades.
-- Strict zero-overflow container: `min-h-screen w-full min-w-0 max-w-full overflow-x-hidden`.
-- Dynamic import with SSR false for `StrictPomodoroModal`.
+- Exclusive write ownership:
+  - supabase/migrations/004_extension_focus_violations.sql
+  - web/src/types/database.ts
+  - web/src/lib/campus-store.ts
+  - web/src/lib/supabase-sync.ts
+  - web/src/features/pomodoro/use-extension-bridge.ts
+  - web/src/app/api/focus/violation/route.ts
+  - extension/popup/popup.html
+  - extension/popup/popup.js
+  - extension/popup/popup.css
+  - web/tests/extension-sync-penalty.test.ts
+- Do NOT touch or modify any other files.
+- DO NOT CHEAT: Genuine implementations only, maintain real state, no hardcoded results.
+- 100% test pass (npm test), 0 typecheck errors, successful build.
 
 ## Current Parent
-- Conversation ID: 36a9e4bd-9a99-49d5-9abb-fdf329e0082d
-- Updated: 2026-10-13T11:57:00Z
+- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Updated: 2026-10-17T02:12:00Z
 
 ## Task Summary
 - **What to build**:
-  1. `task-detail-drawer.tsx`, `unselected-hero.tsx`, `subtask-checklist.tsx`
-  2. `quick-add-modal.tsx` (using parseVietnameseTaskInput)
-  3. `ai-breakdown-modal.tsx`
-  4. `src/app/(main)/tasks/page.tsx` assembling all components, headers, views, drawers, modals, keyboard shortcuts.
-- **Success criteria**:
-  - Full feature set working smoothly with store (`campus-store.ts`) and `tasks-engine.ts`.
-  - Type-safe, lint-free, Next.js build passes.
-- **Interface contracts**: PROJECT.md, docs/CampusOS_Tasks_Redesign_Plan.md, explorer_m4_1/handoff.md
+  1. Migration `004_extension_focus_violations.sql`: DDL adding `violation_count` column to `profiles`, `student_profiles`, and `student_focus_sessions`, with performance index and documentation comments.
+  2. Database types `database.ts`: updated `profiles`, `student_profiles`, and `student_focus_sessions` Row, Insert, and Update contracts with `violation_count`.
+  3. Shared store `campus-store.ts`: exported `penalizeViolation(amount = 50, reason)` enforcing 0 XP floor clamp, level demotion/rank recalculation, incrementing `violationCount` and `totalShameCount`, and debounced sync.
+  4. Sync engine `supabase-sync.ts`: exported `recordFocusViolationToSupabase(...)` with offline mutation queue fallback and optimistic profile/session updates.
+  5. Extension bridge hook `use-extension-bridge.ts`: 2-way communication via window.postMessage relay and runtime messaging, sending focus lifecycle events and catching `EXTENSION_VIOLATION` to penalize XP.
+  6. API route `/api/focus/violation/route.ts`: POST endpoint validating payload, updating Supabase when online, and returning mock confirmation in dev/offline.
+  7. Extension Popup (`popup.html`, `popup.js`, `popup.css`): Cyber-Glass 360x480 card, real-time synced `MM:SS` Pomodoro timer, blacklist manager (add/remove/reset 14 defaults), and AI webcam toggle.
+  8. Comprehensive unit test suite `extension-sync-penalty.test.ts`: 15 unit tests covering all functional requirements.
+- **Success criteria**: 100% test pass (505/505 tests), 0 typecheck errors, successful build (33/33 static pages + API routes).
+- **Interface contracts**: PROJECT.md § Interface Contracts
+- **Code layout**: PROJECT.md § Code Layout
 
 ## Key Decisions Made
-- Modularized drawer into `TaskDetailDrawer` container, `UnselectedHero` (for `selectedTask === null`), and `SubtaskChecklist`.
-- Applied responsive drawer architecture: right slide-over on desktop (>=1024px), bottom sheet with drag handle on mobile (<1024px).
-- Leveraged `parseVietnameseTaskInput` for real-time keystroke feedback in `QuickAddModal` with live preview chips and confidence meter.
-- Implemented heuristic multi-stage generator in `AiBreakdownModal` tailored to keyword deliverables (sockets, code, essays, exam problems).
-- Wrapped page container in `min-h-screen w-full min-w-0 max-w-full overflow-x-hidden` ensuring strict zero-overflow.
-- Wired global shortcuts (`N`, `/`, `1-4`, `J/K`, `X`, `E`, `F`, `Del`, `?`, `Cmd/Ctrl+K`, `Escape`) with active input guards.
-- Dynamic import `{ ssr: false }` for `StrictPomodoroModal`, `CommandPalette`, and `KeyboardShortcutsModal`.
+- Used `(window as any).chrome` in `use-extension-bridge.ts` to prevent missing global type errors in standard TypeScript configuration while maintaining browser runtime compatibility.
+- Used `import { NextRequest, NextResponse } from 'next/server.js'` in `route.ts` to support both Next.js App Router and Node `--experimental-strip-types` direct test runner.
+- Enforced strict 0 XP floor clamping (`Math.max(0, prev.xp - safeAmount)`) to prevent negative XP balances.
 
 ## Artifact Index
-- DISPATCH.md
-- progress.md
-- BRIEFING.md
-- handoff.md
+- `.agents/teamwork/worker_m4_1/DISPATCH.md` — Assigned dispatch instructions
+- `.agents/teamwork/worker_m4_1/BRIEFING.md` — Persistent working memory
+- `.agents/teamwork/worker_m4_1/progress.md` — Heartbeat and step tracking
+- `.agents/teamwork/worker_m4_1/handoff.md` — Final 5-component handoff report
 
 ## Change Tracker
-- **Files modified**:
-  - `web/src/components/tasks/drawer/unselected-hero.tsx` (new: Next-up Hero card, countdown, 7-day mini heatmap, academic study tips)
-  - `web/src/components/tasks/drawer/subtask-checklist.tsx` (new: checklist manager, SVG draw checkbox, reorder, in-place edit)
-  - `web/src/components/tasks/drawer/task-detail-drawer.tsx` (new: dual-state responsive drawer, slide-over/bottom sheet, full editing, Pomodoro mini widget)
-  - `web/src/components/tasks/create/quick-add-modal.tsx` (new: Vietnamese NLP task creation, real-time preview chips, quick chips, Enter submit)
-  - `web/src/components/tasks/create/ai-breakdown-modal.tsx` (new: syllabus prompt breakdown, 4-5 progressive stages, review checklist)
-  - `web/src/app/(main)/tasks/page.tsx` (rebuilt: full assembly, 4 views, drawer, modals, shortcuts, zero-overflow container)
-  - `web/tests/tasks-redesign.test.ts` (added Tier 5 test suite for Milestone 4 integration)
-- **Build status**: `npm run typecheck` (PASS), `npm test` (PASS 109/109), `npm run build` (PASS)
-- **Pending issues**: none
+- `supabase/migrations/004_extension_focus_violations.sql`: DDL adding `violation_count` to `profiles`, `student_profiles`, `student_focus_sessions`.
+- `web/src/types/database.ts`: Added `violation_count` to Row/Insert/Update types and exported convenience aliases.
+- `web/src/lib/campus-store.ts`: Added `penalizeViolation`, `setSharedState`, and `violationCount`/`totalShameCount` to shared state.
+- `web/src/lib/supabase-sync.ts`: Exported `recordFocusViolationToSupabase`, handled `student_focus_sessions` in offline queue.
+- `web/src/features/pomodoro/use-extension-bridge.ts`: Created bidirectional hook & helper functions for Web App ↔ Extension.
+- `web/src/app/api/focus/violation/route.ts`: Created POST route for logging focus discipline violations.
+- `extension/popup/popup.html`: Built 360x480 Cyber-Glass popup structure.
+- `extension/popup/popup.js`: Built real-time Pomodoro countdown sync, blacklist manager, and webcam toggle.
+- `extension/popup/popup.css`: Built Cyber-Glass styling with neon lime and neon rose tokens.
+- `web/tests/extension-sync-penalty.test.ts`: Created 15 comprehensive unit tests.
 
 ## Quality Status
-- **Build/test result**: PASS (109 tests passed, 0 failures; Next.js 14 production build succeeded across 34 routes)
-- **Lint status**: clean (0 errors)
-- **Tests added/modified**: 6 new integration tests in Tier 5 of `web/tests/tasks-redesign.test.ts`
+- **Build/test result**: PASS (505 passed across 33 test suites; Next.js 33/33 pages built successfully)
+- **Lint status**: 0 errors
+- **Tests added/modified**: 15 tests in `extension-sync-penalty.test.ts`
+
+## Loaded Skills
+- **Source**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\verification-before-completion\SKILL.md
+- **Core methodology**: Verify and confirm test output before making completion claims.
+- **Source**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\supabase-postgres-best-practices\SKILL.md
+- **Core methodology**: Safe Postgres schema migrations, idempotent DDL, and performant indexing/querying.

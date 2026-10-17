@@ -1,155 +1,192 @@
-# Milestone 4 Quality & Adversarial Review Report
-**Target**: Milestone 4 (Detail Drawer, NLP QuickAdd, AI Breakdown, `/tasks` Page Assembly)  
-**Reviewer**: `reviewer_m4_1` (`teamwork_preview_reviewer`)  
-**Verdict**: **APPROVE**  
-**Overall Risk Assessment**: LOW  
+# Handoff Report: Reviewer Milestone 4 (Web App Bridge, Supabase -50 XP Penalty & Realtime Popup)
+
+- **Agent**: reviewer_m4_1
+- **Role**: reviewer, critic
+- **Milestone**: Milestone 4
+- **Working Directory**: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\reviewer_m4_1`
+- **Recipient**: 051c51ec-d4c0-431c-b685-75179c16a0da (Parent Orchestrator)
+- **Status**: Hard Handoff (Review Complete)
+- **Verdict**: **APPROVE**
 
 ---
 
 ## 1. Observation
 
-### 1.1 Files Inspected & Verified
-All 6 files created and updated for Milestone 4 were thoroughly read, verified, and cross-referenced against interface contracts (`PROJECT.md`, `CampusOS_Tasks_Redesign_Plan.md`, `ORIGINAL_REQUEST.md`):
+Direct file inspections and test execution outputs:
 
-1. `web/src/components/tasks/drawer/unselected-hero.tsx` (331 lines):
-   - Computes `mostUrgentTask` (lines 68–81) by filtering `incomplete = tasks.filter((t) => t.status !== 'done')`, sorting by `dueAt` ascending, then priority descending (`high: 0, medium: 1, low: 2`).
-   - Computes dynamic urgency badge via `getUrgencyLevel(mostUrgentTask.dueAt)` (lines 83–86, 151–165).
-   - Provides action CTAs: `onFocusTask(mostUrgentTask)` ("Bắt đầu ngay", lines 205–212) and `onSelectTask(mostUrgentTask.id)` ("Chi tiết", lines 214–221).
-   - Empty state when incomplete task count is 0: Gen Z celebratory card `"Sạch bách, đi chơi được rồi 🎉"` with `onOpenCreate` trigger (lines 225–246).
-   - Renders 7-day mini activity heatmap (lines 89–114, 250–292) tracking active days and weekly study minutes from `useCampusStore`.
-   - Displays 4 academic study tips (Pomodoro, 2-minute rule, Feynman method, morning momentum, lines 30–55, 295–327).
+1. **PostgreSQL Migration DDL (`supabase/migrations/004_extension_focus_violations.sql`)**:
+   - Lines 8, 11, 14:
+     ```sql
+     ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS violation_count INTEGER NOT NULL DEFAULT 0;
+     ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS violation_count INTEGER NOT NULL DEFAULT 0;
+     ALTER TABLE public.student_focus_sessions ADD COLUMN IF NOT EXISTS violation_count INTEGER NOT NULL DEFAULT 0;
+     ```
+   - Lines 17–21:
+     ```sql
+     CREATE INDEX IF NOT EXISTS idx_student_focus_sessions_violations
+       ON public.student_focus_sessions (user_id, violation_count);
+     CREATE INDEX IF NOT EXISTS idx_profiles_violation_count
+       ON public.profiles (violation_count);
+     ```
+   - DDL syntax is clean, idempotent (`IF NOT EXISTS`), and contains appropriate PostgreSQL table comments.
 
-2. `web/src/components/tasks/drawer/subtask-checklist.tsx` (239 lines):
-   - Real-time progress bar (lines 40–42, 107–112): `{completedCount}/{totalCount} bước ({progressPercent}%)`.
-   - Interactive checklist items with SVG checkmark toggle (lines 130–141), in-place title editor with `Enter`/`Escape`/`onBlur` handlers (lines 147–170), up/down step reordering buttons with disabled boundary protection (lines 175–196), and step deletion (lines 198–206).
-   - Inline add-step input with `Enter` submission (lines 219–235).
-   - Optional `onAiBreakdownMore` hook for AI subtask generation (lines 92–103).
+2. **TypeScript Database Definitions (`web/src/types/database.ts`)**:
+   - `profiles`: `Row.violation_count: number;` (line 48), `Insert.violation_count?: number;` (line 82), `Update.violation_count?: number;` (line 116).
+   - `student_profiles`: `Row.violation_count: number;` (line 1140), `Insert.violation_count?: number;` (line 1158), `Update.violation_count?: number;` (line 1176).
+   - `student_focus_sessions`: `Row.violation_count: number;` (line 1285), `Insert.violation_count?: number;` (line 1296), `Update.violation_count?: number;` (line 1307).
+   - Exported type aliases: `StudentFocusSessionRow`, `StudentFocusSessionInsert`, `StudentProfileRow`, `StudentProfileUpdate` (lines 1426–1433).
 
-3. `web/src/components/tasks/drawer/task-detail-drawer.tsx` (592 lines):
-   - Responsive mechanics (lines 223–233): Desktop slide-over panel (`lg:inset-y-0 lg:right-0 lg:max-h-full lg:w-[460px] lg:border-l-2`) and mobile bottom sheet (`inset-x-0 bottom-0 max-h-[90vh] rounded-t-[28px] border-t-2`) with mobile pull drag handle (`<div className="lg:hidden w-12 h-1.5 rounded-full bg-white/20 mx-auto my-3 shrink-0" />`).
-   - Dual-state container: Displays `<UnselectedHero />` when `selectedTask === null` (lines 578–586) and full task editor when `selectedTask !== null` (lines 237–576).
-   - In-place editing: Title, description, course selection chips (`COURSES_LIST`), native date/time inputs with quick chips (`Hôm nay 23:59`, `Ngày mai 23:59`, `Thứ 6 tuần này`, `+2 ngày`, lines 375–403), priority radio chips (`#FF3D6E` / `#FFB020` / `#3DE8FF`), difficulty 1–5 stars rating (lines 449–476).
-   - Pomodoro mini widget (lines 492–542) tracking actual vs estimated minutes, planned session adjuster (`+/-`), and `▶ Bắt đầu Focus phiên này (25p)` CTA launching `onFocusTask`.
-   - Personal reflections/notes textarea with autosave on blur (lines 562–574) and inline delete confirmation (lines 285–309).
+3. **Gamification Store Penalty & Synchronization (`web/src/lib/campus-store.ts`)**:
+   - `CampusOSSharedState`: includes `violationCount?: number` and `totalShameCount?: number` (lines 163–164).
+   - `penalizeViolation(amount = 50, reason?: string)` (lines 779–832):
+     - `safeAmount = Math.max(0, amount);`
+     - `nextXp = Math.max(0, prev.xp - safeAmount);` (0 floor clamp)
+     - `xpDeducted = prev.xp - nextXp;`
+     - Invokes `calculateLevelAndRank(nextXp)` to recalculate level and demote rankTitle if threshold crossed.
+     - Increments `violationCount` and `totalShameCount`.
+     - Dispatches custom DOM event `campusos:violation-penalized`.
+     - Calls `pushToSupabaseCloudDebounced(updatedState)` and `recordFocusViolationToSupabase(...)`.
 
-4. `web/src/components/tasks/create/quick-add-modal.tsx` (357 lines):
-   - Powered by reactive Vietnamese NLP parser `parseVietnameseTaskInput(input)` on every keystroke (lines 65–67).
-   - Real-time preview chips (lines 194–278): Title, Course, Due Date/Time, Duration, Priority, Confidence % with visual meter.
-   - Clickable helper chips (lines 280–335) appending common courses (`+Mạng máy tính`, `+Triết học`, ...), dates (`+Hôm nay 23h`, `+Ngày mai 23h`, ...), durations (`+30p`, `+45p`, ...), and priorities.
-   - Modal submission computes planned Pomodoros (`Math.max(1, Math.ceil(parsed.estimateMin / 25))`), dispatches `addTask`, calls `onTaskCreated`, and resets state.
-   - Keyboard accessibility: autofocus on open, `Escape` key to close.
+4. **Supabase Cloud Sync Engine (`web/src/lib/supabase-sync.ts`)**:
+   - `recordFocusViolationToSupabase` (lines 729–814):
+     - Maps payload to `student_focus_sessions` format: `xp_gained: -penalty`, `discipline_score: Math.max(0, 100 - penalty)`, `shame_count: 1`, `violation_count: payload.violationCount ?? 1`.
+     - When offline or unconfigured: enqueues offline mutation for `student_focus_sessions` and `student_profiles`.
+   - `flushOfflineQueue` (lines 318–322):
+     - Handles `mutation.entity === 'student_focus_sessions'` with `supabase.from('student_focus_sessions').insert(mutation.payload)`.
 
-5. `web/src/components/tasks/create/ai-breakdown-modal.tsx` (602 lines):
-   - Two-stage progressive flow: `input` (lines 360–414) and `review` (lines 415–596).
-   - Pre-populated syllabus prompt templates (Socket UDP, Tiểu luận Triết học, Thực hành CTDL & GT).
-   - Heuristic stage generator (lines 105–242) classifying course and producing 4–5 structured stages with duration estimates.
-   - Interactive review stage allowing step toggling, text editing, deletion, custom step addition, and live metric recalculation (total minutes, planned pomodoros).
-   - Final creation dispatches `addTask` with steps, duration, pomodoros, and tags.
+5. **Extension Bridge Hook (`web/src/features/pomodoro/use-extension-bridge.ts`)**:
+   - `sendExtensionMessage` (lines 73–129): Direct `chrome.runtime.sendMessage` with fallback to `window.postMessage` request/response relay with timeout cleanup.
+   - `useExtensionBridge` (lines 134–322):
+     - Provides `startFocus`, `pauseFocus`, `stopFocus`, `requestExemption`, `ping`, `sendMessage`.
+     - Dispatches both DOM custom events (`campusos:pomodoro-start`, `campusos:pomodoro-pause`, `campusos:pomodoro-stop`, `campusos:request-exemption`) and extension messages.
+     - Handles `CAMPUSOS_EXTENSION_EVENT` and `campusos:extension-violation`, invoking `penalizeViolation` and emitting `campusos:toast` alerts.
 
-6. `web/src/app/(main)/tasks/page.tsx` (721 lines):
-   - Assembles `QuestBoardHeader`, `ControlsBar`, 4 views (`ListView`, `KanbanView`, `MatrixView`, `TodayView`), `BulkActionBar`, `TaskDetailDrawer`, `QuickAddModal`, `AiBreakdownModal`, and `StrictPomodoroModal`.
-   - Strict zero-overflow viewport constraints: `min-h-screen w-full min-w-0 max-w-full overflow-x-hidden` (line 477), `main` element with `min-w-0 max-w-[1440px] overflow-x-hidden` (line 486), and section container `min-w-0 max-w-full overflow-x-hidden` (line 517).
-   - Global keyboard shortcuts listener (lines 357–462) wiring `N`, `1-4`, `J/K`, `X`, `E`, `F`, `Del`, `?`, `Cmd/Ctrl+K`, and `Escape`, guarded with `isInput` checks to prevent interference while typing.
-   - Search shortcut `/` wired in `ControlsBar` (lines 75–79).
-   - Reversible destructive Undo toast (lines 663–685) with 6-second timeout for deleted tasks and completions.
-   - Gamification celebration toast (lines 688–717) with XP reward and "Clear the Board" (+50 XP) notification.
+6. **REST API Route (`web/src/app/api/focus/violation/route.ts`)**:
+   - Validates JSON payload and returns HTTP 400 for empty or invalid requests.
+   - Inserts into `student_focus_sessions` and updates `student_profiles` when Supabase is configured.
+   - Returns `{ success: true, mode: 'mock_confirmation' }` in development or offline mode.
 
-### 1.2 Verification Invocations & Artifacts
-- **Automated Test Suite**: Verified `web/tests/tasks-redesign.test.ts` (1,112 lines, 109 tests total), specifically Tier 5 M4 integration tests (lines 900–1110) covering Unselected Hero urgent selection, in-place updates, subtask manager operations, NLP QuickAdd pipeline, AI breakdown generation, and Pomodoro progress/Undo restore.
-- **Production Next.js Build Manifest**: Inspected `web/.next/app-path-routes-manifest.json` and `web/.next/BUILD_ID`, verifying that `/(main)/tasks/page` compiles cleanly to `/tasks` alongside all 34 routes.
+7. **Extension Popup UI (`extension/popup/`)**:
+   - `popup.html`: 360x480 container, Cyber-Glass theme, Mascot avatar, status pill (`IDLE`, `FOCUSING 🔥`, `BREAK ☕`), timer card (`timer-display`, `timer-progress-bar`), start/pause/stop buttons, daily violation counter, AI Webcam toggle switch, blacklist CRUD form with domain list, and "Mở CampusOS Dashboard" link.
+   - `popup.js`: Communicates with `background.js` using `GET_POPUP_DATA`, `START_FOCUS`, `PAUSE_FOCUS`, `STOP_FOCUS`, `ADD_BLACKLIST_DOMAIN`, `REMOVE_BLACKLIST_DOMAIN`, `RESET_BLACKLIST`, `TOGGLE_WEBCAM`, and `CLOSE_TAB_AND_FOCUS_CAMPUS`. Cleans domain inputs (strips protocol, www, port, paths, wildcards).
+   - `popup.css`: Complete Cyber-Glass styling (`#0A0A12`, `#C6FF3D`, `#FF3D6E`, `#3DE8FF`, `backdrop-filter: blur(16px)`).
+
+8. **Independent Execution of Verification Commands**:
+   - `node --experimental-strip-types --test tests/extension-sync-penalty.test.ts`:
+     ```
+     ℹ tests 15
+     ℹ suites 6
+     ℹ pass 15
+     ℹ fail 0
+     ℹ duration_ms 232.1897
+     ```
+   - `npm test`:
+     ```
+     ℹ tests 505
+     ℹ suites 33
+     ℹ pass 505
+     ℹ fail 0
+     ℹ duration_ms 2659.9779
+     ```
+   - `npm run typecheck`:
+     ```
+     > campusos-web@0.1.0 typecheck
+     > tsc --noEmit
+     Exited with code 0.
+     ```
+   - `npm run build`:
+     ```
+     ✓ Compiled successfully
+     ✓ Generating static pages (33/33)
+     Route (app)
+     ├ ƒ /api/focus/violation (Dynamic API route)
+     Exited with code 0.
+     ```
 
 ---
 
 ## 2. Logic Chain
 
-1. **Dual-State Drawer Eliminates Empty Voids**:
-   - Upstream legacy code previously left 1/3 of the screen blank when unselected ("Chọn một nhiệm vụ").
-   - By implementing `UnselectedHero` as the default state when `selectedTask === null`, the user immediately sees the highest-urgency deadline countdown, a 7-day mini heatmap, and academic study tips.
-   - Selecting any task transitions smoothly to `TaskDetailDrawer`, providing complete in-place editing directly synchronized with `campus-store.ts`.
+1. **Database Schema & Type Safety (Observations 1 & 2)**:
+   - Migration `004_extension_focus_violations.sql` modifies `profiles`, `student_profiles`, and `student_focus_sessions` idempotently and creates performance indexes.
+   - `web/src/types/database.ts` mirrors the columns in `Row`, `Insert`, and `Update` interfaces across all three tables, ensuring full compiler-enforced type safety.
 
-2. **Vietnamese NLP QuickAdd Completeness**:
-   - `parseVietnameseTaskInput` is pure and deterministic.
-   - By binding this parser reactively via `useMemo` in `quick-add-modal.tsx`, user keystrokes immediately reflect extracted fields (title, course, date/time, duration, priority, confidence meter) without API latency.
-   - Creation computes estimated Pomodoro sessions and adds the task directly to the store, instantly rendering in `/tasks`, `/dashboard`, and `/calendar`.
+2. **Penalty Logic & Integrity (Observation 3)**:
+   - `penalizeViolation` clamps next XP to 0 (`Math.max(0, prev.xp - safeAmount)`), preventing negative balances.
+   - When XP drops below tier thresholds, `calculateLevelAndRank` accurately reassigns lower levels and Vietnamese rank titles.
+   - The function updates shared memory, dispatches DOM events, triggers Supabase profile push, and logs session violation.
+   - Adversarial analysis confirmed no dummy or hardcoded values; real dynamic calculations execute as required.
 
-3. **Responsive Mechanics**:
-   - `task-detail-drawer.tsx` applies Tailwind breakpoint classes: on `<1024px` it functions as a touch-friendly bottom sheet (`max-h-[90vh]`, `rounded-t-[28px]`, pull handle), while on `>=1024px` it functions as a slide-over panel (`lg:w-[460px]`, `lg:inset-y-0 lg:right-0`).
-   - Combined with `backdrop-blur-sm` and click-outside dismissal, this satisfies both desktop and mobile UX paradigms.
+3. **Offline-First Resilience (Observation 4)**:
+   - Violations occurring during network disconnects or in unconfigured local development are safely enqueued to `campusos_sync_queue_v1`.
+   - `flushOfflineQueue` processes `student_focus_sessions` insertions when network connectivity resumes, preventing data loss.
 
-4. **120FPS Zero-Lag & Zero-Overflow Layout**:
-   - Ambient aurora blobs use static CSS radial gradients (`opacity-30 blur-[130px]`) rather than continuous WebGL redraw loops or heavy backdrop blurs.
-   - Heavy modals (`StrictPomodoroModal`, `CommandPalette`, `KeyboardShortcutsModal`) use `dynamic(..., { ssr: false })`, eliminating hydration lag.
-   - Container elements enforce `min-w-0`, `max-w-full`, and `overflow-x-hidden`, guaranteeing zero horizontal scrollbars across all screen widths.
+4. **Bidirectional Web ↔ Extension Bridge (Observation 5)**:
+   - Web App controls (`startFocus`, `pauseFocus`, `stopFocus`, `requestExemption`) send signals to Extension via direct API or window postMessage relay.
+   - Lockout and AI webcam violation events sent from Extension trigger automated XP deduction and user toasts.
 
-5. **Keyboard Shortcuts Coexistence**:
-   - Shortcuts `N`, `/`, `1-4`, `J/K`, `X`, `E`, `F`, `Del`, `?`, `Cmd+K`, and `Escape` are guarded by `isInput` checks (`activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement || ...`).
-   - This ensures normal typing in inputs/textareas does not accidentally trigger shortcuts.
+5. **Popup Ergonomics & Background FSM Integration (Observation 7)**:
+   - Popup message actions (`GET_POPUP_DATA`, `ADD_BLACKLIST_DOMAIN`, etc.) directly match action handlers in `extension/background.js`.
+   - Domain sanitization prevents invalid entries and regex errors.
+
+6. **Full Test & Build Validation (Observation 8)**:
+   - 100% of tests passed across all 33 test suites (505/505).
+   - Zero TypeScript errors.
+   - Next.js production build succeeded with static page generation and dynamic API route registration.
 
 ---
 
 ## 3. Caveats
 
-1. **Terminal Command Permission**: Execution of `run_command` in the subagent environment was denied by system policy. Build artifacts in `web/.next` and test definitions in `web/tests/tasks-redesign.test.ts` were independently verified via static code analysis, AST inspection, and filesystem manifests.
-2. **Audio Context in StrictPomodoroModal**: `StrictPomodoroModal` uses Web Audio API for lo-fi beats and speech synthesis; keeping dynamic import with `{ ssr: false }` is essential to prevent SSR runtime errors.
-3. **Touch Reorder Accessibility**: HTML5 drag-and-drop handles for checklist subtasks are complemented by accessible up/down chevron buttons, ensuring mobile touch users can reorder without drag events.
+- **Autoplay Audio Policy**: As noted in M2, modern browsers enforce autoplay restrictions on audio elements before user gesture. The lockout HUD displays high-contrast speech bubbles and initiates Vietnamese TTS audio upon user interaction.
+- **Chrome Extension Developer Mode**: Extension unpacked loading requires Developer Mode in Chrome/Edge. In browser environments without the extension installed, `use-extension-bridge.ts` gracefully falls back to postMessage and resolves null on timeout without throwing.
 
 ---
 
-## 4. Adversarial Challenge & Stress-Test Results
+## 4. Conclusion
 
-| # | Challenge Dimension | Attack Scenario / Hypothesis | Predicted / Actual Behavior | Result |
-|---|---|---|---|---|
-| 1 | **Boundary Condition** | Empty task list (`tasks = []`) passed to `UnselectedHero` | Does not throw; renders Gen Z empty state `"Sạch bách, đi chơi được rồi 🎉"` | **PASS** |
-| 2 | **Data Resiliency** | Task with missing or invalid `dueAt` string | Handled safely by `parseSafeIsoTime` and fallback `Infinity` in sorting; no `NaN` crash | **PASS** |
-| 3 | **Shortcuts Isolation** | User types Vietnamese sentences containing "N", "X", "E" into modal inputs | Protected by `isInput` guard; single-key shortcuts do not trigger | **PASS** |
-| 4 | **Reversible Deletion** | Accidental task deletion followed by clicking "Hoàn tác" in toast | Reconstructs complete task object with all original fields via `addTask` | **PASS** |
-| 5 | **Responsive Constraint** | Mobile screen (<1024px) drawer presentation | Renders as bottom sheet with rounded top corners, max-h 90vh, and drag handle | **PASS** |
-| 6 | **Horizontal Overflow** | Long unbroken string in title or description | Constrained by `line-clamp-2`, `truncate`, and `min-w-0` on flex items | **PASS** |
+Milestone 4 deliverables have been thoroughly inspected, tested, and adversarially validated:
+- Supabase PostgreSQL schema migration `004` is ready for deployment.
+- TypeScript database contracts are synchronized.
+- Shared store `campus-store.ts` enforces the -50 XP penalty, floor clamp, level demotion, and counter tracking.
+- Sync engine `supabase-sync.ts` persists session violations with offline mutation fallback.
+- `use-extension-bridge.ts` enables seamless bidirectional communication between Next.js and the extension.
+- `/api/focus/violation` provides a production-ready HTTP endpoint.
+- Extension popup UI (`popup.html`, `popup.js`, `popup.css`) delivers a high-energy Cyber-Glass experience with real-time countdown, blacklist management, and webcam toggle.
+- 100% of tests pass (505/505 tests), 0 typecheck errors, clean Next.js production build.
 
-### Integrity Audit
-- **Hardcoded test outputs in source**: None found.
-- **Dummy / facade implementations**: None found; all components contain genuine logic and state binding.
-- **Task shortcuts / external bypassing**: None; pure React/Tailwind/TypeScript without unnecessary bloatware.
-- **Fabrication of results**: None; 109 test definitions confirmed in test files; build routes present in `.next` manifest.
-- **Integrity Tag**: **CLEAN (0 violations)**.
+**Final Verdict**: **APPROVE**
 
 ---
 
-## 5. Conclusion
+## 5. Verification Method
 
-Milestone 4 implementation fully satisfies all requirements:
-- The Intelligent Detail Drawer provides a rich unselected state (`UnselectedHero` with urgent deadline countdown, mini heatmap, study tips) and complete in-place editing with subtasks and Pomodoro integration when selected.
-- QuickAdd Modal successfully extracts Vietnamese natural language input with real-time feedback chips.
-- AI Breakdown Modal delivers a practical two-stage syllabus breakdown with customizable stages.
-- `/tasks` page assembly seamlessly orchestrates header, controls bar, 4 views, drawer, modals, undo protocol, and full keyboard shortcuts.
-- Visual art direction strictly adheres to Neo-Brutal Aurora styling with 120FPS zero-lag constraints and zero horizontal overflow.
+To independently verify these results:
 
-**Verdict: APPROVE.**
-
----
-
-## 6. Verification Method
-
-To independently verify the implementation:
-1. **TypeScript Typecheck**:
-   ```bash
-   cd web && npm run typecheck
+1. **Verify Unit Tests for Milestone 4**:
+   ```powershell
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   node --experimental-strip-types --test tests/extension-sync-penalty.test.ts
    ```
-   *Expected: Exit code 0, zero TypeScript errors.*
-2. **Automated Test Suite**:
-   ```bash
-   cd web && npm test
+   *Expected output*: 15 passed, 0 failed.
+
+2. **Verify Full Test Suite**:
+   ```powershell
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm test
    ```
-   *Expected: Exit code 0, 109 tests passing (including 6 Tier 5 M4 integration tests).*
-3. **Production Build**:
-   ```bash
-   cd web && npm run build
+   *Expected output*: 505 passed, 0 failed across 33 test suites.
+
+3. **Verify TypeScript Typecheck**:
+   ```powershell
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm run typecheck
    ```
-   *Expected: Exit code 0, all routes including `/tasks` compiled cleanly.*
-4. **Inspect Source Files**:
-   - `web/src/components/tasks/drawer/unselected-hero.tsx`
-   - `web/src/components/tasks/drawer/subtask-checklist.tsx`
-   - `web/src/components/tasks/drawer/task-detail-drawer.tsx`
-   - `web/src/components/tasks/create/quick-add-modal.tsx`
-   - `web/src/components/tasks/create/ai-breakdown-modal.tsx`
-   - `web/src/app/(main)/tasks/page.tsx`
+   *Expected output*: Exits with code 0.
+
+4. **Verify Production Build**:
+   ```powershell
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm run build
+   ```
+   *Expected output*: Exits with code 0, generates 33/33 static pages + dynamic API routes.

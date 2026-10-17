@@ -1,165 +1,253 @@
-# Codebase Survey Handoff Report — CampusOS Web
+# Báo cáo Khảo sát Kiến trúc & Điểm Tích Hợp Chrome Extension "AI Giám Sát Học Tập Cực Đoan"
 
-**Metadata Directory**: `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\explorer_survey_1`  
-**Target Project**: CampusOS Web (`d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web`)  
-**Investigator**: `explorer_survey_1`  
-**Recipient**: `orchestrator_7` (`5bd8e140-4c1e-4580-b966-e8064ec8f7d3`)  
-
----
-
-## 1. Observation
-
-### 1.1 Package Dependencies and Scripts (`web/package.json`)
-- **Next.js**: `14.2.5` (App Router)
-- **React & React DOM**: `18.3.1`
-- **TypeScript**: `5.5.4`
-- **Tailwind Ecosystem**: `tailwindcss: 3.4.10`, `tailwindcss-animate: ^1.0.7`, `postcss: 8.4.47`, `autoprefixer: 10.4.20`, `tailwind-merge: ^3.6.0`, `clsx: ^2.1.1`, `class-variance-authority: ^0.7.1`
-- **Graphics & 3D**: `three: ^0.186.1` and `@types/three: ^0.186.0` are already installed.
-- **Icons**: `lucide-react: ^1.24.0`
-- **Radix Primitives**: `@radix-ui/react-separator: ^1.1.15`, `@radix-ui/react-slot: ^1.3.3`, `@radix-ui/react-tooltip: ^1.2.16`
-- **Audio / TTS**: `msedge-tts: ^2.0.9` (backend neural voice route `/api/tts`), plus procedural Web Audio API in frontend (`src/features/pomodoro/audio-engine.ts`)
-- **Missing / Not Installed**:
-  - `framer-motion` is **not** installed.
-  - `zustand` is **not** installed.
-  - `@dnd-kit/*` is **not** installed.
-  - `vitest` / `jest` are **not** installed.
-- **Scripts**:
-  - `"dev": "next dev"`
-  - `"build": "next build"`
-  - `"typecheck": "tsc --noEmit"`
-  - `"test": "node --experimental-strip-types --test tests/*.test.ts"`
-
-### 1.2 Build, Typecheck, and Test Execution Status
-- **`npm test`**: Ran `node --experimental-strip-types --test tests/*.test.ts`. Exited code 0 with 9 tests passing (duration: 132ms).
-- **`npm run typecheck`**: Ran `tsc --noEmit`. Exited code 0 with 0 errors.
-- **`npm run build`**: Ran `next build`. Exited code 0. Generated 34 static and dynamic routes successfully. First load JS shared chunk is 87.1 kB.
-
-### 1.3 Tailwind Configuration & Styling Tokens
-- **`tailwind.config.js` content array** (lines 4–8):
-  ```js
-  content: [
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './node_modules/streamdown/dist/*.js',
-  ]
-  ```
-  **CRITICAL FINDING**: `./src/features/**/*.{js,ts,jsx,tsx,mdx}` is **missing** from `content`! Any Tailwind utility classes placed strictly inside `src/features/` without existing elsewhere in `src/app` or `src/components` will be purged during production build unless added to `content` or placed under `src/components/`.
-- **Theme Variables** (`src/app/globals.css` lines 6–61):
-  - Uses CSS HSL variables (`--background`, `--foreground`, `--card`, `--primary`, `--border`, etc.).
-  - Default root is dark mode (`--background: 222 38% 6%`).
-  - Supports light mode via `@media (prefers-color-scheme: light)` and `html[data-theme='light']`.
-  - Custom utility classes: `.surface-glow`, `.ai-surface`, `.scrollbar-thin`.
-  - Animations defined: `accordion-down`, `accordion-up`, `fade-in`, `slide-up`.
-- **Typography**:
-  - `tailwind.config.js` (lines 76–94): `font-sans` maps to `Inter`, system fallback fonts. `font-mono` maps to `JetBrains Mono`, `Fira Code`, `Consolas`.
-  - Neither `Unbounded` nor `Be Vietnam Pro` are currently imported in `globals.css` or `layout.tsx`.
-
-### 1.4 App Shell & Navigation Structure
-- **`src/app/layout.tsx`**: Sets `lang="vi"`, wraps `<AuthProvider>{children}</AuthProvider>`.
-- **`src/app/(main)/layout.tsx`**: Server component. Executes `await requireUser({ requireOnboarding: false })` and returns `<AppLayout>{children}</AppLayout>`.
-- **`src/components/layout/app-layout.tsx`**: Client component.
-  - Left desktop sidebar: `<Sidebar />` (`w-[17rem]`, sticky, `z-30`).
-  - Top header: `<Header onMenuClick={...} />` (`h-[4.5rem]`, sticky).
-  - Main area: `<main className="flex-1 px-4 py-6 pb-24 md:px-7 md:py-8 lg:px-10 lg:py-10">{children}</main>`.
-  - Mobile bottom navigation: `<BottomNav />` (`fixed bottom-0 md:hidden`).
-- **`src/components/layout/sidebar.tsx`**: Renders items grouped by sections from `src/config/nav.ts`. Highlights active route using `pathname.startsWith(...)`.
-- **Theme handling**: No dedicated `ThemeProvider` or Context exists. `src/app/(main)/settings/page.tsx` directly modifies `document.documentElement.dataset.theme`.
-
-### 1.5 Existing `/dashboard` and `/calendar` Implementations
-- **`src/app/(main)/dashboard/page.tsx`** (143 lines):
-  - Primitive SaaS card grid.
-  - Static header: `"Thứ Năm, 20 tháng 8 · Hôm nay có 3 lớp và 1 deadline quan trọng."`.
-  - Local state stored only in `localStorage.getItem('campusos-dashboard-v1')`.
-  - Opens legacy generic `StudySessionModal` instead of `StrictPomodoroModal`.
-  - None of the 7 Neo-Brutal Aurora sections (Hero 3D/Aurora blob, Horizontal timeline, Asymmetric Bento Deadline Arena, AI Mascot, Game HUD, 3-column Squad Kanban, Marquee footer + Daily Wrapped) are implemented.
-- **`src/app/(main)/calendar/page.tsx`** (213 lines):
-  - Hardcoded to August 2026 (`todayKey = '2026-08-20'`, `new Date(2026, 7, 1)`).
-  - 11 hardcoded static mock events from August/September 2026.
-  - Stored in `localStorage.getItem('campusos-calendar-v1')`.
-  - Only has Month grid (42 static cells) and simple List/Agenda view.
-  - Missing real system date anchoring, Week/Day time grid (06:00–23:00), conflict detection, drag-and-drop rescheduling, NLP quick-create ("ôn xác suất 19h thứ 6"), Load heat-score bar, AI auto-scheduler modal ("Xếp lịch giúp tao"), and `.ics` import/export.
-
-### 1.6 Pomodoro & Fat Orange Cat Supervisor Integration Point
-- **`src/features/pomodoro/strict-pomodoro-modal.tsx`** (566 lines):
-  - Already implemented with `MemeCatStage`, `TalkingTom3D`, `SupervisorArbiter`, `PomodoroAudioEngine`, and `useTabDetection`.
-  - Real cutout image asset exists at `public/images/fat-orange-cat.png` (405 kB).
-  - Callback signature: `onSessionComplete?: (stats: { focusMinutes: number; shameCount: number; disciplineScore: number }) => void`.
-  - Currently supports `visualMode: 'meme_photo' | '3d_model'`.
-  - Ready to be extended with the second required mode: `chill_breathing` (4-7-8 breathing orb + procedural Web Audio lo-fi ambient synth).
-
-### 1.7 Existing State Management & Storage
-- No Zustand or global Context store for student progress.
-- Pages currently use fragmented `localStorage` keys:
-  - `campusos-dashboard-v1`
-  - `campusos-calendar-v1`
-  - `campusos-tasks-v1`
-  - `campusos-settings-v2`
-- Need a unified shared store module (`src/lib/campus-store.ts`) with custom React hook (`useCampusStore`) synchronizing XP, Level, Rank title, Streak, Streak Freeze, Mood, Vibe Theme, study minutes, deadlines, Kanban tasks, and calendar events across `/dashboard` and `/calendar` using `localStorage` and `window` event dispatching.
+**Mã phiên**: `explorer_survey_1`  
+**Ngày thực hiện**: 2026-10-17  
+**Mục tiêu**: Khảo sát toàn diện phân hệ frontend Pomodoro, store dùng chung (`campus-store.ts`), cơ chế cầu nối Extension, hệ thống Audio/TTS tiếng Việt và hiện trạng Webcam/Camera trên CampusOS để phục vụ triển khai Chrome Extension Manifest V3.
 
 ---
 
-## 2. Logic Chain
+## 1. Observation (Dữ liệu quan sát thực tế)
 
-1. **Observation**: `package.json` does not include `framer-motion` or `@dnd-kit/*`, but includes `three`, `@types/three`, and `tailwindcss-animate`. Next.js is version `14.2.5`.
-   **Inference**: All animations must be implemented using zero-overhead GPU-accelerated CSS transforms/keyframes, native HTML5 drag-and-drop/pointer events, and lightweight 1-draw-call Canvas2D / WebGL / Three.js shaders. This directly aligns with the requirement constraint: **Zero-Lag 120FPS Performance**.
-2. **Observation**: `tailwind.config.js` only scans `./src/app/**` and `./src/components/**`.
-   **Inference**: New modular dashboard and calendar components must either be placed in `src/components/dashboard/` and `src/components/calendar/`, or `tailwind.config.js` content array must be updated to include `./src/features/**/*.{js,ts,jsx,tsx,mdx}`. Placing modular components in `src/components/` is clean and guarantees full Tailwind class retention.
-3. **Observation**: `npm test` runs with `node --experimental-strip-types --test tests/*.test.ts`. Node requires explicit `.ts` extension in module specifiers when running with `--experimental-strip-types`.
-   **Inference**: All newly authored tests in `tests/*.test.ts` (e.g. testing `loadScore`, `conflicts`, `nlpParse`, `ics`, and XP calculation) must use explicit `.ts` extensions in their relative imports from `../src/...`.
-4. **Observation**: The current `/calendar` page hardcodes `todayKey = '2026-08-20'` and August 2026 dates, disconnecting it from the real current date.
-   **Inference**: Anchor `todayKey` to `new Date()` (formatted as `YYYY-MM-DD`). Seed generator must generate events dynamically relative to the current date (`today - 2 days`, `today`, `today + 3 days`, etc.) so the user always sees their real current month/week populated.
-5. **Observation**: `StrictPomodoroModal` already implements the Fat Orange Cat supervisor, tab detection, and Northern Vietnamese TTS, but does not yet feature the 4-7-8 Breathing + Lo-fi synthesizer mode requested in R4.
-   **Inference**: Enhance `StrictPomodoroModal` by adding an in-modal mode switch between `extreme_cat` and `chill_breathing` (with Web Audio synth), and hook its completion directly to the unified campus store to update study minutes and XP.
+### 1.1 Phân hệ Pomodoro (`web/src/features/pomodoro/`)
+
+1. **`strict-pomodoro-modal.tsx` (Lines 47–81, 208–256, 285–315, 317–337, 401–409)**:
+   - Hỗ trợ 2 chế độ học tập: `FocusSessionMode = 'extreme_cat' | 'chill_breathing'`.
+   - Điều khiển vòng lặp đếm ngược: `running`, `seconds`, `setRunning`. Khi hết giờ, gọi `handleFinish()` (dòng 235–256):
+     ```typescript
+     const actualFocusMin = Math.max(1, Math.round((minutes * 60 - seconds) / 60));
+     const score = arbiterRef.current.calculateDisciplineScore(actualFocusMin, minutes);
+     setIsSessionFinished(true);
+     recordCompleted();
+     onSessionComplete?.({
+       focusMinutes: actualFocusMin,
+       shameCount,
+       disciplineScore: focusMode === 'chill_breathing' ? 100 : score,
+     });
+     ```
+   - Phát âm thanh mắng chửi qua `triggerRoast()` (dòng 208–233): gọi `pomodoroAudio.playAlertSound(alertType)` và `pomodoroAudio.speak(speechText, ..., { gender, tone })`.
+   - Cơ chế miễn trừ 2 phút: `handleExemptionClick` gọi `arbiterRef.current.requestExemption(120)` (dòng 401–409).
+   - Hook phát hiện rời tab: `useTabDetection` (dòng 285–315) kích hoạt callback `onTabViolation`, đăng ký vi phạm qua `arbiterRef.current.registerRoast()`, tăng `shameCount` và phát âm thanh trừng phạt.
+
+2. **`use-tab-detection.ts` (Lines 16–98)**:
+   - Sử dụng Page Visibility API (`document.hidden`, `visibilitychange`) và Window Focus/Blur (`window.blur`, `window.focus`).
+   - Có bộ đệm chống nhiễu `toleranceSeconds = 3` (dòng 39–44).
+   - **Hạn chế cố hữu của Web App**: Trình duyệt cô lập hoàn toàn một trang web chuẩn (`localhost:3000`) khỏi các tab khác. Trang web **không thể** biết người dùng chuyển sang URL nào (Facebook, YouTube hay tài liệu nghiên cứu), không thể đóng tab vi phạm và không thể tự giành lại tiêu điểm (focus).
+
+3. **`supervisor-arbiter.ts` (Lines 1–83)**:
+   - Quản lý trạng thái kỷ luật: `lastRoastTimestamp`, `roastCount`, `exemptUntil`.
+   - Định nghĩa kiểu vi phạm tại dòng 2:
+     ```typescript
+     export type ViolationType = 'tab_switch' | 'idle' | 'face_away' | 'sleep';
+     ```
+   - Quản lý cooldown chống mắng liên tục (20 giây) qua `canRoast()` và cấp miễn trừ qua `requestExemption(durationSeconds)`.
+   - Thuật toán tính điểm kỷ luật `calculateDisciplineScore()`: mỗi lần bị mắng trừ 5 điểm kỷ luật (`penalty = this.state.roastCount * 5`).
+
+4. **`characters-data.ts` (Lines 14–24, 26–192)**:
+   - 4 nhân vật giám thị: `co-giao-chu-nhiem` (Nữ Bắc, cô giáo), `sep-kho-tinh` (Nam Bắc, sếp KPI), `tong-tai-lanh-lung` (Nam trầm, CEO), `anime-tsundere` (Nữ Bắc, senpai).
+   - Đã có sẵn kịch bản lời thoại đầy đủ cho mọi tình huống (dòng 15–22), bao gồm cả:
+     - `tab_switch_warning` & `tab_switch_extreme`
+     - `face_away`: *"Mặt mũi lại nghếch đi đâu rồi đấy? Nhìn thẳng vào màn hình học bài mau lên!"*
+     - `sleep`: *"Ối giời đất ơi! Chưa học xong được chữ nào đã ngáp ngắn ngáp dài gục xuống bàn thế kia à? Tỉnh dậy ngay!"*
+
+5. **`meme-cat-stage.tsx` (Lines 21–36, 108–215)**:
+   - Tái hiện UI chuẩn: Chú Mèo Cam Mập PNG tách nền góc phải (`/images/fat-orange-cat.png`), bảng đồng hồ xám bán trong suốt góc trái (`0:52`), overlay nhép miệng theo âm lượng sóng âm thật (`pomodoroAudio.getMouthOpenness()`), phụ kiện trang phục (`teacher`, `ceo`, `boss`).
+   - Tương thích 100% với tài nguyên ảnh đã có sẵn trong `extension/assets/fat-orange-cat.png`.
+
+6. **`pomodoro-settings-store.ts` (Lines 6–39, 45–68, 123–184)**:
+   - Lưu trữ cấu hình trong `localStorage` (`campusos-pomodoro-settings-v1`) và thống kê (`campusos-pomodoro-stats-v1`).
+   - Cơ chế phát sự kiện phản ứng `campusos:pomodoro-settings-change` và lắng nghe `storage` giữa các tab.
+   - Chưa có trường lưu trữ cấu hình Extension (`extensionConnected`, `blacklistDomains`, `webcamTrackingEnabled`).
+
+7. **`pomodoro-supervisor-settings.tsx` (Lines 296–313)**:
+   - Đã thiết kế sẵn thẻ thông tin "Chrome Extension Giám Sát" với nút `<Link href="/extension">Cài đặt</Link>`. Tuy nhiên, route `/extension` chưa tồn tại trong `web/src/app` (gây 404 nếu người dùng bấm vào).
 
 ---
 
-## 3. Caveats
+### 1.2 Quản lý Trạng thái & Gamification (`web/src/lib/campus-store.ts`)
 
-- **No Caveats**: The entire frontend source tree, build pipeline, styles, dependencies, and test harnesses were directly observed, executed, and verified.
+1. **Kiến trúc Store Reactive**:
+   - Sử dụng React 18 `useSyncExternalStore` (dòng 7, 1386–1390), lưu bền vững tại `localStorage` với key `campusos-shared-v2` (`CAMPUS_STORAGE_KEY`).
+   - Phát sự kiện nội bộ `campusos-store-update` và lắng nghe `window.addEventListener('storage')`.
 
----
+2. **Cơ chế Thưởng XP & Đồng bộ Supabase**:
+   - `recordCompletedSession(minutes, disciplineScore)` (dòng 860–922):
+     - Thưởng XP: 2 XP/phút + điểm kỷ luật thưởng + cột mốc 25p (+15 XP).
+     - Cập nhật Level & Danh hiệu qua `calculateLevelAndRank(nextXp)` (Level 1..10, từ *"Tân sinh viên ngơ ngác"* đến *"Chiến thần qua môn"*).
+     - Cập nhật Streak, chuỗi đóng băng `streakFreezes`, và huy hiệu.
+     - Gọi `logFocusSessionToSupabase()` (dòng 909–916) ghi vào bảng `public.student_focus_sessions`.
+     - Gọi `pushToSupabaseCloudDebounced()` (dòng 745) ghi vào `public.student_profiles`.
 
-## 4. Conclusion
-
-1. **Architecture & File Placement**:
-   - Create shared state layer in `src/lib/campus-store.ts` (XP, Level, Streak, Mood, Vibe Theme, Calendar events, Kanban tasks, study minutes).
-   - Create algorithmic helper libraries with zero external dependencies in `src/lib/`:
-     - `src/lib/calendar-math.ts` (load heat-score calculation, conflict detection).
-     - `src/lib/nlp-calendar.ts` (Vietnamese natural language event parsing).
-     - `src/lib/ics-calendar.ts` (.ics export and import parsing).
-     - `src/lib/gamification.ts` (XP levels, humorous Vietnamese ranks, streak freezes).
-   - Place modular UI components in `src/components/dashboard/` and `src/components/calendar/` to adhere to existing Tailwind content boundaries.
-2. **Design Tokens & Fonts**:
-   - Inject `@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Unbounded:wght@700;800;900&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600;700&display=swap');` in `src/app/globals.css` with local font-family fallbacks.
-   - Configure Neo-Brutal Aurora theme classes (`theme-aurora`, `theme-y2k`, `theme-cyberlime`, `theme-pastel`).
-3. **Focus Mode**:
-   - Wire `StrictPomodoroModal` into `/dashboard` and `/calendar`, adding the 4-7-8 Breathing + Lo-fi Mode alongside the existing Fat Orange Cat Supervisor.
-4. **Testing**:
-   - Write comprehensive unit tests in `tests/campus-redesign.test.ts` importing TS helper files with explicit `.ts` extensions, and verify with `npm test`.
+3. **Thiếu sót quan trọng**:
+   - Trong `campus-store.ts`, **chưa có hàm `penalizeViolation`** để trừ XP khi vi phạm.
+   - Hành vi duy nhất giảm XP hiện có là `undo()` trong `addQuickTask` (dòng 1072: `prev.xp - 10`).
+   - Cần bổ sung hàm export:
+     ```typescript
+     export function penalizeViolation(amount: number = 50, reason?: string): { xpDeducted: number; nextXp: number }
+     ```
 
 ---
 
-## 5. Verification Method
+### 1.3 Hiện trạng Cầu nối Extension & Web App
 
-- **Typecheck Verification**:
-  ```bash
-  npm run typecheck
-  ```
-  Expected: Exits with code 0.
-- **Unit Test Verification**:
-  ```bash
-  npm test
-  ```
-  Expected: Exits with code 0, executing all existing and new test suites under `tests/`.
-- **Production Build Verification**:
-  ```bash
-  npm run build
-  ```
-  Expected: Exits with code 0, generating all 34 routes cleanly without syntax or ESLint errors.
-- **File Inspection**:
-  - `web/package.json`
-  - `web/tailwind.config.js`
-  - `web/src/app/globals.css`
-  - `web/src/app/(main)/dashboard/page.tsx`
-  - `web/src/app/(main)/calendar/page.tsx`
-  - `web/src/features/pomodoro/strict-pomodoro-modal.tsx`
+1. **Hiện trạng mã nguồn `web/src`**:
+   - Không có bất kỳ lệnh gọi `chrome.runtime.sendMessage`, `window.postMessage` hay `addEventListener('message')` nào liên quan đến Extension.
+
+2. **Hiện trạng thư mục `extension/`**:
+   - `extension/manifest.json`: Manifest V3 sơ khai, chỉ có quyền `"storage"`, inject content script vào 7 domains, chưa có `background.service_worker`, chưa có `externally_connectable`, thiếu quyền `"tabs"`, `"activeTab"`, `"scripting"`, `"declarativeNetRequest"`.
+   - `extension/content.js`: Đã có overlay Mèo Mập Cam và đồng hồ đếm ngược 52 giây, speech synthesis tiếng Việt qua Web Speech API. Tuy nhiên:
+     - Chưa có cơ chế khóa trang Cyber-Glass Lockout (làm mờ toàn màn hình, chặn click).
+     - Chưa có countdown 5 giây tự động đóng tab và chuyển về CampusOS tab.
+     - Chưa có nút ân hạn *"Tôi đang tra tài liệu"*.
+     - Chưa kết nối với Background Service Worker hay Web App.
+   - Chưa có `extension/background.js` và thư mục `extension/popup/`.
+
+---
+
+### 1.4 Cơ chế Âm thanh & Vietnamese TTS
+
+1. **API Server Endpoint (`web/src/app/api/tts/route.ts`)**:
+   - Tuyệt vời: Đã hoàn thiện sẵn sàng tại `/api/tts` (lines 1–150).
+   - Tích hợp Microsoft Edge Neural TTS chất lượng cao (`msedge-tts`):
+     - Giọng nam: `vi-VN-NamMinhNeural`
+     - Giọng nữ: `vi-VN-HoaiMyNeural`
+   - Tự động fallback sang Google Vietnamese TTS (`translate.google.com/translate_tts?tl=vi`).
+   - Trả về stream `audio/mpeg` MP3, `Cache-Control: public, max-age=3600`.
+
+2. **Audio Engine Frontend (`web/src/features/pomodoro/audio-engine.ts`)**:
+   - Phương thức `speak(text, onEnd, { gender, tone })`: gọi `fetch('/api/tts')`, giải mã qua Web Audio `ctx.decodeAudioData()`, truyền qua `AnalyserNode` để trích xuất biên độ thời gian thực cho khẩu hình miệng Mèo (`getMouthOpenness()`), fallback sang `window.speechSynthesis`.
+   - Phương thức `playAlertSound(type)`: tạo sóng âm procedural qua `OscillatorNode` và `GainNode` cho các sự kiện `warning`, `penalty`, `start`, `success`, `poke`, `tap`.
+
+3. **Cơ chế âm thanh phía Extension**:
+   - Content Script trên tab vi phạm có thể gọi `fetch('http://localhost:3000/api/tts')` để lấy file MP3 giọng đọc Neural thật, giải mã qua `new Audio(url).play()`, và fallback về `window.speechSynthesis.speak(new SpeechSynthesisUtterance(text))` với `lang = 'vi-VN'`.
+
+---
+
+### 1.5 Hiện trạng Webcam / Camera Tracking
+
+1. **Kiểm tra mã nguồn**:
+   - Tìm kiếm `getUserMedia` hoặc `navigator.mediaDevices` trong toàn bộ workspace: **0 kết quả**.
+   - Mọi từ khóa "camera" trong `web/src` đều là `THREE.PerspectiveCamera` hoặc icon `<Camera />` của Lucide.
+   - Thư viện MediaPipe chưa được cài đặt trong `package.json`.
+
+2. **Khả năng tương thích kiến trúc**:
+   - `supervisor-arbiter.ts` dòng 2 đã khai báo sẵn kiểu `ViolationType = 'tab_switch' | 'idle' | 'face_away' | 'sleep'`.
+   - `characters-data.ts` đã có sẵn các câu mắng tiếng Việt khi quay mặt đi (`face_away`) hoặc ngủ gục (`sleep`).
+   - Database schema `supabase/migrations/001_pomodoro_schema.sql` dòng 90 đã có sẵn trường `type` nhận `'no_face'` và `'sleep_detected'`.
+
+---
+
+## 2. Logic Chain (Chuỗi lập luận kiến trúc & đề xuất tích hợp)
+
+```
+[Mục tiêu: AI Giám sát cực đoan (URL Blacklist + AI Face Tracking) kết nối Web App & Extension]
+                             │
+       ┌─────────────────────┴──────────────────────┐
+       ▼                                            ▼
+[Phía Web App (CampusOS)]                  [Phía Chrome Extension]
+ - Bắt đầu / Dừng Pomodoro                 - Giám sát URL tab đen (Blacklist)
+ - Quản trị XP & Kỷ luật                   - Lockout HUD 5s + Giọng mắng
+ - Tùy chọn bật Webcam                     - Đồng bộ trạng thái 2 chiều
+```
+
+### Bước 1: Giao thức Cầu nối Hai chiều (Two-Way Communication Protocol)
+- **Vấn đề**: Chrome Extension Manifest V3 cần giao tiếp với Web App chạy ở `http://localhost:3000` mà không bị gián đoạn hay phụ thuộc vào Extension ID cố định (vốn thay đổi khi tải unpacked trong môi trường phát triển).
+- **Giải pháp**: Thiết kế cơ chế cầu nối lai (Hybrid Bridge):
+  1. **Content Script Relay**: Inject content script của Extension vào cả `http://localhost:3000/*` (song song với các trang blacklist). Content script này đóng vai trò cầu nối DOM event:
+     - Lắng nghe sự kiện từ Web App: `window.addEventListener('message', ...)` với `event.data.source === 'CAMPUSOS_WEB'`.
+     - Chuyển tiếp tới Background Service Worker qua `chrome.runtime.sendMessage(event.data)`.
+     - Khi nhận chỉ thị từ Background (ví dụ vi phạm phát hiện trên tab khác), Content script dispatch sự kiện `window.postMessage({ source: 'CAMPUSOS_EXTENSION', type: 'VIOLATION_DETECTED', ... })` về trang Web App.
+  2. **Direct Externally Connectable**: Cấu hình `"externally_connectable": { "matches": ["http://localhost:3000/*", "https://*.vercel.app/*"] }` trong `manifest.json`. Web App có thể kiểm tra `window.chrome?.runtime?.sendMessage(EXTENSION_ID, ...)` khi cần ping trực tiếp.
+
+### Bước 2: Bảng định nghĩa Message Contract giữa Web và Extension
+
+| Chiều | Action / Type | Payload | Ý nghĩa |
+|---|---|---|---|
+| Web -> Ext | `START_FOCUS` | `{ durationMinutes, characterSlug, roastLevel, targetTaskTitle }` | Bật chế độ giám sát khắt khe trên toàn trình duyệt |
+| Web -> Ext | `PAUSE_FOCUS` | `{}` | Tạm dừng giám sát |
+| Web -> Ext | `STOP_FOCUS` | `{}` | Hủy phiên học, trở về trạng thái idle |
+| Web -> Ext | `COMPLETE_FOCUS` | `{}` | Hoàn thành phiên, tắt giám sát |
+| Web -> Ext | `REQUEST_EXEMPTION` | `{ durationSeconds: 120 }` | Bật chế độ ân hạn 2 phút (cho phép tra cứu) |
+| Web -> Ext | `UPDATE_BLACKLIST` | `{ blacklist: string[] }` | Đồng bộ danh sách trang web cấm từ Web App |
+| Ext -> Web | `VIOLATION_DETECTED` | `{ reason: 'blacklist_url' \| 'face_away' \| 'sleep', domain, penaltyXp: 50 }` | Báo cáo vi phạm, kích hoạt trừ -50 XP và phát âm thanh |
+| Ext -> Web | `PING` / `PONG` | `{ version, status }` | Bắt tay phát hiện Extension đã cài đặt |
+
+### Bước 3: Cập nhật Store `campus-store.ts` cho Phạt XP
+- Khi nhận thông điệp `VIOLATION_DETECTED` từ Extension:
+  1. Gọi `penalizeViolation(50, 'Mở trang giải trí trong giờ học')`:
+     - Trừ XP: `nextXp = Math.max(0, currentXp - 50)`.
+     - Cập nhật lại Level và Rank Title.
+     - Dispatch event `campusos-store-update` để toàn bộ UI (Hero, Game HUD, XP bar) cập nhật ngay lập tức.
+     - Gọi `pushToSupabaseCloudDebounced()` để lưu điểm XP mới lên bảng `student_profiles` / `profiles`.
+  2. Tăng số lần xấu hổ: gọi `incrementPomodoroShame()` trong `pomodoro-settings-store.ts`.
+  3. Kích hoạt hiệu ứng răn đe trên Web App nếu modal đang mở.
+
+### Bước 4: Tích hợp AI Webcam Face Tracking
+- Khuyến nghị triển khai mô hình module nhẹ (Lightweight Face Mesh / Eye Aspect Ratio):
+  - Chạy trực tiếp trong Web App khi phiên `StrictPomodoroModal` kích hoạt (hoặc qua offscreen canvas / web worker trong Extension).
+  - Thuật toán Eye Aspect Ratio (EAR):
+    $$\text{EAR} = \frac{\|p_2 - p_6\| + \|p_3 - p_5\|}{2 \|p_1 - p_4\|}$$
+    Nếu $\text{EAR} < 0.2$ liên tục $> 10$ giây $\rightarrow$ Phát hiện ngủ gục (`sleep`).
+  - Thuật toán Head Pose: Góc lệch Yaw $> 35^\circ$ hoặc không thấy khuôn mặt liên tục $> 10$ giây $\rightarrow$ Phát hiện quay mặt / bỏ đi nơi khác (`face_away`).
+  - Kích hoạt giọng mắng tương ứng từ `characters-data.ts`.
+
+---
+
+## 3. Caveats (Các điểm cần lưu ý & Giả định)
+
+1. **Quyền truy cập Webcam trong trình duyệt**:
+   - `getUserMedia` yêu cầu người dùng cấp quyền (Permission Prompt) và chỉ hoạt động trên HTTPS hoặc `localhost`. Cần có giao diện xin quyền rõ ràng kèm giải thích "Dữ liệu camera chỉ xử lý cục bộ trên máy bạn, 100% không upload lên server".
+2. **Khác biệt môi trường Production vs Localhost**:
+   - Khi chạy ở môi trường phát triển (`http://localhost:3000`), Chrome gán ID ngẫu nhiên cho extension dạng unpack. Cần cơ chế tự động nhận diện Extension qua handshake content script thay vì phụ thuộc cứng vào Extension ID.
+3. **Thao tác đóng Tab của Extension**:
+   - Extension API `chrome.tabs.remove(tabId)` yêu cầu quyền `"tabs"` trong `manifest.json`. Khi đếm ngược 5 giây kết thúc, Service Worker cần đóng tab vi phạm và gọi `chrome.tabs.update(campusTabId, { active: true })` để đưa người dùng trở lại tab CampusOS.
+
+---
+
+## 4. Conclusion (Kết luận & Đề xuất hành động cho Implementer)
+
+1. **Khả năng tương thích của CampusOS**: Cực kỳ cao và sẵn sàng 95%. Hệ thống đã có đầy đủ:
+   - UI Mèo Cam Mập và đồng hồ 0:52 (`meme-cat-stage.tsx`).
+   - Engine tổng hợp giọng nói Neural TTS tiếng Bắc (`/api/tts`).
+   - Kịch bản câu thoại cho cả rời tab, quay mặt đi và ngủ gục (`characters-data.ts`).
+   - Arbiter phân xử cooldown và cấp miễn trừ (`supervisor-arbiter.ts`).
+   - Store đồng bộ thời gian thực Supabase (`campus-store.ts`, `supabase-sync.ts`).
+2. **Các hạng mục cụ thể cần triển khai (Action Items)**:
+   - **Tác vụ 1 (`extension/manifest.json` & `background.js`)**: Nâng cấp manifest chuẩn MV3 đầy đủ permissions (`tabs`, `storage`, `activeTab`, `scripting`), cấu hình `externally_connectable` và xây dựng Background Service Worker quản lý phiên Pomodoro và sự kiện tab.
+   - **Tác vụ 2 (`extension/content.js`)**: Nâng cấp Content Script thành Cyber-Glass Lockout HUD (làm mờ 25px toàn trang, rung lắc màn hình, đếm ngược 5s cưỡng chế đóng tab, nút ân hạn 2p, phát giọng mắng Neural TTS từ `/api/tts`).
+   - **Tác vụ 3 (`extension/popup/`)**: Xây dựng giao diện Popup của Extension hiển thị đồng hồ Pomodoro đồng bộ và danh sách Blacklist domains tùy chỉnh.
+   - **Tác vụ 4 (`web/src/lib/campus-store.ts`)**: Bổ sung action `penalizeViolation(amount = 50, reason)` để trừ XP và đồng bộ Supabase Cloud.
+   - **Tác vụ 5 (`web/src/features/pomodoro/use-extension-bridge.ts`)**: Tạo hook cầu nối liên lạc hai chiều giữa Web App và Chrome Extension.
+   - **Tác vụ 6 (`web/src/app/(main)/extension/page.tsx`)**: Tạo trang hướng dẫn cài đặt và cấu hình Extension để nút "Cài đặt" trong `/settings` hoạt động hoàn hảo.
+   - **Tác vụ 7 (AI Webcam Tracking)**: Tích hợp hook giám sát khuôn mặt nhẹ nhàng bật/tắt được theo cấu hình.
+
+---
+
+## 5. Verification Method (Phương pháp Kiểm chứng Độc lập)
+
+Các lệnh kiểm tra để xác nhận hệ thống không bị hồi quy (regression) và sẵn sàng tích hợp:
+
+1. **Kiểm tra Type Safety**:
+   ```powershell
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm run typecheck
+   ```
+   *Kỳ vọng: Thoát mã 0, 0 lỗi TypeScript.*
+
+2. **Kiểm tra Bộ Test Suite Toàn Dự án**:
+   ```powershell
+   cd d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\web
+   npm test
+   ```
+   *Kỳ vọng: 380/380 tests PASS (bao gồm `supervisor-arbiter.test.ts`, `pomodoro-leo.test.ts`, `tasks-redesign.test.ts`).*
+
+3. **Kiểm tra Cú pháp & Tải Extension**:
+   - Mở Chrome/Edge tại `chrome://extensions`.
+   - Bật "Developer mode".
+   - Bấm "Load unpacked" trỏ vào thư mục `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\extension`.
+   - *Kỳ vọng: Tải thành công không có lỗi Manifest JSON hay cú pháp Service Worker.*
+
+4. **Kiểm tra Endpoint TTS**:
+   ```powershell
+   Invoke-RestMethod -Uri "http://localhost:3000/api/tts" -Method Post -ContentType "application/json" -Body '{"text":"Tập trung học bài ngay!","gender":"female","tone":"sarcastic"}' -OutFile "test_tts.mp3"
+   ```
+   *Kỳ vọng: Trả về file âm thanh `audio/mpeg` hợp lệ.*

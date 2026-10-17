@@ -1,33 +1,25 @@
-## 2026-10-13T11:58:01Z
-You are auditor_m4_1 (teamwork_preview_auditor) for Milestone 4 (Detail Drawer, NLP QuickAdd, AI Breakdown, /tasks Page Assembly) of CampusOS Tasks redesign.
-Your working directory is: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\auditor_m4_1\
+## 2026-10-17T02:12:15Z
+[Message] timestamp=2026-10-17T02:12:15Z sender=051c51ec-d4c0-431c-b685-75179c16a0da priority=MESSAGE_PRIORITY_HIGH content=You are auditor_m4_1.
+Your working directory is: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\auditor_m4_1
 
-Read these files first:
-1. ORIGINAL_REQUEST.md at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md
-2. Master plan at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md
-3. Worker M4 handoff at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m4_1\handoff.md
+MANDATORY FIRST STEP:
+Read the authoritative user request at: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\ORIGINAL_REQUEST.md (specifically header ## 2026-10-17T00:51:59Z).
+Also read:
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\PROJECT.md
+- d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m4_1\handoff.md
 
-Perform forensic integrity checks on the Milestone 4 deliverables:
-- web/src/components/tasks/drawer/unselected-hero.tsx
-- web/src/components/tasks/drawer/subtask-checklist.tsx
-- web/src/components/tasks/drawer/task-detail-drawer.tsx
-- web/src/components/tasks/create/quick-add-modal.tsx
-- web/src/components/tasks/create/ai-breakdown-modal.tsx
-- web/src/app/(main)/tasks/page.tsx
-
-Verify:
-1. No dummy, facade, or hardcoded mock logic.
-2. Genuine reactivity with useCampusStore and real store actions (addTask, updateTask, completeTask, deleteTask, toggleTaskStep, reorderTasks).
-3. Authentic Vietnamese NLP integration with tasks-engine.ts.
-4. Authentic heuristic stage breakdown in ai-breakdown-modal.tsx.
-5. Authentic StrictPomodoroModal invocation and focus session recording.
-
-Write your forensic audit report with a binary verdict (CLEAN or INTEGRITY VIOLATION) to:
-d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\auditor_m4_1\handoff.md
-Send a completion message back to the orchestrator.
-
-
-## 2026-10-13T12:00:19Z
-**Context**: Milestone 4 Forensic Integrity Audit
-**Content**: If run_command is waiting for interactive permission, please proceed immediately with comprehensive static code analysis and AST inspection of the 6 Milestone 4 files. Verify genuine store reactivity, authentic heuristics, absence of dummy facades/mocks, and genuine StrictPomodoroModal integration. Write your report to d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\auditor_m4_1\handoff.md with binary verdict (CLEAN or INTEGRITY VIOLATION).
-**Action**: Finalize handoff.md and reply with your verdict.
+Mission:
+Forensic Integrity Audit of Milestone 4:
+1. Static analysis:
+   - Verify genuine implementation of `penalizeViolation(50)` with mathematical floor clamp at 0.
+   - Verify genuine Supabase migration `004_extension_focus_violations.sql`.
+   - Verify genuine `use-extension-bridge.ts`, `/api/focus/violation`, and `extension/popup/` DOM/JS logic.
+   - Zero hardcoded mock bypasses, zero dummy facades, zero cheating.
+2. Execution analysis:
+   Run in `web/`:
+   `node --experimental-strip-types --test tests/extension-sync-penalty.test.ts`
+   `npm test`
+   `npm run typecheck`
+3. Document forensic evidence in `d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\auditor_m4_1\handoff.md`.
+   State your binary verdict: `CLEAN` or `INTEGRITY VIOLATION`.
+4. Send completion message to parent orchestrator.

@@ -1,53 +1,63 @@
-# BRIEFING — 2026-10-13T08:42:00Z
+# BRIEFING — 2026-10-17T01:12:00Z
 
 ## Mission
-Forensic integrity audit of Milestone 1 (CampusOS /tasks rebuild: models, tasks-engine, campus-store, unit tests).
+Forensic Integrity Audit of Milestone 1 (extension/manifest.json & extension/background.js)
 
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: critic, specialist, auditor
-- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\auditor_m1_1\
-- Original parent: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Target: Milestone 1 (Tasks Redesign Data Model, Engine, Store)
+- Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\auditor_m1_1
+- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Target: Milestone 1: Chrome Extension Manifest & Background Engine
 
 ## 🔒 Key Constraints
 - Audit-only — do NOT modify implementation code
 - Trust NOTHING — verify everything independently
-- ORIGINAL_REQUEST.md always takes precedence over dispatch instructions
+- Block on failure: if ANY check fails, verdict is INTEGRITY VIOLATION
+- Ground-truth constraints in ORIGINAL_REQUEST.md take precedence over all else
 
 ## Current Parent
-- Conversation ID: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Updated: not yet
+- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Updated: 2026-10-17T01:12:00Z
 
 ## Audit Scope
-- **Work product**: Milestone 1 files (`web/src/types/tasks.ts`, `web/src/lib/tasks-engine.ts`, `web/src/lib/campus-store.ts`, `web/tests/tasks-redesign.test.ts`)
-- **Profile loaded**: General Project
+- **Work product**: extension/manifest.json and extension/background.js
+- **Profile loaded**: General Project (Integrity mode: development)
 - **Audit type**: forensic integrity check
 
 ## Audit Progress
 - **Phase**: reporting
-- **Checks completed**: [ORIGINAL_REQUEST review, Source code analysis, Facade/Stub check, Hardcoded result check, Fabricated output check, Tautological assertion check, Empirical node stress test, npm test, npm run typecheck, npm run build]
-- **Checks remaining**: [Final handoff report generation, Dispatch completion message to parent]
-- **Findings so far**: CLEAN — No integrity violations found across all criteria.
-
-## Attack Surface
-- **Hypotheses tested**: 
-  1. Hypothesis: NLP parser hardcodes specific test strings (e.g. "nộp bài tập mạng..."). Result: Refuted. General multi-pass regex extractor handles any input.
-  2. Hypothesis: Eisenhower matrix uses dummy returns. Result: Refuted. Mathematical date difference (<=2 days) + priority/difficulty/regex keyword evaluation.
-  3. Hypothesis: Store methods stub state changes. Result: Refuted. Deep state mutations, activity logging, Clear the Board bonus, XP/level calculations, cross-deadline sync.
-  4. Hypothesis: Tests contain tautological assertions (`assert.ok(true)`). Result: Refuted. 0 tautological assertions; all assert computed fields.
-  5. Hypothesis: Build or typecheck fails on fresh code. Result: Refuted. `npm run typecheck` 0 errors, `npm test` 73/73 pass, `npm run build` exits 0.
-- **Vulnerabilities found**: None.
-- **Untested angles**: UI rendering (assigned to M2-M4).
-
-## Loaded Skills
-- None explicitly assigned.
+- **Checks completed**:
+  - Phase 1: Static Code Analysis (Hardcoded outputs, facades, pre-populated artifacts) -> CLEAN
+  - Phase 2: Behavioral & Execution Verification (node test runner on manifest & bridge: 55/55 PASS) -> CLEAN
+  - Phase 3: Project Full Regression (npm test: 435/435 PASS, typecheck 0 errors) -> CLEAN
+  - Phase 4: Adversarial Stress-Testing (14/14 adversarial edge scenarios PASS) -> CLEAN
+- **Checks remaining**: None
+- **Findings so far**: CLEAN — No integrity violations detected.
 
 ## Key Decisions Made
-- Independent verification completed with 0 code changes.
-- Final verdict confirmed: CLEAN.
+- Executed independent verification of both extension test suites (55 tests) and full project suite (435 tests).
+- Authored and executed an independent adversarial stress test suite (`adversarial_forensic_test.mjs`) covering URL spoofing, boundary conditions, millisecond cooldown math, and FSM timing.
+- Confirmed implementation authenticity: genuine FSM state machine, robust URL normalization and subdomain matching, standard storage sync, and two-way message arbitration.
 
 ## Artifact Index
 - DISPATCH.md — incoming dispatch instructions
-- progress.md — audit heartbeat
-- handoff.md — final audit report
+- progress.md — heartbeat and step tracking
+- adversarial_forensic_test.mjs — independent stress test suite (14 tests)
+- handoff.md — final 5-component forensic report
+
+## Attack Surface
+- **Hypotheses tested**:
+  - H1: Lookalike domain injection (e.g. `facebook.com.evil.com`) -> Mitigated (returns false/null).
+  - H2: Query string URL decoy (e.g. `github.com?q=facebook.com`) -> Mitigated (returns false/null).
+  - H3: Trailing dot & auth credentials bypass -> Mitigated (matches accurately).
+  - H4: Elapsed time underflow / negative remaining seconds -> Mitigated (clamped to 0).
+  - H5: Exemption cooldown exact boundary (< 180s denied, >= 180s granted) -> Mitigated (exact ms match).
+  - H6: Non-object or malformed message routing crash -> Mitigated (graceful error return).
+- **Vulnerabilities found**: None.
+- **Untested angles**: Live browser tab destruction in headless Chrome (deferred to M5 E2E).
+
+## Loaded Skills
+- **Source**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agent\skills\verification-before-completion\SKILL.md
+- **Local copy**: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\auditor_m1_1\skills\verification-before-completion\SKILL.md
+- **Core methodology**: Verify all assertions empirically with fresh tool commands before asserting success or passing verdicts.

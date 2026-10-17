@@ -416,3 +416,49 @@ Integrity mode: development
 - [ ] `npm test` vượt qua 100% các bài test (339+ tests) và các test case mới cho Sync Engine.
 - [ ] `npm run build` biên dịch thành công 100% các route (34+ static & dynamic routes).
 - [ ] Tích hợp mượt mà với UI Cyber-Glass hiện tại, không gây vỡ giao diện hay lỗi SSR hydration.
+
+
+## 2026-10-17T00:51:59Z
+
+Xây dựng và kết nối hoàn chỉnh Chrome Extension Manifest V3 "AI Giám Sát Học Tập Cực Đoan" với Web App CampusOS và Supabase Cloud theo cơ chế phát hiện kép (URL Tab Blacklist & AI Webcam Face Tracking).
+
+Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap
+Integrity mode: development
+
+## Requirements
+
+### R1. Cấu hình Manifest V3 & Kiến trúc Service Worker (`extension/`)
+- Hoàn thiện `extension/manifest.json` chuẩn Manifest V3:
+  - Permissions: `tabs`, `storage`, `activeTab`, `scripting`, `declarativeNetRequest`.
+  - Cấu hình `externally_connectable` cho phép trao đổi message hai chiều an toàn với Web App (`http://localhost:3000/*` và domain production).
+  - Background Service Worker (`extension/background.js`): Quản lý trạng thái phiên học (`idle`, `focusing`, `break`), danh sách Blacklist domains, lắng nghe sự kiện `tabs.onActivated` và `tabs.onUpdated`.
+
+### R2. Giao diện Cyber-Glass Lockout HUD & Âm thanh Mắng Chửi (`extension/content.js`)
+- Xây dựng Content Script chèn DOM Modal phong cách Cyber-Glass trên các trang vi phạm:
+  - Làm mờ đen trang web vi phạm (`backdrop-filter: blur(25px)`, `pointer-events: none`).
+  - Hiển thị nhân vật giám sát (Mèo Cam Cutout / Tom 3D) phóng to toàn màn hình với hiệu ứng rung lắc (screen shake).
+  - Tích hợp giọng đọc mắng chửi bằng giọng Neural TTS tiếng Việt.
+  - Hiển thị thanh đếm ngược 5 giây cưỡng chế đóng tab vi phạm và chuyển tiêu điểm về tab CampusOS.
+  - Cơ chế ân hạn: Cung cấp nút *"Tôi đang tra tài liệu"* (tối đa 1 lần / 3 phút mỗi phiên Pomodoro).
+
+### R3. Tùy chọn AI Webcam Face Tracking (Phát hiện quay mặt / ngủ gục)
+- Tích hợp module theo dõi khuôn mặt nhẹ bằng Web Worker / MediaPipe Face Mesh:
+  - Người dùng có thể bật/tắt trong cài đặt Pomodoro Web App hoặc Extension Popup.
+  - Phân tích góc quay đầu (Head Pose) và tỷ lệ mở mắt (Eye Aspect Ratio): Nếu quay mặt đi quá 10 giây hoặc gục xuống bàn ngủ -> phát cảnh báo và kích hoạt Mèo Cam nhắc nhở.
+
+### R4. Cầu nối Đồng bộ Trạng thái & Phạt XP với Web App & Supabase
+- Kết nối hai chiều giữa Web App và Extension:
+  - Khi bấm "Bắt đầu Focus" trên Web: Gửi tín hiệu kích hoạt giám sát sang Extension.
+  - Khi Extension phát hiện vi phạm: Trừ ngay **-50 XP**, tăng số lần vi phạm `violation_count`, và ghi nhận trực tiếp vào bảng `student_focus_sessions` và `profiles` trên Supabase Cloud.
+- Phát triển giao diện Extension Popup (`extension/popup/`):
+  - Đồng hồ đếm ngược Pomodoro thời gian thực đồng bộ với Web App.
+  - Danh sách Blacklist domains có thể tùy chỉnh thêm/bớt.
+
+## Acceptance Criteria
+
+### Verification & Quality Gates
+- [ ] Thư mục `extension/` tải thành công trên Chrome/Edge (`chrome://extensions` ở Developer Mode) mà không phát sinh bất kỳ lỗi cú pháp Manifest nào.
+- [ ] Mở tab giải trí (Facebook, YouTube, TikTok...) trong lúc Pomodoro đang chạy: Lockout HUD kích hoạt trong vòng dưới 200ms, phát âm thanh và đếm ngược đóng tab.
+- [ ] Sự kiện vi phạm gửi thành công về Web App và trừ -50 XP trên Supabase Database.
+- [ ] Bộ kiểm thử dự án `npm test` tiếp tục PASS 100% (380+ tests) và `npm run typecheck` 0 lỗi.
+- [ ] Next.js Web App biên dịch thành công (`npm run build`).

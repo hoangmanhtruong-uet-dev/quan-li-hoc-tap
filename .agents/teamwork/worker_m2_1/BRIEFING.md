@@ -1,71 +1,59 @@
-# BRIEFING — 2026-10-13T09:42:00Z
+# BRIEFING — 2026-10-17T01:38:00Z
 
 ## Mission
-Milestone 2: Implement Quest Board Header & 3D Blocks (`quest-board-header.tsx`, `floating-blocks-3d.tsx`, `stat-stickers.tsx`, `progress-ring.tsx`).
+Implement Milestone 2: Cyber-Glass Lockout HUD & Vietnamese TTS in `extension/content.js`.
 
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
 - Working directory: d:\MyProjects\MyProjectToMoney\Web-quan-li-hoc-tap\.agents\teamwork\worker_m2_1
-- Original parent: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Milestone: Milestone 2 (Quest Board Header & 3D Blocks)
+- Original parent: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Milestone: Milestone 2: Cyber-Glass Lockout HUD & Vietnamese TTS
 
 ## 🔒 Key Constraints
-- Exclusive write ownership:
-  - `web/src/components/tasks/header/quest-board-header.tsx`
-  - `web/src/components/tasks/header/floating-blocks-3d.tsx`
-  - `web/src/components/tasks/header/stat-stickers.tsx`
-  - `web/src/components/tasks/header/progress-ring.tsx`
-- DO NOT modify test files or store files.
-- Header container height strictly bounded (<= 28vh).
-- Title "NHIỆM VỤ." with character reveal animation.
-- Dynamic Vietnamese subtitle adapting to task count.
-- Magnetic action buttons: "+ Thêm nhiệm vụ", "✨ AI chia nhỏ việc", "▶ Focus ngay".
-- Vanilla Three.js floating cubes canvas: InstancedMesh (~40 cubes/stars), pointer reactive, completion burst particles, DPR capped 1.25, single draw call, reduced motion / mobile (<768px) aurora fallback, proper WebGL cleanup.
-- 4 Asymmetric tilted stat stickers with neo-brutal 2px border, 6px offset shadow, -1.5° / +1.2° asymmetric tilt angles.
-- Completed sticker has SVG circular progress ring drawing liquid fill, count-up animation, 100% mini confetti burst.
-- High priority sticker has pulsing red dot if overdue tasks exist.
-- TypeScript 0 errors, 102 tests passing.
+- Exclusive write ownership: `extension/content.js`. Do NOT touch or modify any other files outside working directory.
+- Shadow DOM injection with `mode: "open"` into `document.documentElement`, preventing duplicate injection.
+- Complete CSS isolation from host web pages.
+- Cyber-Glass visual styling (RGBA overlay, backdrop-filter blur 25px, 1px neon pink/red border, frosted modal, glowing shadow, sticker badge "PHÁT HIỆN VI PHẠM KỶ LUẬT").
+- Screen shake CSS animation (@keyframes screen-shake 0.65s).
+- Mascot cutout (`chrome.runtime.getURL('assets/fat-orange-cat.png')`).
+- Scolding phrases + TTS (`/api/tts` audio or Web Speech API `vi-VN`) + high contrast speech bubble.
+- 5s live countdown progress bar -> auto `CLOSE_TAB_AND_FOCUS_CAMPUS`.
+- Exemption button (`REQUEST_EXEMPTION`, 180s) -> if granted remove HUD, if denied show scolding / wait time.
+- Relay for `localhost:3000` / `campusos.vn` postMessage to background.
+- Pass `npm test` and `npm run typecheck` in `web/`.
 
 ## Current Parent
-- Conversation ID: d87bbdd2-41e0-4e96-8205-9ea9461c7df0
-- Updated: 2026-10-13T09:42:00Z
+- Conversation ID: 051c51ec-d4c0-431c-b685-75179c16a0da
+- Updated: 2026-10-17T01:38:00Z
 
 ## Task Summary
-- **What to build**: Quest Board Header component family for /tasks page.
-- **Success criteria**: Strict bounding (<=28vh), smooth 3D blocks with WebGL cleanup and accessible fallback, 4 tilted stat stickers with SVG progress ring, typecheck and test pass.
-- **Interface contracts**: `PROJECT.md`, `explorer_ui_survey_3/handoff.md`, `campus-store.ts`.
-- **Code layout**: `web/src/components/tasks/header/`.
+- **What to build**: Full-featured Cyber-Glass Lockout HUD & Vietnamese TTS in `extension/content.js`.
+- **Success criteria**: Verified styling, shadow DOM isolation, countdown & actions, TTS fallback, exemption logic, web relay, all web tests & typechecks pass.
+- **Interface contracts**: PROJECT.md, spec_miner_survey_3 handoff report (§ 2.3 & § 3).
+- **Code layout**: `extension/content.js`.
 
 ## Key Decisions Made
-- Built `progress-ring.tsx` with self-contained Canvas2D particle burst on 100%, liquid SVG gradient, and count-up animation.
-- Built `stat-stickers.tsx` with 4 asymmetric neo-brutal cards (-1.5°, +1.2°, -1.2°, +1.5°), count-up numbers, overdue red ping indicator, and progress ring.
-- Built `floating-blocks-3d.tsx` with vanilla Three.js InstancedMesh (40 instances, 1 draw call), capped DPR 1.25, mouse parallax lerp, completion burst FX with upward particle physics, tab hidden throttling, and static aurora gradient fallback for mobile/reducedMotion.
-- Built `quest-board-header.tsx` with <= 28vh constraint (`lg:max-h-[28vh]`), character reveal title `NHIỆM VỤ.`, dynamic Vietnamese subtitle, 3 magnetic action buttons (`+ Thêm nhiệm vụ`, `✨ AI chia nhỏ việc`, `▶ Focus ngay`), and integration with 3D canvas and stickers.
+- Implemented `safeSendMessage` helper to gracefully handle both Promise-based (MV3) and callback-based invocation of `chrome.runtime.sendMessage` without throwing `Cannot read properties of undefined (reading 'catch')`.
+- Embedded all CSS styles within the Shadow DOM's `<style>` node attached to `#campusos-lockout-hud-root`, guaranteeing 100% CSS isolation from distracting external sites.
+- Speech audio implements a two-tier pipeline: attempts `/api/tts` (Neural TTS) with timeout, smoothly falling back to Web Speech API `SpeechSynthesisUtterance` (`vi-VN`).
+- Autoplay policy mitigation: Speech bubble is rendered with bold typography on a high-contrast white card with `#ff3d6e` border; click on the mascot or HUD card re-triggers speech synthesis under user gesture.
+- Cooldown feedback on exemption denial: Button is locked in disabled state showing remaining wait seconds (`🚫 Đang hồi phục (Xs)`) and the mascot scolds the user.
 
 ## Artifact Index
-- `.agents/teamwork/worker_m2_1/DISPATCH.md`
-- `.agents/teamwork/worker_m2_1/BRIEFING.md`
-- `.agents/teamwork/worker_m2_1/progress.md`
-- `.agents/teamwork/worker_m2_1/handoff.md`
-- `web/src/components/tasks/header/progress-ring.tsx`
-- `web/src/components/tasks/header/stat-stickers.tsx`
-- `web/src/components/tasks/header/floating-blocks-3d.tsx`
-- `web/src/components/tasks/header/quest-board-header.tsx`
+- `extension/content.js` — Cyber-Glass HUD & Content Script Implementation
+- `.agents/teamwork/worker_m2_1/verify_hud.test.js` — Verification test suite for Milestone 2
+- `.agents/teamwork/worker_m2_1/handoff.md` — Handoff report
 
 ## Change Tracker
-- **Files modified**:
-  - `web/src/components/tasks/header/progress-ring.tsx` - SVG liquid progress ring with count-up & mini confetti burst
-  - `web/src/components/tasks/header/stat-stickers.tsx` - 4 asymmetric tilted stickers with neo-brutal style & overdue alert
-  - `web/src/components/tasks/header/floating-blocks-3d.tsx` - Vanilla Three.js instanced mesh drifting cubes with parallax & burst
-  - `web/src/components/tasks/header/quest-board-header.tsx` - Bounded header container with character reveal title & magnetic buttons
-- **Build status**: Ready for verification.
-- **Pending issues**: None.
+- **Files modified**: `extension/content.js` (Created comprehensive Cyber-Glass Lockout HUD, TTS, 5s countdown, exemption handler, and web relay)
+- **Build status**: PASS (`npm test` 453/453 pass, `npm run typecheck` 0 errors, `verify_hud.test.js` 4/4 pass)
+- **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: All components type-checked against `types/tasks.ts`, `campus-store.ts`, and `tasks-engine.ts`.
-- **Lint status**: Clean.
-- **Tests added/modified**: Exclusively owned files only.
+- **Build/test result**: All 453 web test suites pass cleanly + 4/4 verification suites pass
+- **Lint status**: 0 errors
+- **Tests added/modified**: `.agents/teamwork/worker_m2_1/verify_hud.test.js`
 
 ## Loaded Skills
-- None explicitly loaded.
+- None explicitly loaded
